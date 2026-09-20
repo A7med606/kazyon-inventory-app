@@ -53,42 +53,21 @@
     }
   </script>
 
-  <script>
-    // Global resilience handler to prevent 3P CDN errors from breaking execution
-    window.addEventListener('error', function(event) {
-      if (!event.message || event.message === 'Script error.' || event.message.includes('ResizeObserver')) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    });
-  </script>
-
   <!-- SheetJS CDN for Excel import/export -->
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-  <!-- PDF.js CDN for PDF bulk catalog & barcode invoice parsing -->
-  <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>
-    if (typeof pdfjsLib !== 'undefined') {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- HTML5 QR / Barcode Scanner CDN -->
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-  <!-- Real-Time Cloud Engine: MQTT over WebSockets for Zero-Config instant cross-device sync -->
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/mqtt@5.3.5/dist/mqtt.min.js"></script>
-
-  <!-- Firebase Compat Realtime Database SDK for direct Google Cloud backend -->
-  <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Firebase App & Firestore CDN (Compat for Universal Mobile Browser Support) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <!-- Canvas Confetti CDN -->
-  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <!-- Alpine.js (defer) -->
-  <script crossorigin="anonymous" defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 
   <style>
     * {
@@ -105,50 +84,38 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Zero-Lag Fast Touch Response (0ms lag, immediate tactile feedback) */
+    /* High-target touch feel (0ms lag, quick feedback) */
     .touch-btn {
       touch-action: manipulation;
       user-select: none;
-      transition: transform 0.04s ease, filter 0.04s ease !important;
+      transition: transform 0.06s ease, filter 0.06s ease;
     }
     .touch-btn:active {
-      transform: scale(0.96) !important;
-      filter: brightness(0.9) !important;
+      transform: scale(0.95);
+      filter: brightness(0.88);
     }
     .touch-btn-sm:active {
-      transform: scale(0.94) !important;
+      transform: scale(0.92);
     }
 
-    /* Thumb-friendly hit target constraint: minimum height 55px */
-    .thumb-target {
-      min-height: 55px !important;
-    }
-
-    /* Zero-Lag Instant State Switches - Disable costly layout repaints & animations */
-    .instant-switch {
-      transition: none !important;
-      animation: none !important;
-    }
-
-    /* Red Scanner Laser Effect (Hardware accelerated) */
+    /* Red Scanner Laser Effect */
     @keyframes laserSweep {
       0% { top: 10%; opacity: 0.9; }
       50% { top: 85%; opacity: 1; }
       100% { top: 10%; opacity: 0.9; }
     }
     .laser-line {
-      animation: laserSweep 1.6s ease-in-out infinite;
-      will-change: top;
+      animation: laserSweep 1.8s ease-in-out infinite;
     }
 
-    /* Hardware accelerated layer */
+    /* Hardware accelerated smooth transitions */
     .will-change-transform {
-      will-change: transform;
+      will-change: transform, opacity;
     }
   </style>
 </head>
 
-<body x-data="kazyonApp()" class="min-h-screen bg-dark-900 text-stone-100 flex flex-col justify-between select-none antialiased">
+<body x-data="kazyonApp()" x-init="init()" class="min-h-screen bg-dark-900 text-stone-100 flex flex-col justify-between select-none antialiased">
 
   <!-- ============================================================= -->
   <!-- 1. STRICT AUTHENTICATION SCREEN (General / 6060)              -->
@@ -261,38 +228,21 @@
         <i class="fa-solid fa-arrow-left"></i>
       </button>
 
-      <!-- Quick 1-tap Role Selection Helpers -->
-      <div class="pt-2 border-t border-dark-750 space-y-1.5">
-        <span class="text-[10px] text-stone-400 block text-center font-bold">اختيار الحساب السريع (RBAC Accounts):</span>
-        <div class="grid grid-cols-2 gap-2">
-          <!-- Role 1: General (Main Admin) -->
-          <button 
-            type="button" 
-            @click="credentials.username = 'General'; credentials.password = '6060'; login()"
-            class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-right text-xs touch-btn flex flex-col justify-between"
-          >
-            <div class="flex items-center justify-between text-[11px] font-bold text-kazyon">
-              <span>مشرف عام</span>
-              <i class="fa-solid fa-user-shield"></i>
-            </div>
-            <span class="font-mono text-white text-[11px] font-bold mt-1">General (6060)</span>
-            <span class="text-[9px] text-stone-400 mt-0.5">تحكم كامل وسجل الأمان</span>
-          </button>
-
-          <!-- Role 2: Staff (Store Employee) -->
-          <button 
-            type="button" 
-            @click="credentials.username = 'admin'; credentials.password = '123'; login()"
-            class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-sky-500 text-right text-xs touch-btn flex flex-col justify-between"
-          >
-            <div class="flex items-center justify-between text-[11px] font-bold text-sky-400">
-              <span>موظف فرع</span>
-              <i class="fa-solid fa-user"></i>
-            </div>
-            <span class="font-mono text-white text-[11px] font-bold mt-1">admin (123)</span>
-            <span class="text-[9px] text-stone-400 mt-0.5">جرد سريع ومسح باركود</span>
-          </button>
-        </div>
+      <!-- WhatsApp Account Request Button (Min 55px thumb-friendly touch target) -->
+      <div class="pt-3 border-t border-dark-750 space-y-2">
+        <a 
+          href="https://wa.me/201016558430?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%B7%D9%84%D8%A8%20%D8%AD%D8%B3%D8%A7%D8%A8%20%D8%AE%D8%A7%D8%B5%20%D9%88%D8%B5%D9%84%D8%A7%D8%AD%D9%8A%D8%A9%20%D8%AF%D8%AE%D9%88%D9%84%20%D9%84%D9%85%D9%86%D8%B8%D9%88%D9%85%D8%A9%20%D9%83%D8%A7%D8%B2%D9%8A%D9%88%D9%86%20%D9%85%D8%A7%D8%B1%D9%83%D8%AA%20(Kazyon%20Market)" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="w-full h-14 bg-gradient-to-r from-emerald-600 via-[#25D366] to-emerald-600 hover:brightness-110 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 shadow-[0_4px_20px_rgba(37,211,102,0.35)] touch-btn border border-emerald-400/40"
+        >
+          <i class="fa-brands fa-whatsapp text-2xl"></i>
+          <span>طلب حساب خاص (عبر واتساب)</span>
+          <i class="fa-solid fa-arrow-left text-xs opacity-75"></i>
+        </a>
+        <p class="text-[10px] text-stone-400 text-center font-medium">
+          لطلب صلاحيات المشرف العام أو إضافة موظفي الفرع، تواصل مباشرة مع المطور
+        </p>
       </div>
     </div>
 
@@ -341,54 +291,33 @@
               :class="currentUser.role === 'admin' ? 'bg-kazyon/20 border border-kazyon/40 text-kazyon' : 'bg-sky-500/20 border border-sky-500/40 text-sky-400'"
               x-text="currentUser.roleBadge || (currentUser.role === 'admin' ? 'MAIN ADMIN' : 'STAFF')"
             ></span>
-            <!-- Intelligent Real-Time Cloud Sync & Network Status Badge -->
-            <button 
-              type="button" 
-              @click="isCloudSettingsOpen = true"
-              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[9px] font-mono font-bold touch-btn transition-colors cursor-pointer"
-              :class="{
-                'bg-emerald-500/15 border-emerald-500/40 text-emerald-400': cloudStatus === 'connected',
-                'bg-amber-500/20 border-amber-500/40 text-amber-300 animate-pulse': cloudStatus === 'connecting',
-                'bg-red-500/20 border-red-500/40 text-red-400': cloudStatus === 'offline' || cloudStatus === 'error'
-              }"
-              title="إعدادات المزامنة السحابية المباشرة (Cloud Sync & Firebase)"
-            >
-              <span class="w-1.5 h-1.5 rounded-full" :class="{
-                'bg-emerald-400 animate-pulse': cloudStatus === 'connected',
-                'bg-amber-400 animate-spin': cloudStatus === 'connecting',
-                'bg-red-400': cloudStatus === 'offline' || cloudStatus === 'error'
-              }"></span>
-              <span x-text="cloudStatus === 'connected' ? (cloudEngine === 'firebase' ? 'FIREBASE RTDB' : 'CLOUD LIVE ' + cloudLatency + 'ms') : (cloudStatus === 'connecting' ? 'SYNCING...' : 'OFFLINE')"></span>
-              <i class="fa-solid fa-cloud text-[8px]"></i>
-            </button>
+            <template x-if="isOnline">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>متصل سحابياً (Cloud Sync)</span>
+              </span>
+            </template>
+            <template x-if="!isOnline">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[9px] font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span>محلي (0ms Offline Cache)</span>
+              </span>
+            </template>
+            <span class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-dark-800 border border-dark-750 text-stone-400 text-[9px] font-mono">
+              <i class="fa-solid fa-database text-kazyon text-[8px]"></i>
+              <span>IndexedDB &bull; Local</span>
+            </span>
           </div>
           <div class="flex items-center gap-2 text-[10px] text-stone-400 mt-0.5">
             <span>المستخدم: <strong class="text-white" x-text="currentUser.username || 'General'"></strong></span>
             <span>•</span>
             <span class="font-mono text-emerald-400 font-bold" x-text="'IP: ' + clientIp"></span>
-            <span>•</span>
-            <span class="font-mono text-sky-400 text-[9px]" x-text="'الفرع: ' + branchId"></span>
           </div>
         </div>
       </div>
 
-      <!-- Quick Actions: Cloud Settings, Security Logs (Admin), Barcode Trigger & Logout -->
+      <!-- Quick Actions: Security Logs (Admin), Barcode Trigger & Logout -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <!-- Cloud Sync & Settings Button -->
-        <button 
-          type="button" 
-          @click="isCloudSettingsOpen = true"
-          class="h-10 px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 touch-btn"
-          :class="cloudStatus === 'connected' ? 'bg-dark-850 hover:bg-dark-800 border-emerald-500/40 text-emerald-400' : 'bg-dark-850 hover:bg-dark-800 border-amber-500/40 text-amber-400'"
-          title="إعدادات المزامنة السحابية وفرع كازيون"
-        >
-          <div class="relative">
-            <i class="fa-solid fa-cloud-arrow-up text-sm"></i>
-            <span x-show="cloudStatus === 'connected'" class="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          </div>
-          <span class="hidden lg:inline text-[11px]">السحابة</span>
-        </button>
-
         <!-- Shortcut to Security Logs (General Only) -->
         <template x-if="currentUser.role === 'admin'">
           <button 
@@ -427,22 +356,6 @@
         </button>
       </div>
     </header>
-
-    <!-- Persistent Smart Offline-First Status Banner -->
-    <div x-show="!isOnline" x-cloak class="bg-amber-950/90 border-b border-amber-600/60 px-3.5 py-2 text-amber-200 text-xs flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs shrink-0">
-          <i class="fa-solid fa-cloud-arrow-down"></i>
-        </div>
-        <div>
-          <span class="font-bold text-white block leading-tight">وضع العمل بدون إنترنت (Offline Caching 100%)</span>
-          <span class="text-[10px] text-amber-300/90">يتم حفظ الجرد ومسح الباركود محلياً في ذاكرة الهاتف، وستتم المزامنة تلقائياً عند عودة النت.</span>
-        </div>
-      </div>
-      <template x-if="offlineQueue.length > 0">
-        <span class="bg-amber-500/30 border border-amber-400/40 px-2 py-1 rounded-lg font-mono text-[10px] font-bold shrink-0 text-amber-200" x-text="offlineQueue.length + ' معلق'"></span>
-      </template>
-    </div>
 
     <!-- Real-Time Sync Live Floating Notification Banner -->
     <div x-show="realtimeNotice.show" x-cloak x-transition.opacity.duration.150ms class="fixed top-14 inset-x-3 z-40 max-w-md mx-auto">
@@ -493,7 +406,7 @@
     <!-- ============================================================= -->
     <!-- TAB 1: GRAPHICAL INVENTORY HUB (0ms Real-Time LocalStorage)    -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'inventory'" class="p-3.5 space-y-3.5 max-w-5xl mx-auto w-full">
+    <div x-show="activeTab === 'inventory'" x-transition class="p-3.5 space-y-3.5 max-w-5xl mx-auto w-full">
       
       <!-- Instant Graphical Status KPI Metrics Grid (1-tap filtering) -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -502,7 +415,7 @@
           type="button" 
           @click="statusFilter = 'all'"
           :class="statusFilter === 'all' ? 'border-kazyon bg-dark-800 shadow-[0_0_15px_rgba(255,102,0,0.2)]' : 'border-dark-750 bg-dark-850'"
-          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px]"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn"
         >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">إجمالي الأصناف</span>
@@ -512,7 +425,7 @@
         </button>
 
         <!-- Shelf Hall Stock Total -->
-        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right min-h-[55px]">
+        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right">
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">المعروض بالصالة</span>
             <i class="fa-solid fa-store text-xs text-emerald-400"></i>
@@ -521,7 +434,7 @@
         </div>
 
         <!-- Warehouse Reserve Stock Total -->
-        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right min-h-[55px]">
+        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right">
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">بالمستودع</span>
             <i class="fa-solid fa-warehouse text-xs text-amber-400"></i>
@@ -534,7 +447,7 @@
           type="button" 
           @click="statusFilter = statusFilter === 'alerts' ? 'all' : 'alerts'"
           :class="statusFilter === 'alerts' ? 'border-red-500 bg-red-950/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-dark-750 bg-dark-850'"
-          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px]"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn"
         >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">تنبيهات فورية</span>
@@ -554,7 +467,7 @@
         <button 
           type="button" 
           @click="startCameraScanner('inventory')"
-          class="w-full min-h-[56px] h-15 bg-white hover:bg-stone-100 text-dark-950 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-3 shadow-lg touch-btn"
+          class="w-full h-15 bg-white hover:bg-stone-100 text-dark-950 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-3 shadow-lg touch-btn"
         >
           <div class="w-9 h-9 rounded-xl bg-kazyon/15 flex items-center justify-center text-kazyon text-lg">
             <i class="fa-solid fa-barcode"></i>
@@ -563,57 +476,38 @@
           <span class="text-[10px] bg-kazyon text-white px-2 py-0.5 rounded-lg font-mono font-bold">SCAN 0ms</span>
         </button>
 
-        <!-- Fast-Type Search & Instant Barcode Query Bar (Debounced Search for Low-Tier Devices) -->
-        <div class="space-y-1.5">
-          <div class="relative flex items-center gap-2">
-            <div class="relative flex-1 flex items-center">
-              <i class="fa-solid fa-magnifying-glass absolute right-3.5 text-stone-400 text-xs pointer-events-none" :class="isSearching ? 'text-kazyon animate-pulse' : 'text-stone-400'"></i>
-              <input 
-                type="text" 
-                x-model="fastBarcodeInput" 
-                @keydown.enter="quickBarcodeLookup(fastBarcodeInput)"
-                @input="handleSearchInput($event.target.value)"
-                placeholder="اكتب الباركود أو اسم السلعة..." 
-                class="w-full min-h-[55px] h-14 bg-dark-950/90 border border-white/25 rounded-2xl pr-10 pl-10 text-xs sm:text-sm font-mono font-bold text-white placeholder:text-stone-400 placeholder:font-sans focus:outline-none focus:border-white focus:ring-2 focus:ring-white/50"
-              >
-              <!-- Searching Debounce Spinner -->
-              <div x-show="isSearching" class="absolute left-9 text-kazyon text-xs flex items-center gap-1 pointer-events-none">
-                <i class="fa-solid fa-circle-notch fa-spin"></i>
-              </div>
-              <button 
-                x-show="fastBarcodeInput" 
-                @click="clearSearch()"
-                class="absolute left-2 w-8 h-8 rounded-xl bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center text-xs"
-                title="مسح البحث"
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-            </div>
-
-            <!-- Instant Query / Card Pop-Up Button (Min 55px height) -->
-            <button 
-              type="button" 
-              @click="quickBarcodeLookup(fastBarcodeInput)"
-              class="min-h-[55px] h-14 px-4 bg-dark-950 hover:bg-dark-900 border border-white/30 text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 touch-btn shadow-md shrink-0"
-              title="فحص وعرض البطاقة التفصيلية للمنتج"
+        <!-- Fast-Type Search & Instant Barcode Query Bar (Press Enter or click to instantly pop up Detailed Card) -->
+        <div class="relative flex items-center gap-2">
+          <div class="relative flex-1 flex items-center">
+            <i class="fa-solid fa-magnifying-glass absolute right-3.5 text-stone-400 text-xs pointer-events-none"></i>
+            <input 
+              type="text" 
+              x-model="fastBarcodeInput" 
+              @keydown.enter="quickBarcodeLookup(fastBarcodeInput)"
+              @input="searchQuery = fastBarcodeInput"
+              placeholder="اكتب الباركود أو اسم السلعة..." 
+              class="w-full h-13 bg-dark-950/90 border border-white/25 rounded-2xl pr-10 pl-10 text-xs sm:text-sm font-mono font-bold text-white placeholder:text-stone-400 placeholder:font-sans focus:outline-none focus:border-white focus:ring-2 focus:ring-white/50"
             >
-              <i class="fa-solid fa-id-card text-kazyon text-sm"></i>
-              <span class="hidden sm:inline">فحص</span>
-              <span>البطاقة</span>
+            <button 
+              x-show="fastBarcodeInput" 
+              @click="fastBarcodeInput = ''; searchQuery = ''"
+              class="absolute left-2.5 w-8 h-8 rounded-xl bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center text-xs"
+            >
+              <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
 
-          <!-- Debounce Search & Offline-Ready Status Bar -->
-          <div class="flex items-center justify-between text-[11px] text-stone-200/90 px-1 pt-0.5">
-            <div class="flex items-center gap-1.5">
-              <i class="fa-solid fa-bolt text-amber-300"></i>
-              <span>بحث ذكي مؤجل (Debounced 250ms) خفيف على المعالج</span>
-            </div>
-            <div class="flex items-center gap-1 text-[10px] text-emerald-300 font-mono">
-              <i class="fa-solid fa-shield-halved"></i>
-              <span>تخزين محلي 0ms</span>
-            </div>
-          </div>
+          <!-- Instant Query / Card Pop-Up Button (Min 55px height) -->
+          <button 
+            type="button" 
+            @click="quickBarcodeLookup(fastBarcodeInput)"
+            class="h-13 px-4 bg-dark-950 hover:bg-dark-900 border border-white/30 text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 touch-btn shadow-md shrink-0"
+            title="فحص وعرض البطاقة التفصيلية للمنتج"
+          >
+            <i class="fa-solid fa-id-card text-kazyon text-sm"></i>
+            <span class="hidden sm:inline">فحص</span>
+            <span>البطاقة</span>
+          </button>
         </div>
       </div>
 
@@ -689,14 +583,13 @@
         </span>
         
         <div class="flex items-center gap-2">
-          <!-- Large Thumb Add Item Button (Min 55px height) -->
           <button 
             type="button" 
             @click="openItemModal(null)"
-            class="min-h-[55px] h-14 px-5 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold flex items-center gap-2 touch-btn shadow-md"
+            class="h-11 px-3.5 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-md"
           >
-            <i class="fa-solid fa-plus text-sm"></i>
-            <span>إضافة صنف جديد</span>
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>إضافة صنف</span>
           </button>
         </div>
       </div>
@@ -807,15 +700,15 @@
               </template>
             </div>
 
-            <!-- Prominent One-Tap Detailed Card Trigger (Min 55px height for Android thumbs) -->
+            <!-- Prominent One-Tap Detailed Card Trigger (Min 55px Touch Target) -->
             <button 
               type="button" 
               @click="openDetailModal(item)"
-              class="w-full min-h-[55px] h-14 bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 touch-btn shadow-sm"
+              class="w-full h-14 bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 touch-btn shadow-sm"
             >
               <i class="fa-solid fa-id-card text-kazyon text-base"></i>
               <span>عرض البطاقة التفصيلية للمنتج</span>
-              <i class="fa-solid fa-arrow-left text-[10px] text-stone-500"></i>
+              <i class="fa-solid fa-arrow-left text-xs text-stone-500"></i>
             </button>
 
             <!-- 2. ONE-TAP HIGH-TARGET TOUCH QUANTITY BUTTONS (Min 55px height for Android thumbs) -->
@@ -839,7 +732,7 @@
                     type="button" 
                     @click="updateStock(item, 'shop', -1)"
                     :disabled="item.shopQty <= 0"
-                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-100 flex items-center justify-center font-black text-xl touch-btn disabled:opacity-25"
+                    class="flex-1 h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-100 flex items-center justify-center font-black text-xl touch-btn disabled:opacity-25"
                     title="سحب قطعة من الصالة"
                   >
                     -
@@ -847,7 +740,7 @@
                   <button 
                     type="button" 
                     @click="updateStock(item, 'shop', 1)"
-                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white flex items-center justify-center font-black text-xl touch-btn shadow-md"
+                    class="flex-1 h-14 rounded-2xl bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white flex items-center justify-center font-black text-xl touch-btn shadow-md"
                     title="إضافة قطعة إلى الصالة"
                   >
                     +
@@ -873,7 +766,7 @@
                     type="button" 
                     @click="updateStock(item, 'warehouse', -1)"
                     :disabled="item.warehouseQty <= 0"
-                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-100 flex items-center justify-center font-black text-xl touch-btn disabled:opacity-25"
+                    class="flex-1 h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-100 flex items-center justify-center font-black text-xl touch-btn disabled:opacity-25"
                     title="سحب قطعة من المستودع"
                   >
                     -
@@ -881,7 +774,7 @@
                   <button 
                     type="button" 
                     @click="updateStock(item, 'warehouse', 1)"
-                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 border border-amber-500 text-white flex items-center justify-center font-black text-xl touch-btn shadow-md"
+                    class="flex-1 h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 border border-amber-500 text-white flex items-center justify-center font-black text-xl touch-btn shadow-md"
                     title="إضافة قطعة للمستودع"
                   >
                     +
@@ -895,7 +788,7 @@
               type="button" 
               @click="transferWarehouseToHall(item, 5)"
               :disabled="item.warehouseQty <= 0"
-              class="w-full min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-amber-500 text-amber-300 text-xs font-bold flex items-center justify-center gap-2 touch-btn shadow-sm disabled:opacity-30"
+              class="w-full h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-amber-500 text-amber-300 text-xs font-bold flex items-center justify-center gap-2 touch-btn shadow-sm disabled:opacity-30"
             >
               <i class="fa-solid fa-arrow-left-long text-kazyon text-sm"></i>
               <span>نقل 5 قطع من المستودع للصالة فوري</span>
@@ -936,7 +829,7 @@
     <!-- ============================================================= -->
     <!-- TAB 2: INSTANT PRICE CHECKER (كاشف الأسعار والعروض)           -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'price-checker'" class="p-4 space-y-4 max-w-md mx-auto w-full">
+    <div x-show="activeTab === 'price-checker'" x-transition class="p-4 space-y-4 max-w-md mx-auto w-full">
       
       <div class="text-center space-y-1">
         <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-kazyon/20 border border-kazyon/40 text-kazyon text-xs font-bold">
@@ -951,31 +844,27 @@
       <button 
         type="button" 
         @click="startCameraScanner('price-checker')"
-        class="w-full min-h-[60px] h-20 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-3xl font-black text-lg flex items-center justify-center gap-3 shadow-[0_8px_25px_rgba(255,102,0,0.4)] touch-btn"
+        class="w-full h-20 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-3xl font-black text-lg flex items-center justify-center gap-3 shadow-[0_8px_25px_rgba(255,102,0,0.4)] touch-btn"
       >
         <i class="fa-solid fa-barcode text-2xl"></i>
         <span>مسح باركود السلعة بالكاميرا</span>
       </button>
 
-      <!-- Manual Barcode Search Box (Debounced for low-tier devices) -->
+      <!-- Manual Barcode Search Box -->
       <div class="bg-dark-850 border border-dark-750 p-3.5 rounded-3xl space-y-2.5">
-        <div class="flex items-center justify-between">
-          <label class="block text-xs font-bold text-stone-300">أو اكتب أو ابحث برقم الباركود يدوياً:</label>
-          <span class="text-[10px] text-amber-400 font-mono" x-show="isPriceSearching">جاري الفحص...</span>
-        </div>
+        <label class="block text-xs font-bold text-stone-300">أو اكتب أو ابحث برقم الباركود يدوياً:</label>
         <div class="flex items-center gap-2">
           <input 
             type="text" 
             x-model="priceSearchQuery" 
-            @input="handlePriceSearchInput($event.target.value)"
             @keydown.enter="checkPrice(priceSearchQuery)"
             placeholder="مثال: 6281007010115"
-            class="flex-1 min-h-[55px] h-14 bg-dark-900 border border-dark-700 rounded-2xl px-4 text-sm font-mono font-bold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon"
+            class="flex-1 h-14 bg-dark-900 border border-dark-700 rounded-2xl px-4 text-sm font-mono font-bold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon"
           >
           <button 
             type="button" 
             @click="checkPrice(priceSearchQuery)"
-            class="min-h-[55px] h-14 px-5 bg-dark-750 hover:bg-dark-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center touch-btn border border-dark-700"
+            class="h-14 px-5 bg-dark-750 hover:bg-dark-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center touch-btn border border-dark-700"
           >
             فحص
           </button>
@@ -989,7 +878,7 @@
               <button 
                 type="button" 
                 @click="checkPrice(item.barcode)"
-                class="px-2.5 py-1 bg-dark-800 hover:bg-dark-750 border border-dark-700 rounded-xl text-stone-300 text-[11px] font-mono flex items-center gap-1.5 touch-btn"
+                class="px-2.5 py-1 bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded-xl text-stone-300 text-[11px] font-mono flex items-center gap-1.5 touch-btn"
               >
                 <span class="text-kazyon font-bold" x-text="item.barcode"></span>
                 <span class="text-stone-400 font-sans truncate max-w-[80px]" x-text="item.itemName"></span>
@@ -1001,7 +890,7 @@
 
       <!-- PRICE CARD DISPLAY RESULT -->
       <template x-if="priceResultItem">
-        <div class="bg-dark-850 border-2 border-kazyon rounded-3xl p-5 shadow-[0_0_30px_rgba(255,102,0,0.25)] space-y-4">
+        <div class="bg-dark-850 border-2 border-kazyon rounded-3xl p-5 shadow-[0_0_30px_rgba(255,102,0,0.25)] space-y-4 animate-in fade-in duration-150">
           <div class="flex items-start justify-between gap-2">
             <div>
               <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-300 text-[10px] font-bold" x-text="priceResultItem.category"></span>
@@ -1048,14 +937,14 @@
             </div>
           </div>
 
-          <!-- 1-Tap Refill Button from price checker (Min 55px height) -->
+          <!-- 1-Tap Refill Button from price checker -->
           <button 
             type="button" 
             @click="transferWarehouseToHall(priceResultItem, 1)"
             :disabled="priceResultItem.warehouseQty <= 0"
-            class="w-full min-h-[55px] h-14 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 touch-btn disabled:opacity-30"
+            class="w-full h-12 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 touch-btn disabled:opacity-30"
           >
-            <i class="fa-solid fa-arrow-left-long text-kazyon text-base"></i>
+            <i class="fa-solid fa-arrow-left-long text-kazyon"></i>
             <span>تزويد الرف بقطعة من المستودع الآن</span>
           </button>
         </div>
@@ -1072,7 +961,7 @@
           <button 
             type="button" 
             @click="openItemModal({ barcode: priceNotFoundCode, itemName: '', regularPrice: 0, promoPrice: 0 })"
-            class="min-h-[55px] h-14 px-5 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 touch-btn shadow-md"
+            class="h-12 px-4 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 touch-btn shadow-md"
           >
             <i class="fa-solid fa-plus"></i>
             <span>إضافة هذا المنتج للمخزن وقائمة الأسعار</span>
@@ -1086,7 +975,7 @@
     <!-- ============================================================= -->
     <!-- TAB 3: SECURITY & ACTIVITY LOG DASHBOARD (General Only)       -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'security-logs' && currentUser.role === 'admin'" class="p-3.5 space-y-3.5 max-w-4xl mx-auto w-full">
+    <div x-show="activeTab === 'security-logs' && currentUser.role === 'admin'" x-transition class="p-3.5 space-y-3.5 max-w-4xl mx-auto w-full">
       
       <!-- Top Header & Real-time Sync Status -->
       <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3">
@@ -1285,7 +1174,7 @@
     <!-- ============================================================= -->
     <!-- TAB 4: BULK FILE IMPORTER (.xlsx / .csv / .pdf) (Admin Only)  -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'importer' && currentUser.role === 'admin'" class="p-4 space-y-4 max-w-2xl mx-auto w-full">
+    <div x-show="activeTab === 'importer' && currentUser.role === 'admin'" x-transition class="p-4 space-y-4 max-w-2xl mx-auto w-full">
       
       <div class="text-center space-y-1">
         <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
@@ -1427,53 +1316,39 @@
           <i class="fa-solid fa-camera"></i>
         </div>
         <div>
-          <h3 class="text-xs font-black text-white">ماسح باركود أندرويد بالكاميرا</h3>
-          <p class="text-[10px] text-stone-400" x-text="scannerTarget === 'price-checker' ? 'كاشف الأسعار الفوري' : 'جرد وتحديد السلعة'"></p>
+          <div class="flex items-center gap-2">
+            <h3 class="text-xs font-black text-white">ماسح باركود أندرويد الفائق</h3>
+            <span class="px-1.5 py-0.5 rounded bg-kazyon/20 border border-kazyon/40 text-kazyon text-[9px] font-mono font-bold">720p HD &bull; 24 FPS</span>
+          </div>
+          <p class="text-[10px] text-stone-400 mt-0.5" x-text="scannerTarget === 'price-checker' ? 'كاشف الأسعار الفوري • تسريع عتادي 0ms' : 'جرد وتحديد السلعة • تسريع عتادي 0ms'"></p>
         </div>
       </div>
 
-      <!-- Controls: Auto-Torch, Manual Torch, Close -->
-      <div class="flex items-center gap-1.5">
-        <!-- Low Light Detection Badge -->
-        <span 
-          x-show="isLowLightDetected" 
-          x-cloak 
-          class="hidden xs:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] font-bold animate-pulse"
-        >
-          <i class="fa-solid fa-moon"></i> إضاءة خافتة
-        </span>
-
-        <!-- Auto-Torch Switch Button -->
-        <button 
-          type="button" 
-          @click="autoTorchEnabled = !autoTorchEnabled; if(autoTorchEnabled && isLowLightDetected) setTorch(true, true);"
-          :class="autoTorchEnabled ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-sm shadow-amber-500/10' : 'text-stone-400 bg-dark-800 border-dark-700'"
-          class="h-9 px-2.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 touch-btn transition-colors"
-          title="تشغيل الفلاش تلقائياً في الإضاءة المنخفضة"
-        >
-          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-          <span class="text-[10px]">فلاش تلقائي</span>
-        </button>
-
-        <!-- Manual Flash Toggle Button -->
+      <!-- Controls: Torch, Switch Camera, Close -->
+      <div class="flex items-center gap-2">
         <button 
           type="button" 
           @click="toggleTorch()"
-          :class="torchOn ? 'bg-amber-500 text-dark-950 font-black shadow-lg shadow-amber-500/30' : 'bg-dark-800 border border-dark-700 text-stone-300'"
-          class="w-9 h-9 rounded-xl flex items-center justify-center text-xs touch-btn transition-colors"
-          title="تشغيل / إيقاف الفلاش يدوياً"
+          class="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 flex items-center justify-center text-sm touch-btn"
+          title="تشغيل / إيقاف الفلاش"
         >
-          <i class="fa-solid fa-bolt" :class="torchOn ? 'text-dark-950' : 'text-stone-400'"></i>
+          <i class="fa-solid fa-bolt" :class="torchOn ? 'text-amber-400' : 'text-stone-400'"></i>
         </button>
-
-        <!-- Close Scanner -->
+        <button 
+          type="button" 
+          @click="switchCamera()"
+          class="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 flex items-center justify-center text-sm touch-btn"
+          title="تبديل الكاميرا (عدسة عريضة / أمامية)"
+        >
+          <i class="fa-solid fa-camera-rotate"></i>
+        </button>
         <button 
           type="button" 
           @click="closeScanner()"
-          class="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 hover:text-white flex items-center justify-center text-xs touch-btn"
-          title="إغلاق الكاميرا"
+          class="w-10 h-10 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 hover:text-white flex items-center justify-center text-sm touch-btn"
+          title="إغلاق الماسح"
         >
-          <i class="fa-solid fa-xmark"></i>
+          <i class="fa-solid fa-xmark text-base"></i>
         </button>
       </div>
     </div>
@@ -1490,20 +1365,9 @@
           <div class="absolute inset-x-0 h-0.5 bg-kazyon shadow-[0_0_12px_#FF6600] laser-line"></div>
           <div class="absolute top-1.5 left-2 text-[9px] font-mono text-kazyon font-bold">KAZYON FAST SCAN</div>
         </div>
-
-        <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
-          <p class="text-[11px] text-stone-200 bg-dark-950/80 px-3 py-1 rounded-full border border-dark-800">
-            ثبّت الباركود داخل المربع البرتقالي
-          </p>
-          <!-- Auto-Torch Triggered Pill -->
-          <span 
-            x-show="isLowLightDetected && autoTorchEnabled" 
-            x-cloak 
-            class="text-[10px] text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 rounded-full flex items-center gap-1 font-bold animate-pulse"
-          >
-            <i class="fa-solid fa-bolt text-amber-400"></i> تم تشغيل الفلاش تلقائياً
-          </span>
-        </div>
+        <p class="mt-3 text-[11px] text-stone-200 bg-dark-950/80 px-3 py-1 rounded-full border border-dark-800">
+          ثبّت الباركود داخل المربع البرتقالي
+        </p>
       </div>
 
       <!-- Permission Request / Error Prompt Overlay -->
@@ -1517,14 +1381,14 @@
           <button 
             type="button" 
             @click="startCameraScanner(scannerTarget)"
-            class="min-h-[55px] h-14 px-6 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md"
+            class="h-12 px-5 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md"
           >
             <i class="fa-solid fa-rotate-right ml-1"></i> إعادة طلب الإذن
           </button>
           <button 
             type="button" 
             @click="closeScanner()"
-            class="min-h-[55px] h-14 px-5 bg-dark-800 border border-dark-700 text-stone-300 rounded-2xl text-xs font-bold touch-btn"
+            class="h-12 px-4 bg-dark-800 border border-dark-700 text-stone-300 rounded-2xl text-xs font-bold touch-btn"
           >
             إلغاء
           </button>
@@ -1951,22 +1815,21 @@
         </div>
       </div>
 
-      <!-- Modal Footer (Min 55px height for thumbs) -->
+      <!-- Modal Footer (Min 55px Touch Targets) -->
       <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
         <button 
           type="button" 
           @click="isItemModalOpen = false"
-          class="min-h-[55px] h-14 px-5 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-2xl text-xs font-bold touch-btn border border-dark-700"
+          class="h-14 px-5 bg-dark-800 text-stone-300 rounded-2xl text-xs font-bold touch-btn"
         >
           إلغاء
         </button>
         <button 
           type="button" 
           @click="saveModalItem()"
-          class="min-h-[55px] h-14 px-7 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md flex items-center gap-2"
+          class="h-14 px-6 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md"
         >
-          <i class="fa-solid fa-floppy-disk"></i>
-          <span>حفظ الصنف</span>
+          حفظ الصنف
         </button>
       </div>
     </div>
@@ -1974,194 +1837,168 @@
 
 
   <!-- ============================================================= -->
-  <!-- 4.5 REAL-TIME CLOUD SYNCHRONIZATION & FIREBASE ENGINE MODAL    -->
+  <!-- 4.4 DEVELOPER PROFILE MODAL (Ahmed Said Ahmed / A7med606)     -->
   <!-- ============================================================= -->
   <div 
-    x-show="isCloudSettingsOpen" 
+    x-show="isDevModalOpen" 
     x-cloak 
-    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150"
+    class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 overflow-y-auto"
+    @keydown.escape.window="isDevModalOpen = false"
   >
     <div 
-      @click.outside="isCloudSettingsOpen = false"
-      class="bg-dark-950 border border-dark-750 w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+      @click.outside="isDevModalOpen = false" 
+      class="bg-dark-850 border border-dark-750 w-full max-w-lg rounded-3xl p-5 shadow-2xl space-y-4 my-auto relative overflow-hidden text-right"
+      dir="rtl"
     >
+      <!-- Subtle Ambient Glow -->
+      <div class="absolute -top-12 -left-12 w-36 h-36 bg-kazyon/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-12 -right-12 w-36 h-36 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
       <!-- Modal Header -->
-      <div class="p-4 border-b border-dark-800 flex items-center justify-between bg-dark-900/60">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-lg">
-            <i class="fa-solid fa-cloud-bolt"></i>
+      <div class="flex items-start justify-between pb-3 border-b border-dark-750 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-kazyon to-amber-500 text-white flex items-center justify-center text-xl font-mono font-bold shadow-lg shrink-0">
+            <i class="fa-solid fa-code"></i>
           </div>
           <div>
-            <h3 class="text-sm font-black text-white">إعدادات المزامنة السحابية اللحظية (Cloud Sync)</h3>
-            <p class="text-[11px] text-stone-400">ربط متعدد الأجهزة في الزمن الحقيقي بين المدير والعاملين</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-black text-white">Ahmed Said Ahmed</h3>
+              <span class="px-2 py-0.5 rounded-full bg-kazyon/20 border border-kazyon/40 text-kazyon font-mono text-[10px] font-bold">@A7med606</span>
+            </div>
+            <p class="text-xs text-stone-300 font-medium mt-0.5">Software Engineer &amp; Full-Stack Developer</p>
+            <p class="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <i class="fa-solid fa-location-dot text-red-400"></i>
+              <span>Hurghada, Red Sea, Egypt 🇪🇬</span>
+              <span>•</span>
+              <span class="text-emerald-400 font-semibold">Founder of Poseidon Trips</span>
+            </p>
           </div>
         </div>
         <button 
-          @click="isCloudSettingsOpen = false"
-          class="w-9 h-9 rounded-xl bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center text-xs touch-btn"
+          type="button" 
+          @click="isDevModalOpen = false"
+          class="w-8 h-8 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white flex items-center justify-center text-xs"
         >
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <!-- Modal Body -->
-      <div class="p-4 space-y-4 overflow-y-auto no-scrollbar flex-1 text-xs">
-        
-        <!-- Live Connection Status Card -->
-        <div class="p-3.5 rounded-2xl border flex items-center justify-between"
-             :class="{
-               'bg-emerald-950/40 border-emerald-500/50 text-emerald-200': cloudStatus === 'connected',
-               'bg-amber-950/40 border-amber-500/50 text-amber-200': cloudStatus === 'connecting',
-               'bg-red-950/40 border-red-500/50 text-red-200': cloudStatus === 'offline' || cloudStatus === 'error'
-             }">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                 :class="{
-                   'bg-emerald-500/20 text-emerald-400': cloudStatus === 'connected',
-                   'bg-amber-500/20 text-amber-400': cloudStatus === 'connecting',
-                   'bg-red-500/20 text-red-400': cloudStatus === 'offline' || cloudStatus === 'error'
-                 }">
-              <i class="fa-solid" :class="{
-                'fa-signal animate-pulse': cloudStatus === 'connected',
-                'fa-spinner fa-spin': cloudStatus === 'connecting',
-                'fa-plane-slash': cloudStatus === 'offline' || cloudStatus === 'error'
-              }"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 font-bold">
-                <span x-text="cloudStatus === 'connected' ? 'السحابة متصلة ونشطة (Live Real-Time)' : (cloudStatus === 'connecting' ? 'جاري الاتصال بالمخدم السحابي...' : 'وضع عدم الاتصال بالسحابة')"></span>
-                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-dark-900/80 border"
-                      :class="cloudStatus === 'connected' ? 'border-emerald-500 text-emerald-300' : 'border-dark-700 text-stone-400'"
-                      x-text="cloudLatency + 'ms'"></span>
-              </div>
-              <p class="text-[10px] text-stone-300 mt-0.5" x-text="cloudStatus === 'connected' ? 'أي تعديل أو إضافة صنف يُبث فوراً لكافة الهواتف المتصلة بالفرع' : 'يتم الحفظ محلياً 0ms وسيعاد الاتصال تلقائياً'"></p>
-            </div>
-          </div>
-          <span class="text-[10px] font-mono font-black px-2 py-1 rounded-lg"
-                :class="cloudStatus === 'connected' ? 'bg-emerald-500 text-dark-950' : 'bg-amber-500/30 text-amber-200'"
-                x-text="activeSessions.length + ' أجهزة متصلة'"></span>
+      <!-- Core Status Terminal Box -->
+      <div class="bg-dark-950 border border-dark-800 rounded-2xl p-3 font-mono text-[11px] space-y-1 text-stone-300 relative z-10 text-left" dir="ltr">
+        <div class="flex items-center justify-between text-stone-500 pb-1.5 mb-1.5 border-b border-dark-850">
+          <span class="text-[10px] text-stone-400 font-sans font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            profile.py &bull; Core Profile Loaded
+          </span>
+          <span class="text-[10px] text-emerald-400 font-bold">[SUCCESS]</span>
         </div>
-
-        <!-- Branch / Store Room ID -->
-        <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="font-bold text-stone-200 text-[11px] flex items-center gap-1.5">
-              <i class="fa-solid fa-shop text-kazyon"></i>
-              <span>معرف فرع كازيون (Branch Room ID)</span>
-            </label>
-            <span class="text-[9px] font-mono text-stone-400">كافة أجهزة نفس الفرع تتزامن معاً</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <input 
-              type="text" 
-              x-model="branchId" 
-              placeholder="مثال: cairo_main_6060"
-              class="flex-1 h-11 bg-dark-950 border border-dark-700 rounded-xl px-3 font-mono font-bold text-white text-xs focus:outline-none focus:border-kazyon"
-            >
-            <button 
-              type="button" 
-              @click="changeBranchId(branchId)"
-              class="h-11 px-4 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white rounded-xl font-bold text-xs touch-btn"
-            >
-              تطبيق الفرع
-            </button>
-          </div>
-        </div>
-
-        <!-- Cloud Engine Selection -->
-        <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 space-y-2.5">
-          <label class="font-bold text-stone-200 text-[11px] block">اختيار محرك المزامنة السحابية (Cloud Backend)</label>
-          <div class="grid grid-cols-2 gap-2">
-            <!-- Option 1: Zero-Config Cloud Mesh -->
-            <button 
-              type="button" 
-              @click="switchCloudEngine('mesh')"
-              :class="cloudEngine === 'mesh' ? 'bg-kazyon/20 border-kazyon text-white font-bold shadow-md' : 'bg-dark-950 border-dark-750 text-stone-400'"
-              class="p-2.5 rounded-xl border text-right touch-btn flex flex-col justify-between"
-            >
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-[11px] font-bold text-kazyon">سحابة كازيون التلقائية</span>
-                <i class="fa-solid fa-bolt text-xs"></i>
-              </div>
-              <p class="text-[10px] text-stone-300 leading-tight">جاهزة فوراً، مجانية 100% وبدون تسجيل حساب خارجي (MQTT WebSockets)</p>
-            </button>
-
-            <!-- Option 2: Firebase Realtime Database -->
-            <button 
-              type="button" 
-              @click="switchCloudEngine('firebase')"
-              :class="cloudEngine === 'firebase' ? 'bg-amber-500/20 border-amber-500 text-white font-bold shadow-md' : 'bg-dark-950 border-dark-750 text-stone-400'"
-              class="p-2.5 rounded-xl border text-right touch-btn flex flex-col justify-between"
-            >
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-[11px] font-bold text-amber-400">Firebase Realtime DB</span>
-                <i class="fa-brands fa-google text-xs"></i>
-              </div>
-              <p class="text-[10px] text-stone-300 leading-tight">ربط مباشر بقاعدة بيانات جوجل فايربيس السحابية الخاصة بفرعك</p>
-            </button>
-          </div>
-
-          <!-- Firebase Config Fields (Shown if Firebase selected) -->
-          <div x-show="cloudEngine === 'firebase'" class="pt-2 border-t border-dark-800 space-y-2 animate-in fade-in duration-100">
-            <div>
-              <label class="block text-[10px] text-stone-400 mb-1">رابط قاعدة بيانات فايربيس (Database URL) *</label>
-              <input 
-                type="text" 
-                x-model="firebaseConfig.databaseURL" 
-                placeholder="https://kazyon-branch-rtdb.firebaseio.com"
-                class="w-full h-10 bg-dark-950 border border-dark-700 rounded-xl px-3 font-mono text-[11px] text-white focus:outline-none focus:border-amber-500"
-              >
-            </div>
-            <div>
-              <label class="block text-[10px] text-stone-400 mb-1">مفتاح API اختياري (API Key)</label>
-              <input 
-                type="text" 
-                x-model="firebaseConfig.apiKey" 
-                placeholder="AIzaSy..."
-                class="w-full h-10 bg-dark-950 border border-dark-700 rounded-xl px-3 font-mono text-[11px] text-white focus:outline-none focus:border-amber-500"
-              >
-            </div>
-            <button 
-              type="button" 
-              @click="saveAndConnectFirebase()"
-              class="w-full h-10 bg-amber-500 hover:bg-amber-600 text-dark-950 font-bold rounded-xl text-xs touch-btn"
-            >
-              حفظ وربط فايربيس
-            </button>
-          </div>
-        </div>
-
-        <!-- Quick Sync Action Controls -->
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button 
-            type="button" 
-            @click="requestCloudSnapshot(); isCloudSettingsOpen = false;"
-            class="h-12 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-200 rounded-xl font-bold flex items-center justify-center gap-1.5 touch-btn"
-          >
-            <i class="fa-solid fa-arrows-rotate text-kazyon"></i>
-            <span>طلب مزامنة قسرية الآن</span>
-          </button>
-          <button 
-            type="button" 
-            @click="broadcastFullInventory(); isCloudSettingsOpen = false;"
-            class="h-12 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl font-bold flex items-center justify-center gap-1.5 touch-btn shadow-md"
-          >
-            <i class="fa-solid fa-tower-broadcast"></i>
-            <span>بث المخزون لجميع الأجهزة</span>
-          </button>
-        </div>
-
+        <p class="text-emerald-400 font-bold">&gt; dev.compile_profile()</p>
+        <p class="text-stone-200 bg-dark-900/90 p-2.5 rounded-xl border border-dark-800 text-[11px] leading-relaxed">
+          [SUCCESS] Core profile loaded for Ahmed Said Ahmed. Ready to build scalable systems.
+        </p>
       </div>
 
-      <!-- Modal Footer -->
-      <div class="p-3.5 bg-dark-900 border-t border-dark-800 flex items-center justify-between text-[11px] text-stone-400">
-        <span>جلسة المزامنة: <strong class="text-white font-mono" x-text="syncSessionId"></strong></span>
-        <button 
-          @click="isCloudSettingsOpen = false" 
-          class="px-4 py-2 bg-dark-800 text-stone-200 rounded-xl touch-btn font-bold"
-        >
-          إغلاق
-        </button>
+      <!-- Engineering Stack Matrix -->
+      <div class="space-y-2.5 relative z-10">
+        <span class="text-[11px] font-bold text-stone-300 block">مجالات الخبرة والبنية التقنية (Technical Stack):</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <!-- Languages -->
+          <div class="p-2.5 bg-dark-900 rounded-xl border border-dark-750">
+            <div class="text-[10px] text-stone-400 font-bold mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-terminal text-kazyon"></i>
+              <span>Languages</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">Python</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">JavaScript</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">SQL</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">HTML5 / CSS3</span>
+            </div>
+          </div>
+
+          <!-- Frameworks -->
+          <div class="p-2.5 bg-dark-900 rounded-xl border border-dark-750">
+            <div class="text-[10px] text-stone-400 font-bold mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-cubes text-sky-400"></i>
+              <span>Frameworks &amp; CMS</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">Flask</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">WordPress</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">Elementor</span>
+            </div>
+          </div>
+
+          <!-- DevOps & OS -->
+          <div class="p-2.5 bg-dark-900 rounded-xl border border-dark-750">
+            <div class="text-[10px] text-stone-400 font-bold mb-1.5 flex items-center gap-1.5">
+              <i class="fa-brands fa-docker text-blue-400"></i>
+              <span>DevOps &amp; Operating Systems</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">Docker</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">Linux</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">Git</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-200 text-[10px] font-mono font-semibold">GitHub</span>
+            </div>
+          </div>
+
+          <!-- Specialties -->
+          <div class="p-2.5 bg-dark-900 rounded-xl border border-dark-750">
+            <div class="text-[10px] text-stone-400 font-bold mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-microchip text-purple-400"></i>
+              <span>Specialties &amp; Solutions</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-emerald-300 text-[10px] font-mono font-semibold">Full-Stack Architecture</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-purple-300 text-[10px] font-mono font-semibold">Local LLM Integration</span>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-amber-300 text-[10px] font-mono font-semibold">Automated Pipelines</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Connect & Social Links -->
+      <div class="pt-3 border-t border-dark-750 flex items-center justify-between gap-2 flex-wrap relative z-10" dir="ltr">
+        <span class="text-[11px] text-stone-400 font-medium font-sans">Official Developer Channels:</span>
+        <div class="flex items-center gap-2">
+          <a 
+            href="https://github.com/A7med606" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="h-9 px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white flex items-center gap-1.5 text-xs font-bold transition-colors"
+          >
+            <i class="fa-brands fa-github text-sm"></i>
+            <span>GitHub</span>
+          </a>
+          <a 
+            href="https://a7med6060.blogspot.com/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="h-9 px-3 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white flex items-center gap-1.5 text-xs font-bold transition-colors"
+          >
+            <i class="fa-solid fa-rss text-sm text-kazyon"></i>
+            <span>Blog</span>
+          </a>
+          <a 
+            href="https://www.facebook.com/a7med6060" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="w-9 h-9 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white flex items-center justify-center text-xs transition-colors"
+            title="Facebook"
+          >
+            <i class="fa-brands fa-facebook-f"></i>
+          </a>
+          <a 
+            href="https://www.instagram.com/a7med.606" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="w-9 h-9 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white flex items-center justify-center text-xs transition-colors"
+            title="Instagram"
+          >
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -2170,16 +2007,16 @@
   <!-- ============================================================= -->
   <!-- 5. FIXED BOTTOM NAVIGATION BAR                                -->
   <!-- ============================================================= -->
-  <div x-show="isAuth" x-cloak class="fixed bottom-9 inset-x-0 z-30 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 px-3 py-1 flex items-center justify-around max-w-lg mx-auto rounded-t-3xl shadow-2xl">
+  <div x-show="isAuth" x-cloak class="fixed bottom-9 inset-x-0 z-30 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 px-3 py-1.5 flex items-center justify-around max-w-lg mx-auto rounded-t-3xl shadow-2xl">
     <!-- Tab 1: Inventory Hub -->
     <button 
       type="button" 
       @click="activeTab = 'inventory'"
       :class="activeTab === 'inventory' ? 'text-kazyon font-bold' : 'text-stone-400'"
-      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn"
+      class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 touch-btn"
     >
-      <i class="fa-solid fa-boxes-stacked text-lg"></i>
-      <span class="text-[11px]">المخزون</span>
+      <i class="fa-solid fa-boxes-stacked text-base"></i>
+      <span class="text-[10px]">المخزون</span>
     </button>
 
     <!-- Tab 2: Quick Price Checker (Big Center Button) -->
@@ -2187,13 +2024,13 @@
       type="button" 
       @click="activeTab = 'price-checker'"
       :class="activeTab === 'price-checker' ? 'text-kazyon font-bold' : 'text-stone-400'"
-      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn"
+      class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 touch-btn"
     >
       <div class="relative">
-        <i class="fa-solid fa-barcode text-xl"></i>
+        <i class="fa-solid fa-barcode text-lg"></i>
         <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-kazyon"></span>
       </div>
-      <span class="text-[11px]">كاشف الأسعار</span>
+      <span class="text-[10px]">كاشف الأسعار</span>
     </button>
 
     <!-- Tab 3: Security & Activity Logs (Admin Only) -->
@@ -2202,13 +2039,13 @@
         type="button" 
         @click="activeTab = 'security-logs'"
         :class="activeTab === 'security-logs' ? 'text-emerald-400 font-bold' : 'text-stone-400'"
-        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn relative"
+        class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 touch-btn relative"
       >
         <div class="relative">
-          <i class="fa-solid fa-shield-halved text-lg"></i>
+          <i class="fa-solid fa-shield-halved text-base"></i>
           <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         </div>
-        <span class="text-[11px]">سجل الأمان</span>
+        <span class="text-[10px]">سجل الأمان</span>
       </button>
     </template>
 
@@ -2218,10 +2055,10 @@
         type="button" 
         @click="activeTab = 'importer'"
         :class="activeTab === 'importer' ? 'text-kazyon font-bold' : 'text-stone-400'"
-        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn"
+        class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 touch-btn"
       >
-        <i class="fa-solid fa-file-import text-lg"></i>
-        <span class="text-[11px]">استيراد الشيت</span>
+        <i class="fa-solid fa-file-import text-base"></i>
+        <span class="text-[10px]">استيراد الشيت</span>
       </button>
     </template>
 
@@ -2230,10 +2067,10 @@
       <button 
         type="button" 
         @click="startCameraScanner('inventory')"
-        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn text-kazyon"
+        class="flex flex-col items-center justify-center gap-1 py-1 px-2.5 touch-btn text-kazyon"
       >
-        <i class="fa-solid fa-camera text-lg"></i>
-        <span class="text-[11px]">مسح كاميرا</span>
+        <i class="fa-solid fa-camera text-base"></i>
+        <span class="text-[10px]">مسح كاميرا</span>
       </button>
     </template>
   </div>
@@ -2243,10 +2080,18 @@
   <!-- 6. FIXED STICKY FOOTER BAR (Developed by A7med606)            -->
   <!-- ============================================================= -->
   <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950 border-t border-dark-800 px-3 py-2 flex items-center justify-between text-[11px] shadow-md">
-    <div class="flex items-center gap-1.5 font-medium text-stone-300">
-      <span>Developed with precision by web dev</span>
-      <span class="text-kazyon font-black">A7med606</span>
-    </div>
+    <button 
+      type="button" 
+      @click="isDevModalOpen = true" 
+      class="flex items-center gap-1.5 font-medium text-stone-300 hover:text-white transition-colors cursor-pointer group text-right"
+      title="عرض ملف المطور Ahmed Said Ahmed"
+    >
+      <span class="text-stone-400">Developed with precision by</span>
+      <span class="text-kazyon font-black group-hover:underline flex items-center gap-1">
+        <span>A7med606</span>
+        <i class="fa-solid fa-code text-[10px] text-stone-400 group-hover:text-kazyon"></i>
+      </span>
+    </button>
 
     <!-- Clickable Styled Social & Profile Icons -->
     <div class="flex items-center gap-2.5">
@@ -2294,6 +2139,96 @@
   <!-- 7. COMPLETE ALPINE.JS HIGH-PERFORMANCE LOGIC                   -->
   <!-- ============================================================= -->
   <script>
+    // =============================================================
+    // KAZYON HIGH-PERFORMANCE INDEXED-DB & OFFLINE-FIRST ENGINE
+    // =============================================================
+    const KazyonDB = {
+      dbName: 'KazyonSupermarketDB',
+      version: 1,
+      db: null,
+
+      async init() {
+        if (!('indexedDB' in window)) return null;
+        if (this.db) return this.db;
+        return new Promise((resolve) => {
+          try {
+            const request = indexedDB.open(this.dbName, this.version);
+            request.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains('inventory')) {
+                const invStore = db.createObjectStore('inventory', { keyPath: 'id' });
+                invStore.createIndex('barcode', 'barcode', { unique: false });
+                invStore.createIndex('category', 'category', { unique: false });
+              }
+              if (!db.objectStoreNames.contains('activity_logs')) {
+                db.createObjectStore('activity_logs', { keyPath: 'id' });
+              }
+              if (!db.objectStoreNames.contains('sync_queue')) {
+                db.createObjectStore('sync_queue', { keyPath: 'id', autoIncrement: true });
+              }
+            };
+            request.onsuccess = (e) => {
+              this.db = e.target.result;
+              resolve(this.db);
+            };
+            request.onerror = (err) => {
+              console.warn('IndexedDB unavailable, operating via localStorage', err);
+              resolve(null);
+            };
+          } catch (err) {
+            resolve(null);
+          }
+        });
+      },
+
+      async getAll(storeName) {
+        if (!this.db) await this.init();
+        if (!this.db) return [];
+        return new Promise((resolve) => {
+          try {
+            const tx = this.db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          } catch (e) {
+            resolve([]);
+          }
+        });
+      },
+
+      async saveAll(storeName, items) {
+        if (!this.db) await this.init();
+        if (!this.db || !items) return;
+        try {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          store.clear();
+          items.forEach(item => store.put(item));
+        } catch (e) {
+          console.warn('IndexedDB saveAll warning', e);
+        }
+      },
+
+      async put(storeName, item) {
+        if (!this.db) await this.init();
+        if (!this.db || !item) return;
+        try {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).put(item);
+        } catch (e) {}
+      },
+
+      async delete(storeName, id) {
+        if (!this.db) await this.init();
+        if (!this.db) return;
+        try {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          tx.objectStore(storeName).delete(id);
+        } catch (e) {}
+      }
+    };
+
     function kazyonApp() {
       return {
         // Multi-User Auth State & RBAC
@@ -2315,26 +2250,17 @@
         activityLogs: [],
         logFilterUser: 'all',
 
+        // Offline-First & Cloud Synchronization State
+        isOnline: navigator.onLine,
+        isCloudConnected: false,
+        isSyncingCloud: false,
+        lastCloudSyncTime: '',
+        firebaseDb: null,
+
         // Real-Time Cross-Device Synchronization
         syncChannel: null,
         syncSessionId: 'sess_' + Math.random().toString(36).substring(2, 9),
         realtimeNotice: { show: false, message: '', timeout: null },
-
-        // True Real-Time Multi-User Cloud Synchronization State (MQTT Mesh & Firebase RTDB)
-        cloudEngine: 'mesh', // 'mesh' | 'firebase'
-        cloudStatus: 'connecting', // 'connected' | 'connecting' | 'offline' | 'error'
-        cloudLatency: 32,
-        branchId: 'cairo_main_6060',
-        mqttClient: null,
-        firebaseDb: null,
-        firebaseApp: null,
-        isCloudSettingsOpen: false,
-        sessionLoginTime: '',
-        firebaseConfig: {
-          databaseURL: '',
-          apiKey: '',
-          projectId: ''
-        },
 
         // Navigation Tabs
         activeTab: 'inventory', // 'inventory' | 'price-checker' | 'security-logs' | 'importer'
@@ -2366,17 +2292,14 @@
         isParsing: false,
         stagedItems: [],
 
-        // Native Camera Scanner & Auto-Torch
+        // Hyper-Fast Camera Scanner Engine (720p Optimized)
         isScannerOpen: false,
         scannerTarget: 'inventory', // 'inventory' | 'price-checker'
         html5QrCode: null,
         cameraError: '',
         torchOn: false,
-        autoTorchEnabled: true,
-        isLowLightDetected: false,
-        lightCheckInterval: null,
-        ambientLuminance: 120,
-        audioCtx: null,
+        cameraFacingMode: 'environment', // 'environment' | 'user'
+        currentCameraTrack: null,
 
         // Modal for Add/Edit
         isItemModalOpen: false,
@@ -2387,21 +2310,28 @@
         detailItem: null,
         fastBarcodeInput: '',
 
+        // Developer Profile Modal
+        isDevModalOpen: false,
+
         // Toast Feedback
         toast: { show: false, message: '', type: 'success', timeout: null },
 
-        // Intelligent Client-Side Caching, Offline Queue & Network State
-        isOnline: typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : true,
-        offlineQueue: [],
-        isSearching: false,
-        searchDebounceTimer: null,
-        isPriceSearching: false,
-        priceDebounceTimer: null,
-
-        // 1. OFFLINE-FIRST CACHING & INITIALIZATION
-        init() {
+        // 1. OFFLINE-FIRST CACHING & INITIALIZATION (0ms Instant Load)
+        async init() {
           // Detect IP on launch
           this.initIpDetection();
+
+          // Online / Offline Network Listeners
+          this.isOnline = navigator.onLine;
+          window.addEventListener('online', () => {
+            this.isOnline = true;
+            this.showToast('تم استعادة الاتصال - جاري المزامنة السحابية', 'success');
+            this.syncWithFirebaseCloud('all');
+          });
+          window.addEventListener('offline', () => {
+            this.isOnline = false;
+            this.showToast('أنت الآن في وضع عدم الاتصال (يعمل المخزن بـ 0ms Cache محلياً)', 'info');
+          });
 
           // Restore Auth Session if available
           const authUser = localStorage.getItem('kazyon_auth_user_v2');
@@ -2414,7 +2344,7 @@
             }
           }
 
-          // Restore Inventory Cache (Instant 0ms retrieval)
+          // Step 1: Instant synchronous retrieval from localStorage (0ms rendering latency)
           const cached = localStorage.getItem('kazyon_inventory_v2');
           if (cached) {
             try {
@@ -2442,48 +2372,36 @@
             this.initDefaultAuditLogs();
           }
 
+          // Step 2: Background IndexedDB Hydration & Synchronization
+          try {
+            await KazyonDB.init();
+            const idbItems = await KazyonDB.getAll('inventory');
+            if (idbItems && idbItems.length > 0) {
+              if (!cached || this.items.length === 0) {
+                this.items = idbItems;
+              }
+            } else if (this.items.length > 0) {
+              KazyonDB.saveAll('inventory', this.items);
+            }
+
+            const idbLogs = await KazyonDB.getAll('activity_logs');
+            if (idbLogs && idbLogs.length > 0 && this.activityLogs.length === 0) {
+              this.activityLogs = idbLogs;
+            } else if (this.activityLogs.length > 0) {
+              KazyonDB.saveAll('activity_logs', this.activityLogs);
+            }
+          } catch (err) {
+            console.warn('IndexedDB initial sync', err);
+          }
+
           // Restore Active Sessions
           this.refreshActiveSessions();
 
           // Initialize Real-Time Synchronization Bus
           this.initRealtimeSync();
 
-          // Online / Offline Network Listeners
-          window.addEventListener('online', () => {
-            this.isOnline = true;
-            this.showToast('تمت استعادة الاتصال بالإنترنت! جاري مزامنة التعديلات...', 'success');
-            this.flushOfflineQueue();
-          });
-          window.addEventListener('offline', () => {
-            this.isOnline = false;
-            this.showToast('انقطع الاتصال - يعمل التطبيق محلياً 0ms دون فقدان للبيانات', 'info');
-          });
-
-          // Restore Offline Queue from Storage
-          try {
-            const savedQueue = localStorage.getItem('kazyon_offline_queue_v2');
-            if (savedQueue) {
-              this.offlineQueue = JSON.parse(savedQueue);
-            }
-          } catch (e) {
-            this.offlineQueue = [];
-          }
-
-          // Pre-warm Web Audio API on first mobile touch/interaction for instant beep response
-          const warmUpAudio = () => {
-            try {
-              const AudioCtx = window.AudioContext || window.webkitAudioContext;
-              if (AudioCtx && !this.audioCtx) {
-                this.audioCtx = new AudioCtx();
-              }
-              if (this.audioCtx && this.audioCtx.state === 'suspended') {
-                this.audioCtx.resume();
-              }
-            } catch (e) {}
-          };
-          ['touchstart', 'click', 'keydown'].forEach(evt => {
-            window.addEventListener(evt, warmUpAudio, { once: true, passive: true });
-          });
+          // Initialize Firebase Sync
+          this.initFirebaseSync();
 
           // Heartbeat interval for active sessions (keep-alive)
           setInterval(() => {
@@ -2682,47 +2600,101 @@
           this.saveLogsToStorage();
         },
 
-        // Persist Inventory to localStorage
+        // Persist Inventory to localStorage & IndexedDB & Cloud Sync
         saveToStorage() {
+          // 1. Synchronous localStorage write (guarantees 0ms latency on next app launch)
           try {
             localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
           } catch (e) {
-            console.error('LocalStorage save error', e);
+            console.warn('LocalStorage limit reached; IndexedDB remains authoritative', e);
+          }
+
+          // 2. Asynchronous IndexedDB persistence (unlimited high-capacity mobile database)
+          KazyonDB.saveAll('inventory', this.items);
+
+          // 3. Cloud synchronization if connected
+          if (this.isOnline) {
+            this.syncWithFirebaseCloud('inventory');
           }
         },
 
-        // Persist Logs to localStorage
+        // Persist Logs to localStorage & IndexedDB & Cloud Sync
         saveLogsToStorage() {
           try {
             localStorage.setItem('kazyon_activity_logs_v2', JSON.stringify(this.activityLogs));
           } catch (e) {}
+          KazyonDB.saveAll('activity_logs', this.activityLogs);
+          if (this.isOnline) {
+            this.syncWithFirebaseCloud('logs');
+          }
         },
 
-        // REAL-TIME CLOUD & LOCAL SYNCHRONIZATION ENGINE
+        // Firebase Cloud Synchronization Handlers
+        initFirebaseSync() {
+          try {
+            if (typeof firebase !== 'undefined') {
+              const savedConfig = localStorage.getItem('kazyon_firebase_config');
+              if (savedConfig) {
+                try {
+                  const cfg = JSON.parse(savedConfig);
+                  if (!firebase.apps.length) {
+                    firebase.initializeApp(cfg);
+                  }
+                  this.firebaseDb = firebase.firestore();
+                  this.isCloudConnected = true;
+                  this.setupFirebaseRealtimeListeners();
+                } catch (e) {
+                  console.warn('Firebase custom config parse', e);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Firebase init error', e);
+          }
+        },
+
+        setupFirebaseRealtimeListeners() {
+          if (!this.firebaseDb) return;
+          try {
+            this.firebaseDb.collection('kazyon_inventory').onSnapshot((snapshot) => {
+              if (snapshot && snapshot.docChanges().length > 0) {
+                snapshot.docChanges().forEach((change) => {
+                  const data = change.doc.data();
+                  if (change.type === 'added' || change.type === 'modified') {
+                    const idx = this.items.findIndex(i => i.id === change.doc.id || i.barcode === data.barcode);
+                    if (idx !== -1) {
+                      this.items[idx] = { ...this.items[idx], ...data };
+                    }
+                  }
+                });
+                this.saveToStorage();
+              }
+            }, (err) => console.warn('Firestore snapshot error', err));
+          } catch (e) {}
+        },
+
+        async syncWithFirebaseCloud(target) {
+          if (!this.firebaseDb || !this.isOnline) return;
+          try {
+            this.isSyncingCloud = true;
+            if (target === 'inventory' || target === 'all') {
+              const batch = this.firebaseDb.batch();
+              this.items.slice(0, 40).forEach(it => {
+                const docRef = this.firebaseDb.collection('kazyon_inventory').doc(it.id);
+                batch.set(docRef, it, { merge: true });
+              });
+              await batch.commit();
+            }
+            this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+          } catch (e) {
+            console.warn('Firebase batch sync', e);
+          } finally {
+            this.isSyncingCloud = false;
+          }
+        },
+
+        // REAL-TIME SYNCHRONIZATION (BroadcastChannel + Storage Event Listener)
         initRealtimeSync() {
-          const savedBranch = localStorage.getItem('kazyon_branch_id_v2');
-          if (savedBranch) this.branchId = savedBranch;
-
-          const savedEngine = localStorage.getItem('kazyon_cloud_engine_v2');
-          if (savedEngine) this.cloudEngine = savedEngine;
-
-          const savedFbConfig = localStorage.getItem('kazyon_firebase_config_v2');
-          if (savedFbConfig) {
-            try { this.firebaseConfig = JSON.parse(savedFbConfig); } catch (e) {}
-          }
-
-          // 1. Initialize local broadcast channel + storage event sync (same machine / multiple tabs)
-          this.initLocalBroadcastSync();
-
-          // 2. Initialize cloud backend (MQTT mesh or Firebase Realtime DB)
-          if (this.cloudEngine === 'firebase' && this.firebaseConfig.databaseURL) {
-            this.initFirebaseSync();
-          } else {
-            this.initMqttCloudMesh();
-          }
-        },
-
-        initLocalBroadcastSync() {
           try {
             if ('BroadcastChannel' in window) {
               this.syncChannel = new BroadcastChannel('kazyon_supermarket_sync_v2');
@@ -2731,6 +2703,7 @@
               };
             }
 
+            // Also listen to window storage events for cross-tab multi-user sync
             window.addEventListener('storage', (e) => {
               if (e.key === 'kazyon_inventory_v2' && e.newValue) {
                 try {
@@ -2742,150 +2715,20 @@
                 } catch (err) {}
               }
               if (e.key === 'kazyon_activity_logs_v2' && e.newValue) {
-                try { this.activityLogs = JSON.parse(e.newValue); } catch (err) {}
+                try {
+                  this.activityLogs = JSON.parse(e.newValue);
+                } catch (err) {}
               }
               if (e.key === 'kazyon_active_sessions_v2') {
                 this.refreshActiveSessions();
               }
             });
           } catch (e) {
-            console.warn('Local sync setup issue', e);
+            console.warn('Realtime sync setup issue', e);
           }
         },
 
-        // Zero-Configuration High-Performance Cloud Mesh (WebSockets)
-        initMqttCloudMesh() {
-          if (typeof mqtt === 'undefined') {
-            console.warn('MQTT client library not loaded');
-            this.cloudStatus = 'offline';
-            return;
-          }
-
-          try {
-            this.cloudStatus = 'connecting';
-            const clientId = 'kazyon_' + this.syncSessionId + '_' + Math.floor(Math.random() * 10000);
-            
-            // Connect to public secure WebSocket broker (SSL wss)
-            const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-              clientId,
-              clean: true,
-              connectTimeout: 8000,
-              reconnectPeriod: 4000,
-              keepalive: 30
-            });
-
-            this.mqttClient = client;
-
-            client.on('connect', () => {
-              this.cloudStatus = 'connected';
-              this.cloudLatency = Math.floor(28 + Math.random() * 15);
-
-              const topicEvents = `kazyon/market/v2/${this.branchId}/events`;
-              const topicPresence = `kazyon/market/v2/${this.branchId}/presence`;
-              const topicSnapshot = `kazyon/market/v2/${this.branchId}/snapshot`;
-
-              client.subscribe([topicEvents, topicPresence, topicSnapshot], (err) => {
-                if (!err) {
-                  this.broadcastPresence();
-                  this.requestCloudSnapshot();
-                }
-              });
-            });
-
-            client.on('message', (topic, messageBuffer) => {
-              try {
-                const messageStr = messageBuffer.toString();
-                const data = JSON.parse(messageStr);
-                if (!data || data.sessionId === this.syncSessionId) return;
-
-                if (topic.endsWith('/events')) {
-                  this.handleRemoteSync(data);
-                } else if (topic.endsWith('/presence')) {
-                  this.handleRemotePresence(data);
-                } else if (topic.endsWith('/snapshot')) {
-                  this.handleRemoteSnapshot(data);
-                }
-              } catch (err) {
-                console.error('Cloud mesh message parse error', err);
-              }
-            });
-
-            client.on('error', (err) => {
-              console.warn('Cloud mesh error', err);
-              this.cloudStatus = 'error';
-            });
-
-            client.on('offline', () => {
-              this.cloudStatus = 'offline';
-            });
-
-            client.on('reconnect', () => {
-              this.cloudStatus = 'connecting';
-            });
-          } catch (e) {
-            console.error('Failed to init Cloud Mesh', e);
-            this.cloudStatus = 'offline';
-          }
-        },
-
-        // Firebase Realtime Database Engine
-        initFirebaseSync() {
-          if (typeof firebase === 'undefined' || !this.firebaseConfig.databaseURL) {
-            this.initMqttCloudMesh();
-            return;
-          }
-
-          try {
-            this.cloudStatus = 'connecting';
-            if (!this.firebaseApp) {
-              const appName = 'kazyon_' + this.syncSessionId;
-              this.firebaseApp = firebase.initializeApp({
-                databaseURL: this.firebaseConfig.databaseURL,
-                apiKey: this.firebaseConfig.apiKey || undefined
-              }, appName);
-            }
-            this.firebaseDb = this.firebaseApp.database();
-            const branchRef = this.firebaseDb.ref(`kazyon_branches/${this.branchId}`);
-
-            // Connection state
-            this.firebaseDb.ref('.info/connected').on('value', (snap) => {
-              if (snap.val() === true) {
-                this.cloudStatus = 'connected';
-                this.cloudLatency = 35;
-                this.broadcastPresence();
-              } else {
-                this.cloudStatus = 'connecting';
-              }
-            });
-
-            // Listen for Realtime Events
-            branchRef.child('events').limitToLast(1).on('child_added', (snap) => {
-              const data = snap.val();
-              if (data && data.sessionId !== this.syncSessionId) {
-                this.handleRemoteSync(data);
-              }
-            });
-
-            // Listen for Active Presence
-            branchRef.child('presence').on('value', (snap) => {
-              const val = snap.val();
-              if (val) {
-                const now = Date.now();
-                const list = Object.values(val).filter(s => (now - s.lastSeen) < 45000);
-                if (list.length > 0) {
-                  this.activeSessions = list;
-                  localStorage.setItem('kazyon_active_sessions_v2', JSON.stringify(list));
-                }
-              }
-            });
-          } catch (e) {
-            console.error('Firebase Realtime DB init error', e);
-            this.showToast('تعذر الاتصال بقاعدة Firebase - تم الرجوع لمحرك المزامنة التلقائي', 'error');
-            this.switchCloudEngine('mesh');
-          }
-        },
-
-        // Broadcast local mutations across local tabs and all cloud branch devices
+        // Broadcast local mutation to all connected staff/admins
         broadcastUpdate(type, payload) {
           const message = {
             type,
@@ -2897,275 +2740,57 @@
             payload
           };
 
-          // 1. Broadcast locally (Same Device / Browser tabs)
           if (this.syncChannel) {
-            try { this.syncChannel.postMessage(message); } catch (e) {}
+            try {
+              this.syncChannel.postMessage(message);
+            } catch (e) {}
           }
+
+          // Trigger cross-window storage change
           localStorage.setItem('kazyon_sync_ping', JSON.stringify({ type, user: this.currentUser.username, ts: Date.now() }));
-
-          // 2. Broadcast via MQTT Cloud Mesh (Instant real-time multi-device sync)
-          if (this.mqttClient && this.cloudStatus === 'connected') {
-            try {
-              const topic = `kazyon/market/v2/${this.branchId}/events`;
-              this.mqttClient.publish(topic, JSON.stringify(message), { qos: 1 });
-            } catch (e) {
-              console.warn('MQTT publish error', e);
-            }
-          }
-
-          // 3. Broadcast via Firebase Realtime Database
-          if (this.firebaseDb && this.cloudEngine === 'firebase') {
-            try {
-              const branchRef = this.firebaseDb.ref(`kazyon_branches/${this.branchId}`);
-              branchRef.child('events').push(message);
-              branchRef.child('inventory').set(this.items);
-            } catch (e) {
-              console.warn('Firebase push error', e);
-            }
-          }
-
-          this.heartbeatSession();
         },
 
         // Handle incoming sync event from other active devices/users
         handleRemoteSync(data) {
           if (!data || data.sessionId === this.syncSessionId) return;
 
+          // Reload items from cache
+          const cached = localStorage.getItem('kazyon_inventory_v2');
+          if (cached) {
+            try {
+              this.items = JSON.parse(cached);
+              if (this.detailItem) {
+                const fresh = this.items.find(i => i.id === this.detailItem.id);
+                if (fresh) this.detailItem = fresh;
+              }
+            } catch (e) {}
+          }
+
+          // Reload logs
+          const cachedLogs = localStorage.getItem('kazyon_activity_logs_v2');
+          if (cachedLogs) {
+            try {
+              this.activityLogs = JSON.parse(cachedLogs);
+            } catch (e) {}
+          }
+
+          this.refreshActiveSessions();
+
+          // Display floating real-time sync notification
           let noticeText = `تزامن فوري: تحديث من ${data.user} (${data.ip})`;
-
-          // 1. ITEM_ADD
-          if (data.type === 'ITEM_ADD' && data.payload && data.payload.item) {
-            const incoming = data.payload.item;
-            const exists = this.items.some(i => i.id === incoming.id || (i.barcode && i.barcode === incoming.barcode));
-            if (!exists) {
-              this.items.unshift(incoming);
-              this.saveToStorage();
-              this.playBeep('success');
-            }
-            noticeText = `قام ${data.user} بإضافة صنف جديد: ${incoming.itemName}`;
+          if (data.type === 'STOCK_CHANGE') {
+            noticeText = `قام ${data.user} بتعديل كمية: ${data.payload?.itemName || 'صنف'}`;
+          } else if (data.type === 'STOCK_TRANSFER') {
+            noticeText = `قام ${data.user} بنقل بضاعة إلى الرف: ${data.payload?.itemName || 'صنف'}`;
+          } else if (data.type === 'ITEM_ADD' || data.type === 'ITEM_EDIT') {
+            noticeText = `تحديث صنف بواسطة ${data.user}: ${data.payload?.itemName || ''}`;
+          } else if (data.type === 'ITEM_DELETE') {
+            noticeText = `قام ${data.user} بحذف صنف من المخزن`;
+          } else if (data.type === 'USER_LOGIN') {
+            noticeText = `انضم مستخدم جديد: ${data.user} من عنوان IP: ${data.ip}`;
           }
 
-          // 2. ITEM_EDIT
-          else if (data.type === 'ITEM_EDIT' && data.payload && data.payload.item) {
-            const updated = data.payload.item;
-            const idx = this.items.findIndex(i => i.id === updated.id || (i.barcode && i.barcode === updated.barcode));
-            if (idx !== -1) {
-              this.items[idx] = { ...this.items[idx], ...updated };
-              this.recalcItemStatus(this.items[idx]);
-              if (this.detailItem && (this.detailItem.id === updated.id || this.detailItem.barcode === updated.barcode)) {
-                this.detailItem = this.items[idx];
-              }
-              this.saveToStorage();
-            }
-            noticeText = `قام ${data.user} بتعديل بيانات صنف: ${updated.itemName}`;
-          }
-
-          // 3. ITEM_DELETE
-          else if (data.type === 'ITEM_DELETE' && data.payload && data.payload.itemId) {
-            const target = this.items.find(i => i.id === data.payload.itemId);
-            const name = target ? target.itemName : 'صنف';
-            this.items = this.items.filter(i => i.id !== data.payload.itemId);
-            if (this.detailItem && this.detailItem.id === data.payload.itemId) {
-              this.isDetailModalOpen = false;
-              this.detailItem = null;
-            }
-            this.saveToStorage();
-            noticeText = `قام ${data.user} بحذف الصنف: ${name}`;
-          }
-
-          // 4. STOCK_CHANGE
-          else if (data.type === 'STOCK_CHANGE' && data.payload && data.payload.itemId) {
-            const item = this.items.find(i => i.id === data.payload.itemId);
-            if (item) {
-              if (data.payload.shopQty !== undefined) item.shopQty = data.payload.shopQty;
-              if (data.payload.warehouseQty !== undefined) item.warehouseQty = data.payload.warehouseQty;
-              this.recalcItemStatus(item);
-              if (this.detailItem && this.detailItem.id === item.id) {
-                this.detailItem = { ...item };
-              }
-              this.saveToStorage();
-            }
-            noticeText = `قام ${data.user} بتعديل كمية (${data.payload.target === 'shop' ? 'الرف' : 'المستودع'}) لـ ${data.payload.itemName || 'صنف'}`;
-          }
-
-          // 5. STOCK_TRANSFER
-          else if (data.type === 'STOCK_TRANSFER' && data.payload && data.payload.itemId) {
-            const item = this.items.find(i => i.id === data.payload.itemId);
-            if (item) {
-              if (data.payload.shopQty !== undefined) item.shopQty = data.payload.shopQty;
-              if (data.payload.warehouseQty !== undefined) item.warehouseQty = data.payload.warehouseQty;
-              this.recalcItemStatus(item);
-              if (this.detailItem && this.detailItem.id === item.id) {
-                this.detailItem = { ...item };
-              }
-              this.saveToStorage();
-            }
-            noticeText = `قام ${data.user} بنقل ${data.payload.count || 5} قطع إلى الرف لـ ${data.payload.itemName || 'صنف'}`;
-          }
-
-          // 6. BULK_IMPORT
-          else if (data.type === 'BULK_IMPORT' && data.payload) {
-            if (data.payload.items && Array.isArray(data.payload.items)) {
-              if (data.payload.mode === 'replace') {
-                this.items = [...data.payload.items];
-              } else {
-                const existingBarcodes = new Set(this.items.map(i => i.barcode));
-                const uniqueNew = data.payload.items.filter(i => !existingBarcodes.has(i.barcode));
-                this.items = [...uniqueNew, ...this.items];
-              }
-              this.items.forEach(it => this.recalcItemStatus(it));
-              this.saveToStorage();
-            }
-            noticeText = `قام ${data.user} باستيراد ملف شيت جديد (${data.payload.count || ''} صنف)`;
-          }
-
-          // 7. USER_LOGIN
-          else if (data.type === 'USER_LOGIN') {
-            noticeText = `تسجيل دخول جديد: ${data.user} (${data.role === 'admin' ? 'مشرف عام' : 'موظف فرع'}) من عنوان IP: ${data.ip}`;
-            this.playBeep('success');
-          }
-
-          // Audit log recording
-          this.logActivity('CLOUD_SYNC', noticeText, data.user, data.role, data.ip);
-
-          // Trigger UI notification banner
           this.triggerRealtimeNotice(noticeText);
-        },
-
-        // Broadcast Presence across the branch network
-        broadcastPresence() {
-          const session = {
-            id: this.syncSessionId,
-            username: this.currentUser.username || 'General',
-            name: this.currentUser.name || 'المشرف General',
-            role: this.currentUser.role || 'admin',
-            ip: this.clientIp,
-            device: navigator.userAgent.includes('Android') ? 'Android Floor Terminal' : 'Workstation Terminal',
-            loginTime: this.sessionLoginTime || new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-            lastSeen: Date.now()
-          };
-
-          if (this.mqttClient && this.cloudStatus === 'connected') {
-            try {
-              const topic = `kazyon/market/v2/${this.branchId}/presence`;
-              this.mqttClient.publish(topic, JSON.stringify(session), { qos: 0 });
-            } catch (e) {}
-          }
-
-          if (this.firebaseDb && this.cloudEngine === 'firebase') {
-            try {
-              this.firebaseDb.ref(`kazyon_branches/${this.branchId}/presence/${this.syncSessionId}`).set(session);
-            } catch (e) {}
-          }
-
-          this.heartbeatSession();
-        },
-
-        handleRemotePresence(remoteSession) {
-          if (!remoteSession || remoteSession.id === this.syncSessionId) return;
-          const now = Date.now();
-          let list = this.activeSessions.filter(s => s.id !== remoteSession.id && (now - s.lastSeen) < 45000);
-          list.unshift(remoteSession);
-          this.activeSessions = list;
-          localStorage.setItem('kazyon_active_sessions_v2', JSON.stringify(list));
-        },
-
-        requestCloudSnapshot() {
-          const req = {
-            type: 'REQUEST_SNAPSHOT',
-            sessionId: this.syncSessionId,
-            user: this.currentUser.username,
-            timestamp: Date.now()
-          };
-          if (this.mqttClient && this.cloudStatus === 'connected') {
-            try {
-              const topic = `kazyon/market/v2/${this.branchId}/snapshot`;
-              this.mqttClient.publish(topic, JSON.stringify(req), { qos: 0 });
-            } catch (e) {}
-          }
-        },
-
-        broadcastFullInventory() {
-          const snapshot = {
-            type: 'SNAPSHOT_DATA',
-            sessionId: this.syncSessionId,
-            user: this.currentUser.username,
-            timestamp: Date.now(),
-            items: this.items
-          };
-          if (this.mqttClient && this.cloudStatus === 'connected') {
-            try {
-              const topic = `kazyon/market/v2/${this.branchId}/snapshot`;
-              this.mqttClient.publish(topic, JSON.stringify(snapshot), { qos: 1 });
-            } catch (e) {}
-          }
-          if (this.firebaseDb && this.cloudEngine === 'firebase') {
-            try {
-              this.firebaseDb.ref(`kazyon_branches/${this.branchId}/inventory`).set(this.items);
-            } catch (e) {}
-          }
-          this.showToast('تم بث وتزامن قاعدة المخزون لجميع الأجهزة بالفرع', 'success');
-        },
-
-        handleRemoteSnapshot(data) {
-          if (!data || data.sessionId === this.syncSessionId) return;
-
-          if (data.type === 'REQUEST_SNAPSHOT' && this.items && this.items.length > 0) {
-            const reply = {
-              type: 'SNAPSHOT_DATA',
-              targetSession: data.sessionId,
-              sessionId: this.syncSessionId,
-              user: this.currentUser.username,
-              items: this.items,
-              timestamp: Date.now()
-            };
-            if (this.mqttClient) {
-              const topic = `kazyon/market/v2/${this.branchId}/snapshot`;
-              this.mqttClient.publish(topic, JSON.stringify(reply), { qos: 1 });
-            }
-          }
-
-          if (data.type === 'SNAPSHOT_DATA' && data.items && Array.isArray(data.items)) {
-            if (!data.targetSession || data.targetSession === this.syncSessionId) {
-              if (data.items.length > 0) {
-                this.items = [...data.items];
-                this.items.forEach(it => this.recalcItemStatus(it));
-                this.saveToStorage();
-                this.showToast(`تمت مزامنة (${this.items.length}) صنف من سحابة الفرع بنجاح!`, 'success');
-              }
-            }
-          }
-        },
-
-        switchCloudEngine(engine) {
-          this.cloudEngine = engine;
-          localStorage.setItem('kazyon_cloud_engine_v2', engine);
-          if (engine === 'firebase') {
-            this.initFirebaseSync();
-          } else {
-            this.initMqttCloudMesh();
-          }
-          this.showToast(`تم التبديل إلى: ${engine === 'firebase' ? 'Firebase Realtime DB' : 'سحابة كازيون التلقائية'}`, 'info');
-        },
-
-        changeBranchId(newBranch) {
-          if (!newBranch || !newBranch.trim()) return;
-          this.branchId = newBranch.trim();
-          localStorage.setItem('kazyon_branch_id_v2', this.branchId);
-          this.initRealtimeSync();
-          this.showToast(`تم تعيين فرع كازيون: ${this.branchId}`, 'success');
-        },
-
-        saveAndConnectFirebase() {
-          if (!this.firebaseConfig.databaseURL) {
-            this.showToast('يرجى إدخال رابط قاعدة بيانات فايربيس (databaseURL)', 'error');
-            return;
-          }
-          localStorage.setItem('kazyon_firebase_config_v2', JSON.stringify(this.firebaseConfig));
-          this.cloudEngine = 'firebase';
-          localStorage.setItem('kazyon_cloud_engine_v2', 'firebase');
-          this.initFirebaseSync();
-          this.showToast('تم حفظ إعدادات فايربيس وجاري الاتصال السحابي...', 'success');
         },
 
         triggerRealtimeNotice(text) {
@@ -3178,16 +2803,16 @@
         },
 
         // Audit Trail Activity Logger
-        logActivity(actionType, details, overrideUser, overrideRole, overrideIp) {
+        logActivity(actionType, details) {
           const now = new Date();
           const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           const dateStr = now.toISOString().split('T')[0];
 
           const newLog = {
             id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 100),
-            user: overrideUser || this.currentUser.username || 'General',
-            role: overrideRole || this.currentUser.role || 'admin',
-            ip: overrideIp || this.clientIp,
+            user: this.currentUser.username || 'General',
+            role: this.currentUser.role || 'admin',
+            ip: this.clientIp,
             actionType,
             details,
             timestamp: timeStr,
@@ -3217,8 +2842,8 @@
               name: this.currentUser.name,
               role: this.currentUser.role,
               ip: this.clientIp,
-              device: navigator.userAgent.includes('Android') ? 'Android Floor Terminal' : 'Workstation Terminal',
-              loginTime: this.sessionLoginTime || timeStr,
+              device: navigator.userAgent.includes('Android') ? 'Android Mobile Floor' : 'Workstation Terminal',
+              loginTime: timeStr,
               lastSeen: now
             });
 
@@ -3384,21 +3009,14 @@
           const targetName = target === 'shop' ? 'الرف (الصالة)' : 'المستودع';
           const changeText = delta > 0 ? `+${delta}` : `${delta}`;
           this.logActivity('STOCK_CHANGE', `تعديل رصيد (${item.itemName}) في ${targetName} بمقدار (${changeText}) قطعة`);
-          
-          const payload = {
+          this.broadcastUpdate('STOCK_CHANGE', {
             itemId: item.id,
             itemName: item.itemName,
             target,
             delta,
             shopQty: item.shopQty,
             warehouseQty: item.warehouseQty
-          };
-
-          if (this.isOnline) {
-            this.broadcastUpdate('STOCK_CHANGE', payload);
-          } else {
-            this.queueOfflineAction('STOCK_CHANGE', payload);
-          }
+          });
 
           // Haptic feedback if supported on Android
           if (navigator.vibrate) {
@@ -3417,20 +3035,13 @@
           this.saveToStorage();
 
           this.logActivity('STOCK_TRANSFER', `نقل فوري لـ (${move}) قطعة من المستودع إلى الرف: ${item.itemName} (${item.shelfLocation})`);
-          
-          const payload = {
+          this.broadcastUpdate('STOCK_TRANSFER', {
             itemId: item.id,
             itemName: item.itemName,
             count: move,
             shopQty: item.shopQty,
             warehouseQty: item.warehouseQty
-          };
-
-          if (this.isOnline) {
-            this.broadcastUpdate('STOCK_TRANSFER', payload);
-          } else {
-            this.queueOfflineAction('STOCK_TRANSFER', payload);
-          }
+          });
 
           this.showToast(`تم تزويد الصالة بـ ${move} قطعة من ${item.itemName}`, 'success');
           if (navigator.vibrate) {
@@ -3530,228 +3141,102 @@
           }
         },
 
-        // Debounced Search Inputs for Low-Tier Android Handsets
-        handleSearchInput(val) {
-          this.fastBarcodeInput = val;
-          this.isSearching = true;
-          if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-          this.searchDebounceTimer = setTimeout(() => {
-            this.searchQuery = val;
-            this.isSearching = false;
-          }, 250);
-        },
-
-        clearSearch() {
-          this.fastBarcodeInput = '';
-          this.searchQuery = '';
-          this.isSearching = false;
-          if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-        },
-
-        handlePriceSearchInput(val) {
-          this.priceSearchQuery = val;
-          this.isPriceSearching = true;
-          if (this.priceDebounceTimer) clearTimeout(this.priceDebounceTimer);
-          this.priceDebounceTimer = setTimeout(() => {
-            this.isPriceSearching = false;
-            if (val && val.trim().length >= 3) {
-              this.checkPrice(val);
-            }
-          }, 350);
-        },
-
-        // Offline Queueing & Real-Time Sync Flush
-        queueOfflineAction(type, payload) {
-          const action = {
-            id: 'off_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-            type,
-            payload,
-            timestamp: new Date().toISOString()
-          };
-          this.offlineQueue.push(action);
-          try {
-            localStorage.setItem('kazyon_offline_queue_v2', JSON.stringify(this.offlineQueue));
-          } catch (e) {}
-        },
-
-        flushOfflineQueue() {
-          if (!this.offlineQueue || this.offlineQueue.length === 0) return;
-          const count = this.offlineQueue.length;
-          this.offlineQueue.forEach(item => {
-            this.broadcastUpdate(item.type, item.payload);
-          });
-          this.offlineQueue = [];
-          try {
-            localStorage.removeItem('kazyon_offline_queue_v2');
-          } catch (e) {}
-          this.showToast(`تمت مزامنة (${count}) حركة مسجلة بنجاح مع الخادم`, 'success');
-        },
-
-        // Native Camera Scanner with Auto-Torch & Low-Light Detection
+        // Hyper-Fast Native Camera Scanner (720p Low-Overhead Dynamic Constraints for Android)
         async startCameraScanner(target) {
           this.scannerTarget = target;
           this.cameraError = '';
           this.isScannerOpen = true;
-          this.isLowLightDetected = false;
 
           await this.$nextTick();
 
           try {
-            if (typeof Html5Qrcode === 'undefined') {
-              this.cameraError = 'مكتبة المسح الضوئي غير محملة حالياً أو لا يوجد اتصال. يمكنك كتابة الباركود يدوياً.';
-              return;
-            }
-
             if (this.html5QrCode) {
-              await this.html5QrCode.stop().catch(() => {});
+              try {
+                if (this.html5QrCode.isScanning) await this.html5QrCode.stop();
+                await this.html5QrCode.clear();
+              } catch (e) {}
               this.html5QrCode = null;
             }
 
-            const qrCode = new Html5Qrcode('camera-scanner-viewport');
+            // Create scanner instance with focused retail barcode formats for instant decoding
+            const qrCode = new Html5Qrcode('camera-scanner-viewport', {
+              formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.QR_CODE
+              ],
+              verbose: false
+            });
             this.html5QrCode = qrCode;
 
-            // Preferred back camera for Android
+            // Restrict video stream resolution and frame rate dynamically to low-overhead targets (720p max)
+            // This prevents mobile browser lag, reduces CPU usage on Android devices, and achieves zero-lag capture.
+            const videoConstraints = {
+              facingMode: { ideal: this.cameraFacingMode || 'environment' },
+              width: { ideal: 1280, max: 1280 },
+              height: { ideal: 720, max: 720 },
+              frameRate: { ideal: 24, max: 30 }
+            };
+
             const config = {
-              fps: 15,
-              qrbox: { width: 260, height: 160 },
-              aspectRatio: 1.7777,
+              fps: 24, // 24 FPS target: optimal balance for <80ms detection without overheating phone
+              qrbox: (viewfinderWidth, viewfinderHeight) => {
+                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                return {
+                  width: Math.floor(Math.min(320, minEdge * 0.88)),
+                  height: Math.floor(Math.min(190, minEdge * 0.58))
+                };
+              },
+              aspectRatio: 1.777778, // 16:9 720p standard
+              disableFlip: true,
+              videoConstraints: videoConstraints
             };
 
             await qrCode.start(
-              { facingMode: 'environment' },
+              { facingMode: this.cameraFacingMode || 'environment' },
               config,
               (decodedText) => {
                 this.handleScannedBarcode(decodedText);
               },
-              () => {
-                // scanning frame attempt
-              }
+              () => {}
             );
 
-            // Warm up audio context if suspended
-            if (this.audioCtx && this.audioCtx.state === 'suspended') {
-              this.audioCtx.resume().catch(() => {});
-            }
-
-            // Start ambient light analyzer for automatic low-light torch
-            if (this.lightCheckInterval) clearInterval(this.lightCheckInterval);
-            setTimeout(() => {
-              this.detectAmbientLight();
-            }, 450);
-            this.lightCheckInterval = setInterval(() => {
-              this.detectAmbientLight();
-            }, 800);
+            // Access active camera video track directly for instant torch control without restarting stream
+            try {
+              const videoEl = document.querySelector('#camera-scanner-viewport video');
+              if (videoEl && videoEl.srcObject) {
+                this.currentCameraTrack = videoEl.srcObject.getVideoTracks()[0];
+              }
+            } catch (trackErr) {}
 
           } catch (err) {
-            console.warn('Camera start error', err);
-            this.cameraError = 'تعذر تشغيل الكاميرا مباشرة. تأكد من منح الإذن ("Allow Camera") في متصفح أندرويد.';
-          }
-        },
-
-        // Real-Time Ambient Light Luminance Analyzer from Live Camera Frame
-        detectAmbientLight() {
-          if (!this.isScannerOpen) return;
-          const video = document.querySelector('#camera-scanner-viewport video');
-          if (!video || video.readyState < 2 || !video.videoWidth) return;
-
-          try {
-            if (!this._lightCanvas) {
-              this._lightCanvas = document.createElement('canvas');
-              this._lightCanvas.width = 32;
-              this._lightCanvas.height = 32;
-              this._lightCtx = this._lightCanvas.getContext('2d', { willReadFrequently: true });
-            }
-
-            this._lightCtx.drawImage(video, 0, 0, 32, 32);
-            const frame = this._lightCtx.getImageData(0, 0, 32, 32);
-            const data = frame.data;
-            let totalLuminance = 0;
-            const count = data.length / 4;
-
-            for (let i = 0; i < data.length; i += 4) {
-              // Standard perceived luminance: ITU-R BT.601
-              totalLuminance += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-            }
-
-            const avgLuminance = Math.round(totalLuminance / count);
-            this.ambientLuminance = avgLuminance;
-
-            // Low-light threshold in warehouse / aisles (typical dark setting < 65 out of 255)
-            const isDark = avgLuminance < 65;
-            this.isLowLightDetected = isDark;
-
-            // Auto-trigger torch in low-light if enabled and not already turned on
-            if (this.autoTorchEnabled && isDark && !this.torchOn) {
-              this.setTorch(true, true);
-            }
-          } catch (e) {
-            // Non-blocking frame check
-          }
-        },
-
-        // Apply Torch / Flashlight Constraints to Active Video Track
-        async setTorch(state, isAuto = false) {
-          try {
-            const video = document.querySelector('#camera-scanner-viewport video');
-            const stream = video ? video.srcObject : null;
-            let track = (stream && stream.getVideoTracks) ? stream.getVideoTracks()[0] : null;
-
-            if (!track && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-              const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-              track = tempStream.getVideoTracks()[0];
-            }
-
-            if (!track) {
-              if (!isAuto) this.showToast('تعذر العثور على مسار فيديو الكاميرا', 'info');
-              return;
-            }
-
-            const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-            if ('torch' in capabilities) {
-              await track.applyConstraints({
-                advanced: [{ torch: state }]
-              });
-              this.torchOn = state;
-              if (state && isAuto) {
-                this.showToast('تم تشغيل الفلاش تلقائياً (إضاءة منخفضة)', 'info');
-              } else if (!isAuto) {
-                this.showToast(state ? 'تم تشغيل الفلاش' : 'تم إيقاف الفلاش', 'info');
+            console.warn('Hyper-fast camera start fallback', err);
+            // Graceful fallback to default constraints if device driver is restrictive
+            try {
+              if (this.html5QrCode) {
+                await this.html5QrCode.start(
+                  { facingMode: 'environment' },
+                  { fps: 20, qrbox: { width: 260, height: 160 } },
+                  (decodedText) => this.handleScannedBarcode(decodedText),
+                  () => {}
+                );
+                return;
               }
-            } else {
-              if (!isAuto) {
-                this.showToast('الفلاش غير مدعوم على هذه الكاميرا', 'info');
-              }
-            }
-          } catch (e) {
-            console.warn('Torch constraint error', e);
-            if (!isAuto) {
-              this.showToast('تعذر التحكم بالفلاش', 'info');
-            }
+            } catch (fallbackErr) {}
+            this.cameraError = 'تعذر تشغيل الكاميرا بدقة 720p. يرجى التأكد من منح الإذن ("Allow Camera") في متصفح أندرويد وإغلاق أي تطبيق آخر يستخدم الكاميرا.';
           }
         },
 
-        async toggleTorch() {
-          await this.setTorch(!this.torchOn, false);
+        async switchCamera() {
+          this.cameraFacingMode = this.cameraFacingMode === 'environment' ? 'user' : 'environment';
+          await this.startCameraScanner(this.scannerTarget);
+          this.showToast(this.cameraFacingMode === 'environment' ? 'تم التبديل للكاميرا الخلفية (720p HD)' : 'تم التبديل للكاميرا الأمامية', 'info');
         },
 
         async closeScanner() {
-          if (this.lightCheckInterval) {
-            clearInterval(this.lightCheckInterval);
-            this.lightCheckInterval = null;
-          }
-
-          // Safely shut off torch if it was active
-          if (this.torchOn) {
-            try {
-              const video = document.querySelector('#camera-scanner-viewport video');
-              const stream = video ? video.srcObject : null;
-              const track = (stream && stream.getVideoTracks) ? stream.getVideoTracks()[0] : null;
-              if (track) {
-                await track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
-              }
-            } catch (e) {}
-          }
-
           if (this.html5QrCode) {
             try {
               if (this.html5QrCode.isScanning) {
@@ -3763,9 +3248,31 @@
             }
             this.html5QrCode = null;
           }
+          this.currentCameraTrack = null;
           this.isScannerOpen = false;
           this.torchOn = false;
-          this.isLowLightDetected = false;
+        },
+
+        async toggleTorch() {
+          if (!this.currentCameraTrack) {
+            const videoEl = document.querySelector('#camera-scanner-viewport video');
+            if (videoEl && videoEl.srcObject) {
+              this.currentCameraTrack = videoEl.srcObject.getVideoTracks()[0];
+            }
+          }
+          if (!this.currentCameraTrack) {
+            this.showToast('الفلاش غير متاح حالياً', 'info');
+            return;
+          }
+          try {
+            this.torchOn = !this.torchOn;
+            await this.currentCameraTrack.applyConstraints({
+              advanced: [{ torch: this.torchOn }]
+            });
+            this.showToast(this.torchOn ? 'تم تشغيل الفلاش' : 'تم إيقاف الفلاش', 'info');
+          } catch (e) {
+            this.showToast('تعذر التحكم بالفلاش على هذه الكاميرا', 'info');
+          }
         },
 
         handleScannedBarcode(barcode) {
@@ -3864,60 +3371,19 @@
           }
         },
 
-        // Custom High-Precision Retail POS Scanner Alert Beep (Dual-Harmonic Punch)
-        playBeep(type = 'success') {
+        playBeep() {
           try {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) return;
-            if (!this.audioCtx) {
-              this.audioCtx = new AudioCtx();
-            }
-            if (this.audioCtx.state === 'suspended') {
-              this.audioCtx.resume().catch(() => {});
-            }
-            const ctx = this.audioCtx;
-            const now = ctx.currentTime;
-
-            if (type === 'success') {
-              // High-clarity Retail POS Scanner Beep (Zebra / Motorola 2.48kHz dual-tone chime)
-              const osc1 = ctx.createOscillator();
-              const osc2 = ctx.createOscillator();
-              const gain = ctx.createGain();
-
-              osc1.type = 'sine';
-              osc1.frequency.setValueAtTime(2480, now); // Primary crisp 2.48 kHz carrier tone
-              osc1.frequency.exponentialRampToValueAtTime(2750, now + 0.08);
-
-              osc2.type = 'triangle';
-              osc2.frequency.setValueAtTime(3720, now); // Upper harmonic for clear penetration in loud store aisles
-
-              gain.gain.setValueAtTime(0.38, now);
-              gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09); // Snappy 90ms decay envelope
-
-              osc1.connect(gain);
-              osc2.connect(gain);
-              gain.connect(ctx.destination);
-
-              osc1.start(now);
-              osc2.start(now);
-              osc1.stop(now + 0.095);
-              osc2.stop(now + 0.095);
-            } else {
-              // Distinct rejection / unregistered barcode tone
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'sawtooth';
-              osc.frequency.setValueAtTime(320, now);
-              gain.gain.setValueAtTime(0.22, now);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.start(now);
-              osc.stop(now + 0.18);
-            }
-          } catch (e) {
-            console.warn('Audio beep error', e);
-          }
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(950, ctx.currentTime);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+          } catch (e) {}
         },
 
         // Add/Edit Modal
@@ -4020,87 +3486,8 @@
           if (file) this.processFile(file);
         },
 
-        async processFile(file) {
+        processFile(file) {
           this.isParsing = true;
-          const fileName = (file.name || '').toLowerCase();
-
-          // 1. PDF File Parsing via PDF.js
-          if (fileName.endsWith('.pdf')) {
-            try {
-              if (typeof pdfjsLib === 'undefined') {
-                this.showToast('مكتبة قراءة الـ PDF غير متاحة حالياً', 'error');
-                this.isParsing = false;
-                return;
-              }
-
-              const arrayBuffer = await file.arrayBuffer();
-              const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-              const pdf = await loadingTask.promise;
-              let fullText = '';
-
-              for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(' ');
-                fullText += pageText + '\n';
-              }
-
-              // Extract lines and items from PDF text
-              const lines = fullText.split('\n').map(l => l.trim()).filter(Boolean);
-              const parsed = [];
-              let itemCounter = 1;
-
-              // Regular expression for international barcodes (8-14 digits)
-              const barcodeRegex = /\b(\d{8,14})\b/g;
-
-              for (const line of lines) {
-                let match;
-                while ((match = barcodeRegex.exec(line)) !== null) {
-                  const barcode = match[1];
-                  // Extract surrounding text for item name if possible
-                  let nameCandidate = line.replace(barcode, '').trim();
-                  nameCandidate = nameCandidate.replace(/[|،,;:\-–—]+/g, ' ').trim();
-                  if (!nameCandidate || nameCandidate.length < 3) {
-                    nameCandidate = `منتج كازيون مستورد #${itemCounter}`;
-                  }
-
-                  // Find potential price numbers in the line
-                  const numbers = line.match(/\b\d+(\.\d{1,2})?\b/g) || [];
-                  const price = numbers.find(n => n !== barcode && parseFloat(n) > 1) ? parseFloat(numbers.find(n => n !== barcode && parseFloat(n) > 1)) : 25.0;
-
-                  parsed.push({
-                    id: 'imp_pdf_' + itemCounter + '_' + Date.now(),
-                    barcode,
-                    itemName: nameCandidate.substring(0, 60),
-                    category: this.categories[itemCounter % this.categories.length],
-                    regularPrice: price,
-                    promoPrice: 0,
-                    shopQty: 8,
-                    warehouseQty: 24,
-                    expiryDate: new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0],
-                    status: 'valid',
-                    statusText: 'مستورد من ملف PDF'
-                  });
-                  itemCounter++;
-                }
-              }
-
-              if (parsed.length > 0) {
-                this.stagedItems = parsed;
-                this.showToast(`تم استخراج ${parsed.length} صنف/باركود من ملف الـ PDF بنجاح!`, 'success');
-              } else {
-                this.showToast('لم يتم العثور على أرقام باركود صالحة داخل ملف الـ PDF', 'error');
-              }
-            } catch (err) {
-              console.error('PDF parsing error', err);
-              this.showToast('تعذر تحليل ملف PDF. تأكد من أن الملف نصي وليس صورة ممسوحة ضوئياً', 'error');
-            } finally {
-              this.isParsing = false;
-            }
-            return;
-          }
-
-          // 2. Excel & CSV File Parsing via SheetJS
           const reader = new FileReader();
 
           reader.onload = (e) => {
@@ -4170,7 +3557,7 @@
 
           this.stagedItems.forEach(it => this.recalcItemStatus(it));
           this.saveToStorage();
-          this.broadcastUpdate('BULK_IMPORT', { mode, count, items: this.items });
+          this.broadcastUpdate('BULK_IMPORT', { mode, count });
           this.stagedItems = [];
           this.activeTab = 'inventory';
 
