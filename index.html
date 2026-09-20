@@ -1,0 +1,3621 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>نظام إدارة مخزون كازيون | A7med606</title>
+  <meta name="description" content="تطبيق الجرد الميداني السريع وكاشف الأسعار المخصص لموظفي كازيون ماركت على أندرويد.">
+
+  <!-- Mobile Browser Theme -->
+  <meta name="theme-color" content="#121212">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Fonts: Cairo Arabic & Monospace -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            kazyon: {
+              DEFAULT: '#FF6600',
+              hover: '#E65C00',
+              dark: '#CC5200',
+              light: '#FF8533',
+              glow: 'rgba(255, 102, 0, 0.4)',
+            },
+            dark: {
+              950: '#0A0A0A',
+              900: '#121212',
+              850: '#181818',
+              800: '#222222',
+              750: '#2A2A2A',
+              700: '#333333',
+              600: '#444444',
+            }
+          },
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <script>
+    // Global resilience handler to prevent 3P CDN errors from breaking execution
+    window.addEventListener('error', function(event) {
+      if (!event.message || event.message === 'Script error.' || event.message.includes('ResizeObserver')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    });
+  </script>
+
+  <!-- SheetJS CDN for Excel import/export -->
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- PDF.js CDN for PDF bulk catalog & barcode invoice parsing -->
+  <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- HTML5 QR / Barcode Scanner CDN -->
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- Canvas Confetti CDN -->
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Alpine.js (defer) -->
+  <script crossorigin="anonymous" defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #121212;
+      color: #F5F5F5;
+      touch-action: manipulation;
+      overscroll-behavior-y: none;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Zero-Lag Fast Touch Response (0ms lag, immediate tactile feedback) */
+    .touch-btn {
+      touch-action: manipulation;
+      user-select: none;
+      transition: transform 0.04s ease, filter 0.04s ease !important;
+    }
+    .touch-btn:active {
+      transform: scale(0.96) !important;
+      filter: brightness(0.9) !important;
+    }
+    .touch-btn-sm:active {
+      transform: scale(0.94) !important;
+    }
+
+    /* Thumb-friendly hit target constraint: minimum height 55px */
+    .thumb-target {
+      min-height: 55px !important;
+    }
+
+    /* Zero-Lag Instant State Switches - Disable costly layout repaints & animations */
+    .instant-switch {
+      transition: none !important;
+      animation: none !important;
+    }
+
+    /* Red Scanner Laser Effect (Hardware accelerated) */
+    @keyframes laserSweep {
+      0% { top: 10%; opacity: 0.9; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.9; }
+    }
+    .laser-line {
+      animation: laserSweep 1.6s ease-in-out infinite;
+      will-change: top;
+    }
+
+    /* Hardware accelerated layer */
+    .will-change-transform {
+      will-change: transform;
+    }
+  </style>
+</head>
+
+<body x-data="kazyonApp()" class="min-h-screen bg-dark-900 text-stone-100 flex flex-col justify-between select-none antialiased">
+
+  <!-- ============================================================= -->
+  <!-- 1. STRICT AUTHENTICATION SCREEN (General / 6060)              -->
+  <!-- ============================================================= -->
+  <div x-show="!isAuth" x-cloak class="fixed inset-0 z-50 bg-dark-950 flex flex-col justify-between p-5 overflow-y-auto">
+    <!-- Top Branding -->
+    <div class="flex flex-col items-center justify-center pt-8">
+      <div class="relative w-20 h-20 rounded-3xl bg-gradient-to-tr from-kazyon to-amber-500 p-1 shadow-[0_0_35px_rgba(255,102,0,0.45)] mb-3 flex items-center justify-center">
+        <div class="w-full h-full bg-dark-900 rounded-[20px] flex items-center justify-center text-kazyon text-3xl">
+          <i class="fa-solid fa-barcode"></i>
+        </div>
+      </div>
+      <h1 class="text-2xl font-black text-white tracking-tight text-center">
+        كازيون ماركت <span class="text-kazyon">برو</span>
+      </h1>
+      <p class="text-xs text-stone-400 mt-1 text-center font-medium">
+        نظام الجرد الفوري الميداني وكاشف الأسعار لأجهزة أندرويد
+      </p>
+    </div>
+
+    <!-- Login Box -->
+    <div class="w-full max-w-sm mx-auto bg-dark-850 border border-dark-750 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-3.5">
+      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-kazyon animate-pulse"></div>
+          <h2 class="text-xs font-bold text-stone-200">بوابة الدخول وتتبع الأمان</h2>
+        </div>
+        <span class="text-[10px] font-mono text-kazyon font-bold bg-kazyon/15 px-2 py-0.5 rounded-md">RBAC SECURITY</span>
+      </div>
+
+      <!-- Dynamic Client IP Tracking Box -->
+      <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-xs shrink-0">
+            <i class="fa-solid fa-network-wired" :class="isDetectingIp ? 'fa-spin' : ''"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] text-stone-400 block font-medium">عنوان IP الخاص بجهازك</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            <div class="text-xs font-bold font-mono text-white mt-0.5 flex items-center gap-1">
+              <span x-text="clientIp"></span>
+              <span class="text-[10px] font-sans text-emerald-400 font-semibold">(متصل بالشبكة)</span>
+            </div>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          @click="initIpDetection()"
+          class="w-7 h-7 bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white rounded-lg flex items-center justify-center text-[10px]"
+          title="إعادة فحص IP"
+        >
+          <i class="fa-solid fa-rotate-right" :class="isDetectingIp ? 'fa-spin text-kazyon' : ''"></i>
+        </button>
+      </div>
+
+      <!-- Auth Error Alert -->
+      <div x-show="loginError" x-cloak class="p-3 bg-red-950/80 border border-red-800 text-red-200 text-xs rounded-2xl flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation text-red-400 text-sm shrink-0"></i>
+        <span x-text="loginError"></span>
+      </div>
+
+      <!-- Username -->
+      <div>
+        <label class="block text-xs font-bold text-stone-300 mb-1.5">
+          <i class="fa-solid fa-user-gear text-kazyon ml-1"></i> اسم المستخدم (Username)
+        </label>
+        <input 
+          type="text" 
+          x-model="credentials.username" 
+          @keydown.enter="login()"
+          placeholder="General أو admin" 
+          class="w-full h-13 bg-dark-900 border border-dark-700 rounded-2xl px-4 text-sm font-semibold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon font-mono"
+          autocomplete="username"
+        >
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-xs font-bold text-stone-300 mb-1.5">
+          <i class="fa-solid fa-lock text-kazyon ml-1"></i> كلمة السر (Password)
+        </label>
+        <div class="relative">
+          <input 
+            :type="showPass ? 'text' : 'password'" 
+            x-model="credentials.password" 
+            @keydown.enter="login()"
+            placeholder="••••" 
+            class="w-full h-13 bg-dark-900 border border-dark-700 rounded-2xl px-4 pl-12 text-sm font-mono font-bold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon"
+            autocomplete="current-password"
+          >
+          <button 
+            type="button" 
+            @click="showPass = !showPass"
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-stone-400 hover:text-white"
+          >
+            <i :class="showPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Login Submit Button (High target touch min 56px) -->
+      <button 
+        type="button" 
+        @click="login()"
+        class="w-full h-14 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-[0_5px_20px_rgba(255,102,0,0.35)] touch-btn mt-2"
+      >
+        <span>تسجيل الدخول للمنظومة</span>
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+
+      <!-- Quick 1-tap Role Selection Helpers -->
+      <div class="pt-2 border-t border-dark-750 space-y-1.5">
+        <span class="text-[10px] text-stone-400 block text-center font-bold">اختيار الحساب السريع (RBAC Accounts):</span>
+        <div class="grid grid-cols-2 gap-2">
+          <!-- Role 1: General (Main Admin) -->
+          <button 
+            type="button" 
+            @click="credentials.username = 'General'; credentials.password = '6060'; login()"
+            class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-right text-xs touch-btn flex flex-col justify-between"
+          >
+            <div class="flex items-center justify-between text-[11px] font-bold text-kazyon">
+              <span>مشرف عام</span>
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <span class="font-mono text-white text-[11px] font-bold mt-1">General (6060)</span>
+            <span class="text-[9px] text-stone-400 mt-0.5">تحكم كامل وسجل الأمان</span>
+          </button>
+
+          <!-- Role 2: Staff (Store Employee) -->
+          <button 
+            type="button" 
+            @click="credentials.username = 'admin'; credentials.password = '123'; login()"
+            class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-sky-500 text-right text-xs touch-btn flex flex-col justify-between"
+          >
+            <div class="flex items-center justify-between text-[11px] font-bold text-sky-400">
+              <span>موظف فرع</span>
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <span class="font-mono text-white text-[11px] font-bold mt-1">admin (123)</span>
+            <span class="text-[9px] text-stone-400 mt-0.5">جرد سريع ومسح باركود</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Footer Developer Details -->
+    <div class="py-4 text-center">
+      <p class="text-xs text-stone-400 font-semibold">
+        Developed with precision by web dev <span class="text-kazyon font-bold">A7med606</span>
+      </p>
+      <div class="flex items-center justify-center gap-3.5 mt-2.5">
+        <a href="https://www.facebook.com/a7med6060" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+          <i class="fa-brands fa-facebook-f"></i>
+        </a>
+        <a href="https://www.instagram.com/a7med.606" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://a7med6060.blogspot.com/" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+        <a href="https://github.com/A7med606" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 2. MAIN APPLICATION CONTENT (AUTHENTICATED)                  -->
+  <!-- ============================================================= -->
+  <div x-show="isAuth" x-cloak class="flex-1 flex flex-col pb-36">
+    
+    <!-- Top Android Floor Header Bar -->
+    <header class="sticky top-0 z-30 bg-dark-950/95 backdrop-blur-md border-b border-dark-750 px-3.5 py-2.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div 
+          class="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-base shadow-md shrink-0"
+          :class="currentUser.role === 'admin' ? 'bg-gradient-to-tr from-kazyon to-amber-500 shadow-[0_0_12px_rgba(255,102,0,0.35)]' : 'bg-gradient-to-tr from-sky-600 to-indigo-600 shadow-[0_0_12px_rgba(14,165,233,0.35)]'"
+        >
+          <i :class="currentUser.role === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-user-tag'"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <h1 class="text-sm font-extrabold text-white leading-none">كازيون ماركت</h1>
+            <span 
+              class="px-1.5 py-0.2 rounded font-mono font-bold text-[9px]"
+              :class="currentUser.role === 'admin' ? 'bg-kazyon/20 border border-kazyon/40 text-kazyon' : 'bg-sky-500/20 border border-sky-500/40 text-sky-400'"
+              x-text="currentUser.roleBadge || (currentUser.role === 'admin' ? 'MAIN ADMIN' : 'STAFF')"
+            ></span>
+            <!-- Intelligent Client-Side Caching & Network Status Badge -->
+            <template x-if="isOnline">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>ONLINE 0ms</span>
+              </span>
+            </template>
+            <template x-if="!isOnline">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[9px] font-mono font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span>OFFLINE LOCAL</span>
+              </span>
+            </template>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] text-stone-400 mt-0.5">
+            <span>المستخدم: <strong class="text-white" x-text="currentUser.username || 'General'"></strong></span>
+            <span>•</span>
+            <span class="font-mono text-emerald-400 font-bold" x-text="'IP: ' + clientIp"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions: Security Logs (Admin), Barcode Trigger & Logout -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Shortcut to Security Logs (General Only) -->
+        <template x-if="currentUser.role === 'admin'">
+          <button 
+            type="button" 
+            @click="activeTab = 'security-logs'"
+            class="h-10 px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 touch-btn"
+            :class="activeTab === 'security-logs' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-dark-850 hover:bg-dark-800 border-dark-700 text-stone-300'"
+            title="سجل الأمان وتتبع المستخدمين والـ IP"
+          >
+            <div class="relative">
+              <i class="fa-solid fa-shield-halved text-sm" :class="activeTab === 'security-logs' ? 'text-white' : 'text-emerald-400'"></i>
+              <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            </div>
+            <span class="hidden md:inline">سجل الأمان</span>
+            <span class="text-[10px] font-mono px-1 rounded bg-dark-900/60" x-text="activeSessions.length || 1"></span>
+          </button>
+        </template>
+
+        <button 
+          type="button" 
+          @click="startCameraScanner('inventory')"
+          class="h-10 px-3 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-[0_2px_10px_rgba(255,102,0,0.3)]"
+          title="مسح باركود بالكاميرا"
+        >
+          <i class="fa-solid fa-barcode text-sm"></i>
+          <span class="hidden xs:inline">مسح</span>
+        </button>
+
+        <button 
+          type="button" 
+          @click="logout()"
+          class="w-10 h-10 bg-dark-800 hover:bg-red-950/40 border border-dark-700 hover:border-red-700 text-stone-400 hover:text-red-400 rounded-xl flex items-center justify-center text-xs touch-btn"
+          title="تسجيل الخروج"
+        >
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Persistent Smart Offline-First Status Banner -->
+    <div x-show="!isOnline" x-cloak class="bg-amber-950/90 border-b border-amber-600/60 px-3.5 py-2 text-amber-200 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs shrink-0">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+        </div>
+        <div>
+          <span class="font-bold text-white block leading-tight">وضع العمل بدون إنترنت (Offline Caching 100%)</span>
+          <span class="text-[10px] text-amber-300/90">يتم حفظ الجرد ومسح الباركود محلياً في ذاكرة الهاتف، وستتم المزامنة تلقائياً عند عودة النت.</span>
+        </div>
+      </div>
+      <template x-if="offlineQueue.length > 0">
+        <span class="bg-amber-500/30 border border-amber-400/40 px-2 py-1 rounded-lg font-mono text-[10px] font-bold shrink-0 text-amber-200" x-text="offlineQueue.length + ' معلق'"></span>
+      </template>
+    </div>
+
+    <!-- Real-Time Sync Live Floating Notification Banner -->
+    <div x-show="realtimeNotice.show" x-cloak x-transition.opacity.duration.150ms class="fixed top-14 inset-x-3 z-40 max-w-md mx-auto">
+      <div class="bg-dark-900/95 border-2 border-emerald-500 text-white rounded-2xl p-3 shadow-[0_10px_30px_rgba(16,185,129,0.35)] flex items-center justify-between backdrop-blur-md">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-sm">
+            <i class="fa-solid fa-tower-broadcast animate-pulse"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wide">تزامن فوري متعدد المستخدمين</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            </div>
+            <p class="text-xs text-stone-200 font-bold mt-0.5" x-text="realtimeNotice.message"></p>
+          </div>
+        </div>
+        <button @click="realtimeNotice.show = false" class="text-stone-400 hover:text-white p-1 text-xs">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Offline-Ready Notification Toast -->
+    <div x-show="toast.show" x-transition.opacity.duration.150ms class="fixed top-28 inset-x-4 z-40 max-w-sm mx-auto">
+      <div 
+        :class="{
+          'bg-emerald-950/95 border-emerald-600 text-emerald-100': toast.type === 'success',
+          'bg-red-950/95 border-red-600 text-red-100': toast.type === 'error',
+          'bg-dark-800/95 border-kazyon text-white': toast.type === 'info'
+        }"
+        class="border rounded-2xl p-3 shadow-2xl flex items-center justify-between backdrop-blur-md"
+      >
+        <div class="flex items-center gap-2 text-xs font-bold">
+          <i :class="{
+            'fa-solid fa-circle-check text-emerald-400': toast.type === 'success',
+            'fa-solid fa-triangle-exclamation text-red-400': toast.type === 'error',
+            'fa-solid fa-bell text-kazyon': toast.type === 'info'
+          }"></i>
+          <span x-text="toast.message"></span>
+        </div>
+        <button @click="toast.show = false" class="text-stone-400 hover:text-white px-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================= -->
+    <!-- TAB 1: GRAPHICAL INVENTORY HUB (0ms Real-Time LocalStorage)    -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'inventory'" class="p-3.5 space-y-3.5 max-w-5xl mx-auto w-full">
+      
+      <!-- Instant Graphical Status KPI Metrics Grid (1-tap filtering) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <!-- Total Items -->
+        <button 
+          type="button" 
+          @click="statusFilter = 'all'"
+          :class="statusFilter === 'all' ? 'border-kazyon bg-dark-800 shadow-[0_0_15px_rgba(255,102,0,0.2)]' : 'border-dark-750 bg-dark-850'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px]"
+        >
+          <div class="flex items-center justify-between text-stone-400">
+            <span class="text-[11px] font-bold">إجمالي الأصناف</span>
+            <i class="fa-solid fa-cubes text-xs text-kazyon"></i>
+          </div>
+          <div class="text-2xl font-black font-mono text-white mt-1" x-text="items.length"></div>
+        </button>
+
+        <!-- Shelf Hall Stock Total -->
+        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right min-h-[55px]">
+          <div class="flex items-center justify-between text-stone-400">
+            <span class="text-[11px] font-bold">المعروض بالصالة</span>
+            <i class="fa-solid fa-store text-xs text-emerald-400"></i>
+          </div>
+          <div class="text-2xl font-black font-mono text-emerald-400 mt-1" x-text="calcTotalHall()"></div>
+        </div>
+
+        <!-- Warehouse Reserve Stock Total -->
+        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right min-h-[55px]">
+          <div class="flex items-center justify-between text-stone-400">
+            <span class="text-[11px] font-bold">بالمستودع</span>
+            <i class="fa-solid fa-warehouse text-xs text-amber-400"></i>
+          </div>
+          <div class="text-2xl font-black font-mono text-amber-400 mt-1" x-text="calcTotalWarehouse()"></div>
+        </div>
+
+        <!-- Expired / Low Stock Alerts -->
+        <button 
+          type="button" 
+          @click="statusFilter = statusFilter === 'alerts' ? 'all' : 'alerts'"
+          :class="statusFilter === 'alerts' ? 'border-red-500 bg-red-950/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-dark-750 bg-dark-850'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px]"
+        >
+          <div class="flex items-center justify-between text-stone-400">
+            <span class="text-[11px] font-bold">تنبيهات فورية</span>
+            <i class="fa-solid fa-triangle-exclamation text-xs text-red-400"></i>
+          </div>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-black font-mono text-red-400" x-text="calcAlertsCount()"></span>
+            <span class="text-[10px] bg-red-500/20 text-red-300 font-bold px-1.5 py-0.5 rounded">فحص</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- 1. PROMINENT SINGLE-TAP BARCODE SCANNER & FAST LOOKUP BAR -->
+      <div class="bg-gradient-to-r from-kazyon via-amber-500 to-kazyon rounded-3xl p-3.5 shadow-[0_8px_30px_rgba(255,102,0,0.35)] space-y-3">
+        
+        <!-- Large Single-Tap Barcode Camera Button (Min 56px height for Android thumbs) -->
+        <button 
+          type="button" 
+          @click="startCameraScanner('inventory')"
+          class="w-full min-h-[56px] h-15 bg-white hover:bg-stone-100 text-dark-950 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-3 shadow-lg touch-btn"
+        >
+          <div class="w-9 h-9 rounded-xl bg-kazyon/15 flex items-center justify-center text-kazyon text-lg">
+            <i class="fa-solid fa-barcode"></i>
+          </div>
+          <span class="text-base tracking-tight font-extrabold">مسح باركود السلعة بالكاميرا</span>
+          <span class="text-[10px] bg-kazyon text-white px-2 py-0.5 rounded-lg font-mono font-bold">SCAN 0ms</span>
+        </button>
+
+        <!-- Fast-Type Search & Instant Barcode Query Bar (Debounced Search for Low-Tier Devices) -->
+        <div class="space-y-1.5">
+          <div class="relative flex items-center gap-2">
+            <div class="relative flex-1 flex items-center">
+              <i class="fa-solid fa-magnifying-glass absolute right-3.5 text-stone-400 text-xs pointer-events-none" :class="isSearching ? 'text-kazyon animate-pulse' : 'text-stone-400'"></i>
+              <input 
+                type="text" 
+                x-model="fastBarcodeInput" 
+                @keydown.enter="quickBarcodeLookup(fastBarcodeInput)"
+                @input="handleSearchInput($event.target.value)"
+                placeholder="اكتب الباركود أو اسم السلعة..." 
+                class="w-full min-h-[55px] h-14 bg-dark-950/90 border border-white/25 rounded-2xl pr-10 pl-10 text-xs sm:text-sm font-mono font-bold text-white placeholder:text-stone-400 placeholder:font-sans focus:outline-none focus:border-white focus:ring-2 focus:ring-white/50"
+              >
+              <!-- Searching Debounce Spinner -->
+              <div x-show="isSearching" class="absolute left-9 text-kazyon text-xs flex items-center gap-1 pointer-events-none">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+              </div>
+              <button 
+                x-show="fastBarcodeInput" 
+                @click="clearSearch()"
+                class="absolute left-2 w-8 h-8 rounded-xl bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center text-xs"
+                title="مسح البحث"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Instant Query / Card Pop-Up Button (Min 55px height) -->
+            <button 
+              type="button" 
+              @click="quickBarcodeLookup(fastBarcodeInput)"
+              class="min-h-[55px] h-14 px-4 bg-dark-950 hover:bg-dark-900 border border-white/30 text-white rounded-2xl font-bold text-xs flex items-center gap-1.5 touch-btn shadow-md shrink-0"
+              title="فحص وعرض البطاقة التفصيلية للمنتج"
+            >
+              <i class="fa-solid fa-id-card text-kazyon text-sm"></i>
+              <span class="hidden sm:inline">فحص</span>
+              <span>البطاقة</span>
+            </button>
+          </div>
+
+          <!-- Debounce Search & Offline-Ready Status Bar -->
+          <div class="flex items-center justify-between text-[11px] text-stone-200/90 px-1 pt-0.5">
+            <div class="flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-amber-300"></i>
+              <span>بحث ذكي مؤجل (Debounced 250ms) خفيف على المعالج</span>
+            </div>
+            <div class="flex items-center gap-1 text-[10px] text-emerald-300 font-mono">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>تخزين محلي 0ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instant Filter Chips Section -->
+      <div class="bg-dark-850 border border-dark-750 p-2.5 rounded-2xl space-y-2">
+        <!-- Horizontal Category Chips (0ms Lag) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <button 
+            type="button" 
+            @click="selectedCategory = 'all'"
+            :class="selectedCategory === 'all' ? 'bg-kazyon text-white font-black shadow-md' : 'bg-dark-800 text-stone-300 border border-dark-700'"
+            class="px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1"
+          >
+            <span>الكل</span>
+            <span class="text-[10px] opacity-80" x-text="'(' + items.length + ')'"></span>
+          </button>
+          
+          <template x-for="cat in categories" :key="cat">
+            <button 
+              type="button" 
+              @click="selectedCategory = cat"
+              :class="selectedCategory === cat ? 'bg-kazyon text-white font-black shadow-md' : 'bg-dark-800 text-stone-300 border border-dark-700'"
+              class="px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap touch-btn"
+              x-text="cat"
+            ></button>
+          </template>
+        </div>
+
+        <!-- Status Filter Badges (Quick Filter Pills) -->
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1.5 border-t border-dark-800">
+          <button 
+            type="button" 
+            @click="statusFilter = 'all'"
+            :class="statusFilter === 'all' ? 'text-kazyon font-bold border-b-2 border-kazyon' : 'text-stone-400'"
+            class="pb-1 text-xs whitespace-nowrap px-2"
+          >
+            كافة الأصناف
+          </button>
+          <button 
+            type="button" 
+            @click="statusFilter = 'promo'"
+            :class="statusFilter === 'promo' ? 'text-kazyon font-bold border-b-2 border-kazyon' : 'text-stone-400'"
+            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
+          >
+            <i class="fa-solid fa-fire text-kazyon text-[10px]"></i>
+            <span>عروض البرومو</span>
+          </button>
+          <button 
+            type="button" 
+            @click="statusFilter = 'low_stock'"
+            :class="statusFilter === 'low_stock' ? 'text-amber-400 font-bold border-b-2 border-amber-400' : 'text-stone-400'"
+            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
+          >
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-[10px]"></i>
+            <span>نقص الرف</span>
+          </button>
+          <button 
+            type="button" 
+            @click="statusFilter = 'expired'"
+            :class="statusFilter === 'expired' ? 'text-red-400 font-bold border-b-2 border-red-400' : 'text-stone-400'"
+            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
+          >
+            <i class="fa-solid fa-ban text-red-400 text-[10px]"></i>
+            <span>منتهي الصلاحية</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Row: Count & Add Item -->
+      <div class="flex items-center justify-between px-1">
+        <span class="text-xs text-stone-400 font-medium">
+          المعروض: <strong class="text-white" x-text="filteredItems().length"></strong> من <strong class="text-stone-300" x-text="items.length"></strong> صنف
+        </span>
+        
+        <div class="flex items-center gap-2">
+          <!-- Large Thumb Add Item Button (Min 55px height) -->
+          <button 
+            type="button" 
+            @click="openItemModal(null)"
+            class="min-h-[55px] h-14 px-5 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold flex items-center gap-2 touch-btn shadow-md"
+          >
+            <i class="fa-solid fa-plus text-sm"></i>
+            <span>إضافة صنف جديد</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. GRAPHICAL MINIMALIST CARDS (NO DENSE TABLES, 1-TAP INSTANT QUANTITY ADJUSTMENTS) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <template x-for="item in filteredItems()" :key="item.id">
+          <div 
+            :id="'card-' + item.id"
+            :class="{
+              'border-red-600/70 bg-red-950/15': item.status === 'expired',
+              'border-amber-600/70 bg-amber-950/15': item.status === 'low_stock',
+              'border-kazyon/50 bg-kazyon/10': item.promoPrice && item.promoPrice < item.regularPrice,
+              'border-dark-750 bg-dark-850': item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice)
+            }"
+            class="rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 relative overflow-hidden transition-all duration-100"
+          >
+            <!-- Card Top: Category & Bold Color-Coded Status Badge -->
+            <div class="flex items-start justify-between gap-2">
+              <div class="space-y-1 min-w-0 cursor-pointer flex-1" @click="openDetailModal(item)">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-stone-300 text-[10px] font-bold" x-text="item.category"></span>
+                  
+                  <!-- Graphical Status Badges -->
+                  <template x-if="item.status === 'expired'">
+                    <span class="px-2 py-0.5 rounded-md bg-red-500/20 border border-red-500/50 text-red-300 text-[10px] font-black inline-flex items-center gap-1">
+                      <i class="fa-solid fa-circle-xmark text-red-400"></i> منتهي الصلاحية
+                    </span>
+                  </template>
+                  <template x-if="item.status === 'low_stock'">
+                    <span class="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/50 text-amber-300 text-[10px] font-black inline-flex items-center gap-1">
+                      <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> نقص الرف
+                    </span>
+                  </template>
+                  <template x-if="item.promoPrice && item.promoPrice < item.regularPrice">
+                    <span class="px-2 py-0.5 rounded-md bg-kazyon/25 border border-kazyon/60 text-kazyon text-[10px] font-black inline-flex items-center gap-1">
+                      <i class="fa-solid fa-fire text-kazyon"></i> برومو كازيون
+                    </span>
+                  </template>
+                  <template x-if="item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice)">
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
+                      سليم ومتاح
+                    </span>
+                  </template>
+                </div>
+
+                <!-- Product Name -->
+                <h3 class="text-base font-extrabold text-white leading-snug pt-0.5 truncate hover:text-kazyon transition-colors" x-text="item.itemName"></h3>
+                
+                <!-- Barcode Tag with Shelf Location -->
+                <div class="flex items-center gap-2 text-xs font-mono text-stone-400 flex-wrap">
+                  <div class="flex items-center gap-1">
+                    <i class="fa-solid fa-barcode text-stone-500 text-[11px]"></i>
+                    <span class="font-bold text-stone-300" x-text="item.barcode"></span>
+                  </div>
+                  <div class="flex items-center gap-1 text-[11px] font-sans font-semibold text-kazyon bg-kazyon/10 px-2 py-0.5 rounded-md border border-kazyon/20">
+                    <i class="fa-solid fa-location-dot text-[10px]"></i>
+                    <span x-text="item.shelfLocation || item.notes || 'رف A-01'"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Action & Edit icons -->
+              <div class="flex items-center gap-1 shrink-0">
+                <button 
+                  type="button" 
+                  @click="openDetailModal(item)"
+                  class="w-9 h-9 rounded-xl bg-dark-800 hover:bg-dark-750 text-kazyon flex items-center justify-center text-xs touch-btn-sm border border-dark-700"
+                  title="عرض البطاقة المفردة"
+                >
+                  <i class="fa-solid fa-id-card text-sm"></i>
+                </button>
+                <button 
+                  type="button" 
+                  @click="openItemModal(item)"
+                  class="w-9 h-9 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 flex items-center justify-center text-xs touch-btn-sm border border-dark-700"
+                  title="تعديل التفاصيل"
+                >
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button 
+                  type="button" 
+                  x-show="currentUser.role === 'admin'"
+                  @click="deleteItem(item)"
+                  class="w-9 h-9 rounded-xl bg-dark-800 hover:bg-red-950/50 text-stone-400 hover:text-red-400 flex items-center justify-center text-xs touch-btn-sm border border-dark-700"
+                  title="حذف الصنف (المشرف العام فقط)"
+                >
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Price Card (Regular vs Promo Highlight) -->
+            <div class="p-2.5 bg-dark-900/90 rounded-2xl border border-dark-800 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-stone-400 font-medium block">السعر للكاشير</span>
+                <div class="flex items-baseline gap-2 mt-0.5">
+                  <span class="text-xl font-black text-kazyon font-mono" x-text="(item.promoPrice || item.regularPrice) + ' ج.م'"></span>
+                  <template x-if="item.promoPrice && item.promoPrice < item.regularPrice">
+                    <span class="text-xs text-stone-400 line-through font-mono" x-text="item.regularPrice + ' ج.م'"></span>
+                  </template>
+                </div>
+              </div>
+              <template x-if="item.promoPrice && item.promoPrice < item.regularPrice">
+                <span class="px-2.5 py-1 rounded-xl bg-kazyon text-white text-[11px] font-black font-mono">
+                  وفر <span x-text="(item.regularPrice - item.promoPrice).toFixed(1)"></span> ج.م
+                </span>
+              </template>
+            </div>
+
+            <!-- Prominent One-Tap Detailed Card Trigger (Min 55px height for Android thumbs) -->
+            <button 
+              type="button" 
+              @click="openDetailModal(item)"
+              class="w-full min-h-[55px] h-14 bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-stone-200 hover:text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 touch-btn shadow-sm"
+            >
+              <i class="fa-solid fa-id-card text-kazyon text-base"></i>
+              <span>عرض البطاقة التفصيلية للمنتج</span>
+              <i class="fa-solid fa-arrow-left text-[10px] text-stone-500"></i>
+            </button>
+
+            <!-- 2. ONE-TAP HIGH-TARGET TOUCH QUANTITY BUTTONS (Min 55px height for Android thumbs) -->
+            <div class="grid grid-cols-2 gap-2.5">
+              
+              <!-- Hall Stock (+1 / -1) -->
+              <div class="p-3 rounded-2xl bg-dark-900 border border-dark-750 flex flex-col justify-between space-y-2">
+                <div class="flex items-center justify-between text-stone-400 text-xs">
+                  <span class="font-bold text-emerald-400">الصالة (الرف)</span>
+                  <i class="fa-solid fa-store text-emerald-400 text-xs"></i>
+                </div>
+                
+                <div class="text-center py-0.5">
+                  <span class="text-2xl font-black font-mono text-emerald-400" x-text="item.shopQty"></span>
+                  <span class="text-[11px] text-stone-400 mr-0.5">قطعة</span>
+                </div>
+
+                <!-- High-Target Touch Buttons (Min 55px height!) -->
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    type="button" 
+                    @click="updateStock(item, 'shop', -1)"
+                    :disabled="item.shopQty <= 0"
+                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-100 flex items-center justify-center font-black text-xl touch-btn disabled:opacity-25"
+                    title="سحب قطعة من الصالة"
+                  >
+                    -
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="updateStock(item, 'shop', 1)"
+                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white flex items-center justify-center font-black text-xl touch-btn shadow-md"
+                    title="إضافة قطعة إلى الصالة"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <!-- Warehouse Stock (+1 / -1) -->
+              <div class="p-3 rounded-2xl bg-dark-900 border border-dark-750 flex flex-col justify-between space-y-2">
+                <div class="flex items-center justify-between text-stone-400 text-xs">
+                  <span class="font-bold text-amber-400">المستودع</span>
+                  <i class="fa-solid fa-warehouse text-amber-400 text-xs"></i>
+                </div>
+
+                <div class="text-center py-0.5">
+                  <span class="text-2xl font-black font-mono text-amber-400" x-text="item.warehouseQty"></span>
+                  <span class="text-[11px] text-stone-400 mr-0.5">قطعة</span>
+                </div>
+
+                <!-- High-Target Touch Buttons (Min 55px height!) -->
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    type="button" 
+                    @click="updateStock(item, 'warehouse', -1)"
+                    :disabled="item.warehouseQty <= 0"
+                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-100 flex items-center justify-center font-black text-xl touch-btn disabled:opacity-25"
+                    title="سحب قطعة من المستودع"
+                  >
+                    -
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="updateStock(item, 'warehouse', 1)"
+                    class="flex-1 min-h-[55px] h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 border border-amber-500 text-white flex items-center justify-center font-black text-xl touch-btn shadow-md"
+                    title="إضافة قطعة للمستودع"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instant 1-Tap Transfer (نقل 5 قطع من المخزن للصالة بلمسة واحدة - Min 55px height!) -->
+            <button 
+              type="button" 
+              @click="transferWarehouseToHall(item, 5)"
+              :disabled="item.warehouseQty <= 0"
+              class="w-full min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-amber-500 text-amber-300 text-xs font-bold flex items-center justify-center gap-2 touch-btn shadow-sm disabled:opacity-30"
+            >
+              <i class="fa-solid fa-arrow-left-long text-kazyon text-sm"></i>
+              <span>نقل 5 قطع من المستودع للصالة فوري</span>
+            </button>
+
+            <!-- Card Bottom: Expiry Date & Stock Location -->
+            <div class="pt-1.5 border-t border-dark-800 flex items-center justify-between text-[11px] text-stone-400">
+              <div class="flex items-center gap-1.5">
+                <i class="fa-regular fa-calendar-check text-stone-500"></i>
+                <span>الصلاحية: <strong class="font-mono text-stone-300" x-text="item.expiryDate || 'ساري'"></strong></span>
+              </div>
+              <span class="text-stone-400 font-semibold" x-text="item.statusText || ''"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Zero Results Placeholder -->
+      <div x-show="filteredItems().length === 0" class="p-10 text-center bg-dark-850 rounded-3xl border border-dark-750 space-y-3">
+        <div class="w-14 h-14 rounded-2xl bg-dark-800 text-stone-500 flex items-center justify-center mx-auto text-xl">
+          <i class="fa-solid fa-box-open"></i>
+        </div>
+        <h4 class="text-sm font-bold text-stone-300">لا توجد أصناف مطابقة</h4>
+        <p class="text-xs text-stone-500 max-w-xs mx-auto">
+          جرب مسح باركود جديد أو إزالة فلاتر البحث لإظهار كافة المنتجات.
+        </p>
+        <button 
+          type="button" 
+          @click="searchQuery = ''; selectedCategory = 'all'; statusFilter = 'all'"
+          class="px-4 py-2 rounded-xl bg-dark-800 border border-dark-700 text-xs font-bold text-stone-300 touch-btn"
+        >
+          إعادة ضبط الفلاتر
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================= -->
+    <!-- TAB 2: INSTANT PRICE CHECKER (كاشف الأسعار والعروض)           -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'price-checker'" class="p-4 space-y-4 max-w-md mx-auto w-full">
+      
+      <div class="text-center space-y-1">
+        <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-kazyon/20 border border-kazyon/40 text-kazyon text-xs font-bold">
+          <i class="fa-solid fa-bolt"></i>
+          <span>الماسح الفوري للأسعار والخصومات</span>
+        </span>
+        <h2 class="text-xl font-black text-white">كاشف أسعار كازيون</h2>
+        <p class="text-xs text-stone-400">امسح باركود أي سلعة لمعرفة سعر الكاشير والعرض فوراً</p>
+      </div>
+
+      <!-- Giant Android Touch Scan Button (Min 65px height) -->
+      <button 
+        type="button" 
+        @click="startCameraScanner('price-checker')"
+        class="w-full min-h-[60px] h-20 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-3xl font-black text-lg flex items-center justify-center gap-3 shadow-[0_8px_25px_rgba(255,102,0,0.4)] touch-btn"
+      >
+        <i class="fa-solid fa-barcode text-2xl"></i>
+        <span>مسح باركود السلعة بالكاميرا</span>
+      </button>
+
+      <!-- Manual Barcode Search Box (Debounced for low-tier devices) -->
+      <div class="bg-dark-850 border border-dark-750 p-3.5 rounded-3xl space-y-2.5">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold text-stone-300">أو اكتب أو ابحث برقم الباركود يدوياً:</label>
+          <span class="text-[10px] text-amber-400 font-mono" x-show="isPriceSearching">جاري الفحص...</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <input 
+            type="text" 
+            x-model="priceSearchQuery" 
+            @input="handlePriceSearchInput($event.target.value)"
+            @keydown.enter="checkPrice(priceSearchQuery)"
+            placeholder="مثال: 6281007010115"
+            class="flex-1 min-h-[55px] h-14 bg-dark-900 border border-dark-700 rounded-2xl px-4 text-sm font-mono font-bold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon"
+          >
+          <button 
+            type="button" 
+            @click="checkPrice(priceSearchQuery)"
+            class="min-h-[55px] h-14 px-5 bg-dark-750 hover:bg-dark-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center touch-btn border border-dark-700"
+          >
+            فحص
+          </button>
+        </div>
+
+        <!-- Quick barcode chips for instant simulation -->
+        <div class="pt-2 border-t border-dark-800">
+          <span class="text-[11px] text-stone-400 block mb-1 font-medium">تجربة سريعة لأصناف مخزنة:</span>
+          <div class="flex flex-wrap gap-1.5">
+            <template x-for="item in items.slice(0, 4)" :key="item.barcode">
+              <button 
+                type="button" 
+                @click="checkPrice(item.barcode)"
+                class="px-2.5 py-1 bg-dark-800 hover:bg-dark-750 border border-dark-700 rounded-xl text-stone-300 text-[11px] font-mono flex items-center gap-1.5 touch-btn"
+              >
+                <span class="text-kazyon font-bold" x-text="item.barcode"></span>
+                <span class="text-stone-400 font-sans truncate max-w-[80px]" x-text="item.itemName"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRICE CARD DISPLAY RESULT -->
+      <template x-if="priceResultItem">
+        <div class="bg-dark-850 border-2 border-kazyon rounded-3xl p-5 shadow-[0_0_30px_rgba(255,102,0,0.25)] space-y-4">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-300 text-[10px] font-bold" x-text="priceResultItem.category"></span>
+              <h3 class="text-base font-black text-white mt-1" x-text="priceResultItem.itemName"></h3>
+              <p class="text-xs font-mono text-stone-400 mt-0.5">
+                الباركود: <strong class="text-stone-200" x-text="priceResultItem.barcode"></strong>
+              </p>
+            </div>
+            <div class="w-11 h-11 rounded-2xl bg-kazyon/20 border border-kazyon text-kazyon flex items-center justify-center text-lg shrink-0">
+              <i class="fa-solid fa-tag"></i>
+            </div>
+          </div>
+
+          <!-- Price Display Big Metrics -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
+              <span class="text-[11px] text-stone-400 font-medium block">السعر العادي</span>
+              <div class="text-2xl font-black font-mono text-stone-300 mt-1" :class="priceResultItem.promoPrice && priceResultItem.promoPrice < priceResultItem.regularPrice ? 'line-through opacity-50' : ''" x-text="priceResultItem.regularPrice + ' ج.م'"></div>
+            </div>
+
+            <div class="p-3 bg-kazyon/15 rounded-2xl border border-kazyon text-center">
+              <span class="text-[11px] text-kazyon font-bold block">سعر البرومو (العرض)</span>
+              <div class="text-3xl font-black font-mono text-kazyon mt-1" x-text="(priceResultItem.promoPrice || priceResultItem.regularPrice) + ' ج.م'"></div>
+            </div>
+          </div>
+
+          <!-- Savings banner if promo -->
+          <template x-if="priceResultItem.promoPrice && priceResultItem.promoPrice < priceResultItem.regularPrice">
+            <div class="p-2.5 bg-gradient-to-r from-kazyon to-amber-600 text-white rounded-2xl text-center font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-fire"></i>
+              <span>وفر للعميل الآن <strong class="font-mono text-sm" x-text="(priceResultItem.regularPrice - priceResultItem.promoPrice).toFixed(1)"></strong> جنيه مصري!</span>
+            </div>
+          </template>
+
+          <!-- Stock situation on shelf -->
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-dark-800 text-xs">
+            <div class="p-2 bg-dark-900 rounded-xl flex items-center justify-between">
+              <span class="text-stone-400">على الرف:</span>
+              <span class="font-bold font-mono text-emerald-400 text-sm" x-text="priceResultItem.shopQty + ' قطعة'"></span>
+            </div>
+            <div class="p-2 bg-dark-900 rounded-xl flex items-center justify-between">
+              <span class="text-stone-400">بالمستودع:</span>
+              <span class="font-bold font-mono text-amber-400 text-sm" x-text="priceResultItem.warehouseQty + ' قطعة'"></span>
+            </div>
+          </div>
+
+          <!-- 1-Tap Refill Button from price checker (Min 55px height) -->
+          <button 
+            type="button" 
+            @click="transferWarehouseToHall(priceResultItem, 1)"
+            :disabled="priceResultItem.warehouseQty <= 0"
+            class="w-full min-h-[55px] h-14 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 touch-btn disabled:opacity-30"
+          >
+            <i class="fa-solid fa-arrow-left-long text-kazyon text-base"></i>
+            <span>تزويد الرف بقطعة من المستودع الآن</span>
+          </button>
+        </div>
+      </template>
+
+      <!-- Barcode Not Found Box -->
+      <template x-if="priceNotFound">
+        <div class="p-5 bg-dark-850 border border-dark-700 rounded-3xl text-center space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-xl">
+            <i class="fa-solid fa-barcode"></i>
+          </div>
+          <h4 class="text-sm font-bold text-white">الباركود غير مسجل في قاعدة البيانات</h4>
+          <p class="text-xs font-mono text-stone-400" x-text="priceNotFoundCode"></p>
+          <button 
+            type="button" 
+            @click="openItemModal({ barcode: priceNotFoundCode, itemName: '', regularPrice: 0, promoPrice: 0 })"
+            class="min-h-[55px] h-14 px-5 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold inline-flex items-center gap-2 touch-btn shadow-md"
+          >
+            <i class="fa-solid fa-plus"></i>
+            <span>إضافة هذا المنتج للمخزن وقائمة الأسعار</span>
+          </button>
+        </div>
+      </template>
+
+    </div>
+
+
+    <!-- ============================================================= -->
+    <!-- TAB 3: SECURITY & ACTIVITY LOG DASHBOARD (General Only)       -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'security-logs' && currentUser.role === 'admin'" class="p-3.5 space-y-3.5 max-w-4xl mx-auto w-full">
+      
+      <!-- Top Header & Real-time Sync Status -->
+      <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-xl shrink-0">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-base font-black text-white">سجل الأمان وتتبع نشاط المستخدمين</h2>
+                <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold">MAIN ADMIN ONLY</span>
+              </div>
+              <p class="text-xs text-stone-400 mt-0.5">مراقبة الجلسات الحية، عناوين IP للأجهزة، وتدقيق عمليات الجرد والباركود اللحظية</p>
+            </div>
+          </div>
+
+          <!-- Real-Time Sync Indicator -->
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-dark-900 border border-emerald-500/30 text-emerald-400 text-xs font-bold shrink-0">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+            <span class="hidden sm:inline">مزامنة الشبكة نشطة</span>
+            <span class="font-mono text-[11px]">BroadcastChannel ON</span>
+          </div>
+        </div>
+
+        <!-- 3 Quick KPI Status Cards -->
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-dark-750">
+          <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
+            <span class="text-[10px] text-stone-400 block font-medium">الجلسات النشطة</span>
+            <div class="text-xl font-black font-mono text-emerald-400 mt-0.5" x-text="activeSessions.length || 1"></div>
+          </div>
+          <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
+            <span class="text-[10px] text-stone-400 block font-medium">العمليات المسجلة</span>
+            <div class="text-xl font-black font-mono text-kazyon mt-0.5" x-text="activityLogs.length"></div>
+          </div>
+          <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
+            <span class="text-[10px] text-stone-400 block font-medium">عنوان IP الحالي</span>
+            <div class="text-xs font-black font-mono text-stone-200 mt-1 truncate" x-text="clientIp"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Logged-In Sessions Card (المستخدمون النشطون وعناوين IP) -->
+      <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-users text-kazyon text-sm"></i>
+            <h3 class="text-xs font-bold text-white">المستخدمون النشطون في المنظومة (Active Logged-In Users & IPs)</h3>
+          </div>
+          <span class="text-[10px] text-stone-400">تحديث لحظي عبر الشبكة</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <template x-for="sess in activeSessions" :key="sess.id || sess.username">
+            <div class="p-3.5 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div 
+                  class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white"
+                  :class="sess.role === 'admin' ? 'bg-gradient-to-tr from-kazyon to-amber-500' : 'bg-gradient-to-tr from-sky-600 to-indigo-600'"
+                >
+                  <i :class="sess.role === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-user'"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-white" x-text="sess.name || sess.username"></span>
+                    <span 
+                      class="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold"
+                      :class="sess.role === 'admin' ? 'bg-kazyon/20 text-kazyon' : 'bg-sky-500/20 text-sky-400'"
+                      x-text="sess.role === 'admin' ? 'MAIN ADMIN' : 'STAFF'"
+                    ></span>
+                  </div>
+                  <div class="flex items-center gap-2 text-[11px] font-mono text-stone-400 mt-1">
+                    <span class="flex items-center gap-1 text-emerald-400 font-bold">
+                      <i class="fa-solid fa-network-wired text-[10px]"></i>
+                      <span x-text="sess.ip"></span>
+                    </span>
+                    <span>•</span>
+                    <span class="font-sans text-[10px]" x-text="sess.device || 'Android Station'"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-left font-mono text-[10px]">
+                <span class="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700/60 font-sans font-bold flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>متصل</span>
+                </span>
+                <span class="text-stone-500 block mt-1" x-text="sess.loginTime"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Live Security & Activity Audit Trail -->
+      <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-dark-750">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-kazyon text-sm"></i>
+            <h3 class="text-xs font-bold text-white">سجل العمليات والتدقيق الأمني الميداني (Live Audit Trail)</h3>
+          </div>
+
+          <!-- Controls: Filter & Export -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Filter by User -->
+            <select 
+              x-model="logFilterUser" 
+              class="h-9 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-[11px] text-stone-200 focus:outline-none focus:border-kazyon"
+            >
+              <option value="all">كافة المستخدمين</option>
+              <option value="General">المشرف General</option>
+              <option value="admin">موظف الفرع admin</option>
+            </select>
+
+            <!-- Export Log Button -->
+            <button 
+              type="button" 
+              @click="exportActivityLogsExcel()"
+              class="h-9 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-[11px] font-bold flex items-center gap-1 touch-btn"
+              title="تصدير سجل الأمان للأكسيل"
+            >
+              <i class="fa-solid fa-file-excel text-emerald-400"></i>
+              <span>تصدير XLSX</span>
+            </button>
+
+            <!-- Clear Log Button -->
+            <button 
+              type="button" 
+              @click="clearActivityLogs()"
+              class="h-9 px-2.5 bg-dark-800 hover:bg-red-950/40 border border-dark-700 hover:border-red-700 text-stone-400 hover:text-red-400 rounded-xl text-[11px] touch-btn"
+              title="مسح السجل"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Logs Stream List -->
+        <div class="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
+          <template x-for="log in filteredActivityLogs()" :key="log.id">
+            <div class="p-3 bg-dark-900/90 rounded-2xl border border-dark-800 flex items-center justify-between text-xs transition-all hover:border-dark-700">
+              <div class="flex items-center gap-2.5">
+                <div 
+                  class="w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0"
+                  :class="{
+                    'bg-emerald-500/20 text-emerald-400': log.actionType === 'LOGIN',
+                    'bg-kazyon/20 text-kazyon': log.actionType === 'STOCK_CHANGE',
+                    'bg-amber-500/20 text-amber-400': log.actionType === 'STOCK_TRANSFER',
+                    'bg-sky-500/20 text-sky-400': log.actionType === 'PRICE_CHECK',
+                    'bg-purple-500/20 text-purple-400': log.actionType === 'ITEM_EDIT' || log.actionType === 'ITEM_ADD',
+                    'bg-red-500/20 text-red-400': log.actionType === 'ITEM_DELETE',
+                    'bg-stone-500/20 text-stone-300': !log.actionType
+                  }"
+                >
+                  <i :class="{
+                    'fa-solid fa-right-to-bracket': log.actionType === 'LOGIN',
+                    'fa-solid fa-arrow-trend-up': log.actionType === 'STOCK_CHANGE',
+                    'fa-solid fa-boxes-packing': log.actionType === 'STOCK_TRANSFER',
+                    'fa-solid fa-tag': log.actionType === 'PRICE_CHECK',
+                    'fa-solid fa-pen-to-square': log.actionType === 'ITEM_EDIT' || log.actionType === 'ITEM_ADD',
+                    'fa-solid fa-trash': log.actionType === 'ITEM_DELETE',
+                    'fa-solid fa-bell': !log.actionType
+                  }"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-white text-[11px]" x-text="log.user"></span>
+                    <span 
+                      class="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold"
+                      :class="log.role === 'admin' ? 'bg-kazyon/20 text-kazyon' : 'bg-sky-500/20 text-sky-400'"
+                      x-text="log.role === 'admin' ? 'ADMIN' : 'STAFF'"
+                    ></span>
+                    <span class="text-[10px] font-mono text-stone-400 bg-dark-800 px-1.5 py-0.2 rounded border border-dark-750" x-text="'IP: ' + log.ip"></span>
+                  </div>
+                  <p class="text-[11px] text-stone-300 mt-1 font-medium" x-text="log.details"></p>
+                </div>
+              </div>
+              <div class="text-left font-mono text-[10px] text-stone-400 shrink-0 mr-2">
+                <span x-text="log.timestamp"></span>
+                <span class="text-stone-500 block text-[9px]" x-text="log.date"></span>
+              </div>
+            </div>
+          </template>
+
+          <template x-if="filteredActivityLogs().length === 0">
+            <div class="p-8 text-center text-stone-400 text-xs">
+              <i class="fa-solid fa-shield-cat text-2xl text-stone-600 mb-2 block"></i>
+              لا توجد سجلات مطابقة للفلتر المحدد
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ============================================================= -->
+    <!-- TAB 4: BULK FILE IMPORTER (.xlsx / .csv / .pdf) (Admin Only)  -->
+    <!-- ============================================================= -->
+    <div x-show="activeTab === 'importer' && currentUser.role === 'admin'" class="p-4 space-y-4 max-w-2xl mx-auto w-full">
+      
+      <div class="text-center space-y-1">
+        <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+          <i class="fa-solid fa-file-excel"></i>
+          <span>الاستيراد والتصدير الفوري</span>
+        </span>
+        <h2 class="text-xl font-black text-white">استيراد المخزون والشيتات</h2>
+        <p class="text-xs text-stone-400">تحديث جماعي للأصناف والأسعار عبر ملفات Excel و PDF</p>
+      </div>
+
+      <!-- Drag & Drop Zone -->
+      <div 
+        @dragover.prevent="dragOver = true"
+        @dragleave.prevent="dragOver = false"
+        @drop.prevent="handleFileDrop($event)"
+        :class="dragOver ? 'border-kazyon bg-kazyon/10' : 'border-dark-700 bg-dark-850'"
+        class="border-2 border-dashed rounded-3xl p-6 text-center space-y-3 transition-all"
+      >
+        <div class="w-14 h-14 rounded-2xl bg-dark-800 border border-dark-700 text-kazyon flex items-center justify-center mx-auto text-xl shadow-inner">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-bold text-white">اختر ملف إكسيل أو اسحبه هنا</h3>
+          <p class="text-xs text-stone-400 mt-0.5">يدعم ملفات .xlsx, .xls, .csv و ملفات PDF</p>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 pt-1">
+          <label class="h-13 px-5 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer touch-btn shadow-md">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>تصفح واختيار ملف</span>
+            <input type="file" @change="handleFileInput($event)" accept=".xlsx, .xls, .csv, .pdf" class="hidden">
+          </label>
+
+          <button 
+            type="button" 
+            @click="downloadSampleExcel()"
+            class="h-13 px-4 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-2xl font-bold text-xs flex items-center gap-1.5 touch-btn"
+            title="تحميل شيت تجريبي"
+          >
+            <i class="fa-solid fa-file-excel text-emerald-400"></i>
+            <span>نموذج جاهز</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- File Parsing Spinner -->
+      <div x-show="isParsing" class="p-6 bg-dark-850 rounded-3xl border border-dark-750 text-center space-y-2">
+        <i class="fa-solid fa-circle-notch fa-spin text-kazyon text-2xl"></i>
+        <p class="text-xs font-bold text-stone-200">جاري تحليل بيانات الشيت عبر SheetJS...</p>
+      </div>
+
+      <!-- Staged Items Preview Box -->
+      <template x-if="stagedItems.length > 0">
+        <div class="bg-dark-850 border border-emerald-700/60 rounded-3xl p-4 space-y-3 animate-in fade-in">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h3 class="text-xs font-bold text-white">
+                تم قراءة <strong class="text-emerald-400 font-mono text-sm" x-text="stagedItems.length"></strong> منتج جاهز للاستيراد
+              </h3>
+            </div>
+            <button @click="stagedItems = []" class="text-xs text-stone-400 hover:text-red-400">
+              إلغاء
+            </button>
+          </div>
+
+          <div class="max-h-56 overflow-y-auto space-y-1.5 no-scrollbar">
+            <template x-for="(st, idx) in stagedItems.slice(0, 8)" :key="idx">
+              <div class="p-2.5 bg-dark-900 rounded-xl border border-dark-800 flex items-center justify-between text-xs">
+                <div>
+                  <h4 class="font-bold text-stone-200 text-[11px]" x-text="st.itemName"></h4>
+                  <span class="font-mono text-stone-400 text-[10px]" x-text="'كود: ' + st.barcode"></span>
+                </div>
+                <div class="text-right font-mono">
+                  <span class="font-bold text-kazyon" x-text="st.regularPrice + ' ج.م'"></span>
+                  <div class="text-[9px] text-stone-400" x-text="'صالة: ' + st.shopQty + ' | مخزن: ' + st.warehouseQty"></div>
+                </div>
+              </div>
+            </template>
+            <template x-if="stagedItems.length > 8">
+              <p class="text-center text-[10px] text-stone-400 py-1" x-text="'و ' + (stagedItems.length - 8) + ' صنف إضافي...'"></p>
+            </template>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-dark-800">
+            <button 
+              type="button" 
+              @click="commitImport('merge')"
+              class="h-13 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 touch-btn shadow-md"
+            >
+              <i class="fa-solid fa-plus"></i>
+              <span>دمج مع المخزون</span>
+            </button>
+            <button 
+              type="button" 
+              @click="commitImport('replace')"
+              class="h-13 bg-dark-800 hover:bg-red-950/60 border border-dark-700 hover:border-red-700 text-stone-300 hover:text-red-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 touch-btn"
+            >
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>استبدال الكل</span>
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Export to Excel Button -->
+      <div class="p-4 bg-dark-850 rounded-3xl border border-dark-750 flex items-center justify-between">
+        <div>
+          <h4 class="text-xs font-bold text-white">تصدير قاعدة بيانات السوبرماركت (Excel)</h4>
+          <p class="text-[10px] text-stone-400 mt-0.5">حفظ نسخة احتياطية من كافة الأصناف والكميات الحالية</p>
+        </div>
+        <button 
+          type="button" 
+          @click="exportInventoryExcel()"
+          class="h-12 px-4 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-kazyon font-bold rounded-2xl text-xs flex items-center gap-1.5 touch-btn"
+        >
+          <i class="fa-solid fa-download"></i>
+          <span>تصدير XLSX</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 3. NATIVE ANDROID CAMERA & BARCODE SCANNER MODAL VIEWPORT     -->
+  <!-- ============================================================= -->
+  <div 
+    x-show="isScannerOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between overflow-hidden animate-in fade-in duration-150"
+  >
+    <!-- Scanner Top Bar -->
+    <div class="p-3.5 flex items-center justify-between bg-dark-950 border-b border-dark-800 z-10">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-kazyon/20 border border-kazyon/50 text-kazyon flex items-center justify-center text-xs">
+          <i class="fa-solid fa-camera"></i>
+        </div>
+        <div>
+          <h3 class="text-xs font-black text-white">ماسح باركود أندرويد بالكاميرا</h3>
+          <p class="text-[10px] text-stone-400" x-text="scannerTarget === 'price-checker' ? 'كاشف الأسعار الفوري' : 'جرد وتحديد السلعة'"></p>
+        </div>
+      </div>
+
+      <!-- Controls: Auto-Torch, Manual Torch, Close -->
+      <div class="flex items-center gap-1.5">
+        <!-- Low Light Detection Badge -->
+        <span 
+          x-show="isLowLightDetected" 
+          x-cloak 
+          class="hidden xs:inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] font-bold animate-pulse"
+        >
+          <i class="fa-solid fa-moon"></i> إضاءة خافتة
+        </span>
+
+        <!-- Auto-Torch Switch Button -->
+        <button 
+          type="button" 
+          @click="autoTorchEnabled = !autoTorchEnabled; if(autoTorchEnabled && isLowLightDetected) setTorch(true, true);"
+          :class="autoTorchEnabled ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-sm shadow-amber-500/10' : 'text-stone-400 bg-dark-800 border-dark-700'"
+          class="h-9 px-2.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 touch-btn transition-colors"
+          title="تشغيل الفلاش تلقائياً في الإضاءة المنخفضة"
+        >
+          <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+          <span class="text-[10px]">فلاش تلقائي</span>
+        </button>
+
+        <!-- Manual Flash Toggle Button -->
+        <button 
+          type="button" 
+          @click="toggleTorch()"
+          :class="torchOn ? 'bg-amber-500 text-dark-950 font-black shadow-lg shadow-amber-500/30' : 'bg-dark-800 border border-dark-700 text-stone-300'"
+          class="w-9 h-9 rounded-xl flex items-center justify-center text-xs touch-btn transition-colors"
+          title="تشغيل / إيقاف الفلاش يدوياً"
+        >
+          <i class="fa-solid fa-bolt" :class="torchOn ? 'text-dark-950' : 'text-stone-400'"></i>
+        </button>
+
+        <!-- Close Scanner -->
+        <button 
+          type="button" 
+          @click="closeScanner()"
+          class="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 hover:text-white flex items-center justify-center text-xs touch-btn"
+          title="إغلاق الكاميرا"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Viewfinder Area -->
+    <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
+      <!-- HTML5 Video Container -->
+      <div id="camera-scanner-viewport" class="w-full h-full min-h-[300px]"></div>
+
+      <!-- Laser Scanner Guide Frame -->
+      <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4">
+        <div class="relative w-64 h-40 border-2 border-kazyon rounded-2xl shadow-[0_0_20px_rgba(255,102,0,0.4)] overflow-hidden">
+          <!-- Animated Laser Line -->
+          <div class="absolute inset-x-0 h-0.5 bg-kazyon shadow-[0_0_12px_#FF6600] laser-line"></div>
+          <div class="absolute top-1.5 left-2 text-[9px] font-mono text-kazyon font-bold">KAZYON FAST SCAN</div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <p class="text-[11px] text-stone-200 bg-dark-950/80 px-3 py-1 rounded-full border border-dark-800">
+            ثبّت الباركود داخل المربع البرتقالي
+          </p>
+          <!-- Auto-Torch Triggered Pill -->
+          <span 
+            x-show="isLowLightDetected && autoTorchEnabled" 
+            x-cloak 
+            class="text-[10px] text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2.5 py-1 rounded-full flex items-center gap-1 font-bold animate-pulse"
+          >
+            <i class="fa-solid fa-bolt text-amber-400"></i> تم تشغيل الفلاش تلقائياً
+          </span>
+        </div>
+      </div>
+
+      <!-- Permission Request / Error Prompt Overlay -->
+      <div x-show="cameraError" x-cloak class="absolute inset-0 bg-dark-950/90 flex flex-col items-center justify-center p-6 text-center space-y-3 z-20">
+        <div class="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl mx-auto">
+          <i class="fa-solid fa-camera-rotate"></i>
+        </div>
+        <h4 class="text-sm font-bold text-white">إذن الكاميرا مطلوب (Camera Permission)</h4>
+        <p class="text-xs text-stone-300 max-w-xs leading-relaxed" x-text="cameraError"></p>
+        <div class="flex items-center gap-2 pt-2">
+          <button 
+            type="button" 
+            @click="startCameraScanner(scannerTarget)"
+            class="min-h-[55px] h-14 px-6 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md"
+          >
+            <i class="fa-solid fa-rotate-right ml-1"></i> إعادة طلب الإذن
+          </button>
+          <button 
+            type="button" 
+            @click="closeScanner()"
+            class="min-h-[55px] h-14 px-5 bg-dark-800 border border-dark-700 text-stone-300 rounded-2xl text-xs font-bold touch-btn"
+          >
+            إلغاء
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanner Bottom Simulation Chips (For rapid testing in preview or emulator) -->
+    <div class="p-3 bg-dark-950 border-t border-dark-800 space-y-1.5 z-10">
+      <div class="flex items-center justify-between text-[11px] text-stone-400">
+        <span>محاكاة قراءة سريعة بنقرة واحدة (أكواد تجريبية):</span>
+      </div>
+      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <template x-for="item in items.slice(0, 5)" :key="item.barcode">
+          <button 
+            type="button" 
+            @click="handleScannedBarcode(item.barcode)"
+            class="px-2.5 py-1.5 bg-dark-850 hover:bg-dark-800 border border-dark-750 rounded-xl text-[11px] font-mono text-stone-300 whitespace-nowrap touch-btn flex items-center gap-1.5"
+          >
+            <span class="text-kazyon font-bold" x-text="item.barcode"></span>
+            <span class="text-stone-400 font-sans truncate max-w-[90px]" x-text="item.itemName"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 3.5. INSTANT DETAILED PRODUCT CARD VIEW (بطاقة تفصيلية مفردة) -->
+  <!-- ============================================================= -->
+  <div 
+    x-show="isDetailModalOpen && detailItem" 
+    x-cloak 
+    class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3.5 overflow-y-auto animate-in fade-in duration-150"
+  >
+    <div 
+      @click.outside="isDetailModalOpen = false" 
+      class="bg-dark-900 border-2 border-kazyon rounded-3xl w-full max-w-lg p-5 text-stone-100 space-y-4 shadow-[0_0_50px_rgba(255,102,0,0.35)] my-auto relative overflow-hidden"
+    >
+      <!-- Top Header & Category & Close -->
+      <div class="flex items-start justify-between gap-3 pb-3 border-b border-dark-750">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 text-xs font-bold" x-text="detailItem?.category"></span>
+            <span class="px-2.5 py-1 rounded-xl bg-kazyon/20 border border-kazyon/40 text-kazyon text-[11px] font-mono font-bold">بطاقة فحص الصنف</span>
+          </div>
+          <h2 class="text-xl font-black text-white leading-tight mt-1" x-text="detailItem?.itemName"></h2>
+        </div>
+        <button 
+          @click="isDetailModalOpen = false" 
+          class="w-10 h-10 rounded-2xl bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white flex items-center justify-center text-sm touch-btn shrink-0 border border-dark-700"
+        >
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Barcode Bar with Quick Copy -->
+      <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-barcode text-kazyon text-2xl"></i>
+          <div>
+            <span class="text-[10px] text-stone-400 block font-medium">رقم الباركود الدولي</span>
+            <span class="text-sm font-mono font-black text-stone-100 tracking-wider" x-text="detailItem?.barcode"></span>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          @click="copyBarcode(detailItem?.barcode)"
+          class="h-10 px-3.5 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn"
+        >
+          <i class="fa-solid fa-copy text-kazyon"></i>
+          <span>نسخ</span>
+        </button>
+      </div>
+
+      <!-- Clear Color-Coded Status Alert Banner (Expired, Promo, Low Stock, Good) -->
+      <div>
+        <!-- 1. Expired Status Alert -->
+        <template x-if="detailItem?.status === 'expired'">
+          <div class="p-3.5 bg-red-950/90 border-2 border-red-600 rounded-2xl flex items-center gap-3 text-red-200 shadow-md">
+            <div class="w-10 h-10 rounded-xl bg-red-600/30 flex items-center justify-center text-red-400 text-xl shrink-0">
+              <i class="fa-solid fa-ban"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-black text-red-300">تنبيه حرج: منتهي الصلاحية (سحب فوري)</h4>
+              <p class="text-[11px] text-red-400/90 mt-0.5">يجب إزالة السلعة من رف العرض فوراً وإعادتها لمكتب المرتجعات.</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- 2. Promo / Discount Status Alert -->
+        <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
+          <div class="p-3.5 bg-kazyon/20 border-2 border-kazyon rounded-2xl flex items-center gap-3 text-kazyon shadow-md">
+            <div class="w-10 h-10 rounded-xl bg-kazyon/30 flex items-center justify-center text-kazyon text-xl shrink-0">
+              <i class="fa-solid fa-fire animate-pulse"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-black text-white">عرض خاص (برومو كازيون)</h4>
+              <p class="text-[11px] text-stone-300 mt-0.5">
+                سعر العرض: <strong class="text-kazyon font-mono font-bold" x-text="detailItem?.promoPrice"></strong> ج.م بدلاً من <span class="line-through font-mono" x-text="detailItem?.regularPrice"></span> ج.م (توفير <strong class="text-kazyon font-mono font-bold" x-text="(detailItem?.regularPrice - detailItem?.promoPrice).toFixed(1)"></strong> ج.م)
+              </p>
+            </div>
+          </div>
+        </template>
+
+        <!-- 3. Low Shelf Stock Alert -->
+        <template x-if="detailItem?.status === 'low_stock' && (!detailItem?.promoPrice || detailItem?.promoPrice >= detailItem?.regularPrice)">
+          <div class="p-3.5 bg-amber-950/90 border-2 border-amber-600 rounded-2xl flex items-center gap-3 text-amber-200 shadow-md">
+            <div class="w-10 h-10 rounded-xl bg-amber-600/30 flex items-center justify-center text-amber-400 text-xl shrink-0">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-black text-amber-300">تنبيه نقص الرف: الكمية منخفضة في الصالة</h4>
+              <p class="text-[11px] text-amber-400/90 mt-0.5">يوجد مخزون بالمستودع يلزم تغذية الرف فوراً لعدم ضياع مبيعات العميل.</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- 4. Good / Valid Stock Alert -->
+        <template x-if="detailItem?.status === 'valid' && (!detailItem?.promoPrice || detailItem?.promoPrice >= detailItem?.regularPrice)">
+          <div class="p-3.5 bg-emerald-950/70 border border-emerald-600/60 rounded-2xl flex items-center gap-3 text-emerald-200">
+            <div class="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-lg shrink-0">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-emerald-300">حالة ممتازة: سليم ومتاح</h4>
+              <p class="text-[10px] text-emerald-400/80">المخزون متوفر بالصالة والمستودع والصلاحية سارية بشكل طبيعي.</p>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Warehouse Quantity vs. Hall Quantity (with Shelf Location) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Hall / Shelf Quantity -->
+        <div class="p-3.5 rounded-2xl bg-dark-850 border-2 border-emerald-500/40 flex flex-col justify-between space-y-2.5">
+          <div class="flex items-center justify-between text-emerald-400 text-xs font-bold">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-store"></i> المعروض بالصالة
+            </span>
+            <span class="text-[10px] bg-emerald-500/15 px-2 py-0.5 rounded text-emerald-300">الرف</span>
+          </div>
+
+          <div class="text-center py-1">
+            <span class="text-3xl font-black font-mono text-emerald-400" x-text="detailItem?.shopQty"></span>
+            <span class="text-xs text-stone-400 mr-1">قطعة</span>
+          </div>
+
+          <!-- Shelf Location Tag -->
+          <div class="p-2 bg-dark-900 rounded-xl text-center text-xs font-bold text-stone-200 border border-dark-750">
+            <i class="fa-solid fa-location-dot text-kazyon ml-1"></i>
+            <span x-text="detailItem?.shelfLocation || detailItem?.notes || 'رف A-02'"></span>
+          </div>
+
+          <!-- High-Target Touch Buttons (Min 55px height for Android thumbs!) -->
+          <div class="flex items-center gap-2 pt-1">
+            <button 
+              type="button" 
+              @click="updateStock(detailItem, 'shop', -1)"
+              :disabled="detailItem?.shopQty <= 0"
+              class="flex-1 h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-black text-xl flex items-center justify-center touch-btn disabled:opacity-25"
+              title="سحب قطعة من الصالة"
+            >
+              -
+            </button>
+            <button 
+              type="button" 
+              @click="updateStock(detailItem, 'shop', 1)"
+              class="flex-1 h-14 rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xl flex items-center justify-center touch-btn shadow-md"
+              title="إضافة قطعة إلى الصالة"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <!-- Warehouse Reserve Quantity -->
+        <div class="p-3.5 rounded-2xl bg-dark-850 border-2 border-amber-500/40 flex flex-col justify-between space-y-2.5">
+          <div class="flex items-center justify-between text-amber-400 text-xs font-bold">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-warehouse"></i> كمية المستودع
+            </span>
+            <span class="text-[10px] bg-amber-500/15 px-2 py-0.5 rounded text-amber-300">مخزن</span>
+          </div>
+
+          <div class="text-center py-1">
+            <span class="text-3xl font-black font-mono text-amber-400" x-text="detailItem?.warehouseQty"></span>
+            <span class="text-xs text-stone-400 mr-1">قطعة</span>
+          </div>
+
+          <!-- Warehouse Location Tag -->
+          <div class="p-2 bg-dark-900 rounded-xl text-center text-xs font-bold text-stone-200 border border-dark-750">
+            <i class="fa-solid fa-boxes-packing text-amber-400 ml-1"></i>
+            <span>المستودع الرئيسي</span>
+          </div>
+
+          <!-- High-Target Touch Buttons (Min 55px height for Android thumbs!) -->
+          <div class="flex items-center gap-2 pt-1">
+            <button 
+              type="button" 
+              @click="updateStock(detailItem, 'warehouse', -1)"
+              :disabled="detailItem?.warehouseQty <= 0"
+              class="flex-1 h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-black text-xl flex items-center justify-center touch-btn disabled:opacity-25"
+              title="سحب قطعة من المستودع"
+            >
+              -
+            </button>
+            <button 
+              type="button" 
+              @click="updateStock(detailItem, 'warehouse', 1)"
+              class="flex-1 h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-black text-xl flex items-center justify-center touch-btn shadow-md"
+              title="إضافة قطعة للمستودع"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick 1-Tap Transfer 5 Items (Min 55px height!) -->
+      <button 
+        type="button" 
+        @click="transferWarehouseToHall(detailItem, 5)"
+        :disabled="detailItem?.warehouseQty <= 0"
+        class="w-full h-14 rounded-2xl bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white font-black text-sm flex items-center justify-center gap-2 touch-btn shadow-lg disabled:opacity-30"
+      >
+        <i class="fa-solid fa-arrow-left-long text-base"></i>
+        <span>تزويد فوري: نقل 5 قطع من المستودع للرف</span>
+      </button>
+
+      <!-- Production & Expiry Dates Section -->
+      <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <span class="text-[10px] text-stone-400 block mb-1">تاريخ الإنتاج (Production Date)</span>
+          <div class="flex items-center gap-1.5 font-mono font-bold text-stone-200">
+            <i class="fa-regular fa-calendar text-stone-400"></i>
+            <span x-text="detailItem?.productionDate || 'غير محدد'"></span>
+          </div>
+        </div>
+        <div>
+          <span class="text-[10px] text-stone-400 block mb-1">تاريخ الانتهاء (Expiry Date)</span>
+          <div class="flex items-center gap-1.5 font-mono font-bold" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-stone-200'">
+            <i class="fa-regular fa-calendar-xmark" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-kazyon'"></i>
+            <span x-text="detailItem?.expiryDate || 'ساري'"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Price details & Bottom Actions (Min 55px height!) -->
+      <div class="flex items-center justify-between pt-2 border-t border-dark-750">
+        <div>
+          <span class="text-[10px] text-stone-400 block">سعر الكاشير</span>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-black text-kazyon font-mono" x-text="(detailItem?.promoPrice || detailItem?.regularPrice) + ' ج.م'"></span>
+            <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
+              <span class="text-xs text-stone-500 line-through font-mono" x-text="detailItem?.regularPrice + ' ج.م'"></span>
+            </template>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            @click="isDetailModalOpen = false; openItemModal(detailItem)"
+            class="h-14 px-4 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 text-xs font-bold flex items-center gap-1.5 touch-btn"
+          >
+            <i class="fa-solid fa-pen text-kazyon"></i>
+            <span>تعديل</span>
+          </button>
+          <button 
+            type="button" 
+            @click="isDetailModalOpen = false"
+            class="h-14 px-6 rounded-2xl bg-kazyon hover:bg-kazyon-hover text-white text-xs font-bold touch-btn shadow-md"
+          >
+            تم وإغلاق
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 4. ADD / EDIT PRODUCT MODAL                                  -->
+  <!-- ============================================================= -->
+  <div 
+    x-show="isItemModalOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
+  >
+    <div 
+      @click.outside="isItemModalOpen = false" 
+      class="bg-dark-850 border border-dark-750 rounded-3xl w-full max-w-md p-5 text-stone-100 space-y-4 shadow-2xl my-auto"
+    >
+      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
+        <h3 class="text-sm font-bold text-white" x-text="modalItem.id ? 'تعديل بيانات الصنف' : 'إضافة صنف جديد'"></h3>
+        <button @click="isItemModalOpen = false" class="text-stone-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Form Inputs -->
+      <div class="space-y-3">
+        <!-- Barcode -->
+        <div>
+          <label class="block text-[11px] font-bold text-stone-300 mb-1">رقم الباركود (Barcode) *</label>
+          <div class="flex items-center gap-2">
+            <input 
+              type="text" 
+              x-model="modalItem.barcode" 
+              placeholder="مثال: 6281007010115"
+              class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+            >
+            <button 
+              type="button" 
+              @click="generateRandomBarcode()"
+              class="h-12 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs touch-btn"
+              title="توليد باركود تلقائي"
+            >
+              <i class="fa-solid fa-wand-magic-sparkles text-kazyon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Name -->
+        <div>
+          <label class="block text-[11px] font-bold text-stone-300 mb-1">اسم المنتج (Item Name) *</label>
+          <input 
+            type="text" 
+            x-model="modalItem.itemName" 
+            placeholder="مثال: حليب كازيون كامل الدسم 1 لتر"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+          >
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-[11px] font-bold text-stone-300 mb-1">القسم / الصنف</label>
+          <select 
+            x-model="modalItem.category"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+          >
+            <template x-for="cat in categories" :key="cat">
+              <option :value="cat" x-text="cat"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Prices: Regular vs Promo -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">السعر العادي (ج.م)</label>
+            <input 
+              type="number" 
+              step="0.5" 
+              x-model.number="modalItem.regularPrice" 
+              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-kazyon mb-1">سعر العرض (البرومو)</label>
+            <input 
+              type="number" 
+              step="0.5" 
+              x-model.number="modalItem.promoPrice" 
+              placeholder="اختياري"
+              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-kazyon focus:outline-none focus:border-kazyon"
+            >
+          </div>
+        </div>
+
+        <!-- Quantities: Hall vs Warehouse -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-emerald-400 mb-1">الكمية بالصالة (الرف)</label>
+            <input 
+              type="number" 
+              x-model.number="modalItem.shopQty" 
+              min="0"
+              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-amber-400 mb-1">الكمية بالمستودع</label>
+            <input 
+              type="number" 
+              x-model.number="modalItem.warehouseQty" 
+              min="0"
+              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+        </div>
+
+        <!-- Shelf Location -->
+        <div>
+          <label class="block text-[11px] font-bold text-stone-300 mb-1">مكان الرف بالصالة (Shelf Location)</label>
+          <input 
+            type="text" 
+            x-model="modalItem.shelfLocation" 
+            placeholder="مثال: رف ألبان 2 - A01 أو ستاند العروض"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
+          >
+        </div>
+
+        <!-- Dates: Production & Expiry -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الإنتاج</label>
+            <input 
+              type="date" 
+              x-model="modalItem.productionDate" 
+              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الانتهاء (Expiry) *</label>
+            <input 
+              type="date" 
+              x-model="modalItem.expiryDate" 
+              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer (Min 55px height for thumbs) -->
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
+        <button 
+          type="button" 
+          @click="isItemModalOpen = false"
+          class="min-h-[55px] h-14 px-5 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-2xl text-xs font-bold touch-btn border border-dark-700"
+        >
+          إلغاء
+        </button>
+        <button 
+          type="button" 
+          @click="saveModalItem()"
+          class="min-h-[55px] h-14 px-7 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md flex items-center gap-2"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>حفظ الصنف</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 5. FIXED BOTTOM NAVIGATION BAR                                -->
+  <!-- ============================================================= -->
+  <div x-show="isAuth" x-cloak class="fixed bottom-9 inset-x-0 z-30 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 px-3 py-1 flex items-center justify-around max-w-lg mx-auto rounded-t-3xl shadow-2xl">
+    <!-- Tab 1: Inventory Hub -->
+    <button 
+      type="button" 
+      @click="activeTab = 'inventory'"
+      :class="activeTab === 'inventory' ? 'text-kazyon font-bold' : 'text-stone-400'"
+      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn"
+    >
+      <i class="fa-solid fa-boxes-stacked text-lg"></i>
+      <span class="text-[11px]">المخزون</span>
+    </button>
+
+    <!-- Tab 2: Quick Price Checker (Big Center Button) -->
+    <button 
+      type="button" 
+      @click="activeTab = 'price-checker'"
+      :class="activeTab === 'price-checker' ? 'text-kazyon font-bold' : 'text-stone-400'"
+      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn"
+    >
+      <div class="relative">
+        <i class="fa-solid fa-barcode text-xl"></i>
+        <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-kazyon"></span>
+      </div>
+      <span class="text-[11px]">كاشف الأسعار</span>
+    </button>
+
+    <!-- Tab 3: Security & Activity Logs (Admin Only) -->
+    <template x-if="currentUser.role === 'admin'">
+      <button 
+        type="button" 
+        @click="activeTab = 'security-logs'"
+        :class="activeTab === 'security-logs' ? 'text-emerald-400 font-bold' : 'text-stone-400'"
+        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn relative"
+      >
+        <div class="relative">
+          <i class="fa-solid fa-shield-halved text-lg"></i>
+          <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        </div>
+        <span class="text-[11px]">سجل الأمان</span>
+      </button>
+    </template>
+
+    <!-- Tab 4: Bulk Importer (Admin Only) -->
+    <template x-if="currentUser.role === 'admin'">
+      <button 
+        type="button" 
+        @click="activeTab = 'importer'"
+        :class="activeTab === 'importer' ? 'text-kazyon font-bold' : 'text-stone-400'"
+        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn"
+      >
+        <i class="fa-solid fa-file-import text-lg"></i>
+        <span class="text-[11px]">استيراد الشيت</span>
+      </button>
+    </template>
+
+    <!-- Fast Camera Trigger (For Staff) -->
+    <template x-if="currentUser.role !== 'admin'">
+      <button 
+        type="button" 
+        @click="startCameraScanner('inventory')"
+        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-3 touch-btn text-kazyon"
+      >
+        <i class="fa-solid fa-camera text-lg"></i>
+        <span class="text-[11px]">مسح كاميرا</span>
+      </button>
+    </template>
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 6. FIXED STICKY FOOTER BAR (Developed by A7med606)            -->
+  <!-- ============================================================= -->
+  <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950 border-t border-dark-800 px-3 py-2 flex items-center justify-between text-[11px] shadow-md">
+    <div class="flex items-center gap-1.5 font-medium text-stone-300">
+      <span>Developed with precision by web dev</span>
+      <span class="text-kazyon font-black">A7med606</span>
+    </div>
+
+    <!-- Clickable Styled Social & Profile Icons -->
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="https://www.facebook.com/a7med6060" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        title="Facebook: a7med6060"
+      >
+        <i class="fa-brands fa-facebook-f"></i>
+      </a>
+      <a 
+        href="https://www.instagram.com/a7med.606" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        title="Instagram: a7med.606"
+      >
+        <i class="fa-brands fa-instagram"></i>
+      </a>
+      <a 
+        href="https://a7med6060.blogspot.com/" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        title="Blog: a7med6060"
+      >
+        <i class="fa-solid fa-rss"></i>
+      </a>
+      <a 
+        href="https://github.com/A7med606" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        title="GitHub: A7med606"
+      >
+        <i class="fa-brands fa-github"></i>
+      </a>
+    </div>
+  </footer>
+
+
+  <!-- ============================================================= -->
+  <!-- 7. COMPLETE ALPINE.JS HIGH-PERFORMANCE LOGIC                   -->
+  <!-- ============================================================= -->
+  <script>
+    function kazyonApp() {
+      return {
+        // Multi-User Auth State & RBAC
+        isAuth: false,
+        currentUser: {
+          username: 'General',
+          name: 'المشرف General',
+          role: 'admin', // 'admin' | 'staff'
+          roleBadge: 'MAIN ADMIN'
+        },
+        credentials: { username: '', password: '' },
+        showPass: false,
+        loginError: '',
+
+        // IP Tracking & Network Status
+        clientIp: '192.168.1.104',
+        isDetectingIp: false,
+        activeSessions: [],
+        activityLogs: [],
+        logFilterUser: 'all',
+
+        // Real-Time Cross-Device Synchronization
+        syncChannel: null,
+        syncSessionId: 'sess_' + Math.random().toString(36).substring(2, 9),
+        realtimeNotice: { show: false, message: '', timeout: null },
+
+        // Navigation Tabs
+        activeTab: 'inventory', // 'inventory' | 'price-checker' | 'security-logs' | 'importer'
+
+        // Data & Filters
+        items: [],
+        categories: [
+          'ألبان وأجبان',
+          'بقالة جافة وبقوليات',
+          'مشروبات ومياه',
+          'مخبوزات وحلويات',
+          'زيوت وسمن',
+          'منظفات وعناية',
+          'مجمدات ولحوم',
+          'تسالي ومقرمشات'
+        ],
+        searchQuery: '',
+        selectedCategory: 'all',
+        statusFilter: 'all', // 'all' | 'promo' | 'low_stock' | 'expired' | 'alerts'
+
+        // Price Checker
+        priceSearchQuery: '',
+        priceResultItem: null,
+        priceNotFound: false,
+        priceNotFoundCode: '',
+
+        // Importer
+        dragOver: false,
+        isParsing: false,
+        stagedItems: [],
+
+        // Native Camera Scanner & Auto-Torch
+        isScannerOpen: false,
+        scannerTarget: 'inventory', // 'inventory' | 'price-checker'
+        html5QrCode: null,
+        cameraError: '',
+        torchOn: false,
+        autoTorchEnabled: true,
+        isLowLightDetected: false,
+        lightCheckInterval: null,
+        ambientLuminance: 120,
+        audioCtx: null,
+
+        // Modal for Add/Edit
+        isItemModalOpen: false,
+        modalItem: {},
+
+        // Detailed Product Card View (بطاقة تفصيلية مفردة)
+        isDetailModalOpen: false,
+        detailItem: null,
+        fastBarcodeInput: '',
+
+        // Toast Feedback
+        toast: { show: false, message: '', type: 'success', timeout: null },
+
+        // Intelligent Client-Side Caching, Offline Queue & Network State
+        isOnline: typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : true,
+        offlineQueue: [],
+        isSearching: false,
+        searchDebounceTimer: null,
+        isPriceSearching: false,
+        priceDebounceTimer: null,
+
+        // 1. OFFLINE-FIRST CACHING & INITIALIZATION
+        init() {
+          // Detect IP on launch
+          this.initIpDetection();
+
+          // Restore Auth Session if available
+          const authUser = localStorage.getItem('kazyon_auth_user_v2');
+          if (authUser) {
+            try {
+              this.currentUser = JSON.parse(authUser);
+              this.isAuth = true;
+            } catch (e) {
+              this.isAuth = false;
+            }
+          }
+
+          // Restore Inventory Cache (Instant 0ms retrieval)
+          const cached = localStorage.getItem('kazyon_inventory_v2');
+          if (cached) {
+            try {
+              this.items = JSON.parse(cached);
+              this.items.forEach(i => {
+                if (!i.shelfLocation) i.shelfLocation = i.notes || 'رف A-02';
+              });
+            } catch (e) {
+              console.warn('Failed to parse cached items', e);
+              this.loadDefaultSeedData();
+            }
+          } else {
+            this.loadDefaultSeedData();
+          }
+
+          // Restore Activity Logs
+          const cachedLogs = localStorage.getItem('kazyon_activity_logs_v2');
+          if (cachedLogs) {
+            try {
+              this.activityLogs = JSON.parse(cachedLogs);
+            } catch (e) {
+              this.activityLogs = [];
+            }
+          } else {
+            this.initDefaultAuditLogs();
+          }
+
+          // Restore Active Sessions
+          this.refreshActiveSessions();
+
+          // Initialize Real-Time Synchronization Bus
+          this.initRealtimeSync();
+
+          // Online / Offline Network Listeners
+          window.addEventListener('online', () => {
+            this.isOnline = true;
+            this.showToast('تمت استعادة الاتصال بالإنترنت! جاري مزامنة التعديلات...', 'success');
+            this.flushOfflineQueue();
+          });
+          window.addEventListener('offline', () => {
+            this.isOnline = false;
+            this.showToast('انقطع الاتصال - يعمل التطبيق محلياً 0ms دون فقدان للبيانات', 'info');
+          });
+
+          // Restore Offline Queue from Storage
+          try {
+            const savedQueue = localStorage.getItem('kazyon_offline_queue_v2');
+            if (savedQueue) {
+              this.offlineQueue = JSON.parse(savedQueue);
+            }
+          } catch (e) {
+            this.offlineQueue = [];
+          }
+
+          // Pre-warm Web Audio API on first mobile touch/interaction for instant beep response
+          const warmUpAudio = () => {
+            try {
+              const AudioCtx = window.AudioContext || window.webkitAudioContext;
+              if (AudioCtx && !this.audioCtx) {
+                this.audioCtx = new AudioCtx();
+              }
+              if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                this.audioCtx.resume();
+              }
+            } catch (e) {}
+          };
+          ['touchstart', 'click', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, warmUpAudio, { once: true, passive: true });
+          });
+
+          // Heartbeat interval for active sessions (keep-alive)
+          setInterval(() => {
+            if (this.isAuth) {
+              this.heartbeatSession();
+            }
+          }, 15000);
+        },
+
+        // Dynamic Client IP Detection (Local Network & WebRTC / Public IP)
+        async initIpDetection() {
+          this.isDetectingIp = true;
+          try {
+            // Check stored IP first
+            const savedIp = localStorage.getItem('kazyon_client_ip');
+            if (savedIp) {
+              this.clientIp = savedIp;
+            }
+
+            // Attempt online IP lookup with fast timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+            const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.ip) {
+                this.clientIp = data.ip;
+                localStorage.setItem('kazyon_client_ip', data.ip);
+              }
+            }
+          } catch (e) {
+            // Intranet IP fallback for offline/sandboxed retail floor terminals
+            if (!this.clientIp || this.clientIp === '192.168.1.104') {
+              const octet = Math.floor(100 + Math.random() * 50);
+              this.clientIp = `192.168.1.${octet}`;
+              localStorage.setItem('kazyon_client_ip', this.clientIp);
+            }
+          } finally {
+            this.isDetectingIp = false;
+            if (this.isAuth) {
+              this.heartbeatSession();
+            }
+          }
+        },
+
+        // Seed initial inventory data
+        loadDefaultSeedData() {
+          const today = new Date();
+          const formatDate = (days) => {
+            const d = new Date(today);
+            d.setDate(d.getDate() + days);
+            return d.toISOString().split('T')[0];
+          };
+
+          this.items = [
+            {
+              id: 'k1',
+              barcode: '6281007010115',
+              itemName: 'حليب المراعي كامل الدسم 1 لتر',
+              category: 'ألبان وأجبان',
+              regularPrice: 42.0,
+              promoPrice: 38.5,
+              shopQty: 8,
+              warehouseQty: 40,
+              shelfLocation: 'ثلاجة الألبان 2 - رف A-01',
+              productionDate: formatDate(-15),
+              expiryDate: formatDate(6),
+              status: 'expiring_soon',
+              statusText: 'يوشك على الانتهاء (6 أيام)',
+              notes: 'ثلاجة الألبان 2'
+            },
+            {
+              id: 'k2',
+              barcode: '6221008000421',
+              itemName: 'جبنة دومتي فيتا بلس 500 جم',
+              category: 'ألبان وأجبان',
+              regularPrice: 35.0,
+              promoPrice: 31.0,
+              shopQty: 2,
+              warehouseQty: 24,
+              shelfLocation: 'ستاند الأجبان - رف B-03',
+              productionDate: formatDate(-30),
+              expiryDate: formatDate(90),
+              status: 'low_stock',
+              statusText: 'نقص حاد على الرف',
+              notes: 'ستاند الأجبان'
+            },
+            {
+              id: 'k3',
+              barcode: '6221155021894',
+              itemName: 'تونة صن شاين قطع سهلة الفتح 185 جم',
+              category: 'بقالة جافة وبقوليات',
+              regularPrice: 65.0,
+              promoPrice: 58.0,
+              shopQty: 22,
+              warehouseQty: 80,
+              shelfLocation: 'ممر المعلبات 1 - رف C-04',
+              productionDate: formatDate(-60),
+              expiryDate: formatDate(360),
+              status: 'valid',
+              statusText: 'سليم ومتاح',
+              notes: 'ممر المعلبات 1'
+            },
+            {
+              id: 'k4',
+              barcode: '6223000551029',
+              itemName: 'زبادي نستله طبيعي 105 جم',
+              category: 'ألبان وأجبان',
+              regularPrice: 10.0,
+              promoPrice: 0,
+              shopQty: 0,
+              warehouseQty: 10,
+              shelfLocation: 'ثلاجة الزبادي - رف A-05',
+              productionDate: formatDate(-30),
+              expiryDate: formatDate(-2),
+              status: 'expired',
+              statusText: 'منتهي الصلاحية (سحب فوري)',
+              notes: 'مرتجعات المورد'
+            },
+            {
+              id: 'k5',
+              barcode: '6281006540026',
+              itemName: 'أرز كازيون بسمتي ممتاز 5 كجم',
+              category: 'بقالة جافة وبقوليات',
+              regularPrice: 195.0,
+              promoPrice: 175.0,
+              shopQty: 12,
+              warehouseQty: 60,
+              shelfLocation: 'ستاند العروض الرئيسي - أرضية 1',
+              productionDate: formatDate(-20),
+              expiryDate: formatDate(400),
+              status: 'valid',
+              statusText: 'سليم ومتاح',
+              notes: 'ستاند العروض الرئيسي'
+            },
+            {
+              id: 'k6',
+              barcode: '6221155000103',
+              itemName: 'زيت ذرة كازيون نقي 1.6 لتر',
+              category: 'زيوت وسمن',
+              regularPrice: 120.0,
+              promoPrice: 109.0,
+              shopQty: 3,
+              warehouseQty: 30,
+              shelfLocation: 'ممر الزيوت - رف D-02',
+              productionDate: formatDate(-40),
+              expiryDate: formatDate(250),
+              status: 'low_stock',
+              statusText: 'يحتاج تزويد الرف',
+              notes: 'ممر الزيوت'
+            }
+          ];
+          this.saveToStorage();
+        },
+
+        // Default initial audit trail logs
+        initDefaultAuditLogs() {
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = now.toISOString().split('T')[0];
+
+          this.activityLogs = [
+            {
+              id: 'log_01',
+              user: 'General',
+              role: 'admin',
+              ip: '192.168.1.104',
+              actionType: 'LOGIN',
+              details: 'تسجيل دخول المشرف العام وتفويض أمان الشبكة',
+              timestamp: timeStr,
+              date: dateStr
+            },
+            {
+              id: 'log_02',
+              user: 'admin',
+              role: 'staff',
+              ip: '192.168.1.118',
+              actionType: 'STOCK_TRANSFER',
+              details: 'نقل 5 قطع (حليب المراعي كامل الدسم) من المستودع إلى الرف A-01',
+              timestamp: timeStr,
+              date: dateStr
+            },
+            {
+              id: 'log_03',
+              user: 'admin',
+              role: 'staff',
+              ip: '192.168.1.118',
+              actionType: 'PRICE_CHECK',
+              details: 'فحص سعر سلعة بالكاميرا: جبنة دومتي فيتا بلس 500 جم',
+              timestamp: timeStr,
+              date: dateStr
+            }
+          ];
+          this.saveLogsToStorage();
+        },
+
+        // Persist Inventory to localStorage
+        saveToStorage() {
+          try {
+            localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
+          } catch (e) {
+            console.error('LocalStorage save error', e);
+          }
+        },
+
+        // Persist Logs to localStorage
+        saveLogsToStorage() {
+          try {
+            localStorage.setItem('kazyon_activity_logs_v2', JSON.stringify(this.activityLogs));
+          } catch (e) {}
+        },
+
+        // REAL-TIME SYNCHRONIZATION (BroadcastChannel + Storage Event Listener)
+        initRealtimeSync() {
+          try {
+            if ('BroadcastChannel' in window) {
+              this.syncChannel = new BroadcastChannel('kazyon_supermarket_sync_v2');
+              this.syncChannel.onmessage = (event) => {
+                this.handleRemoteSync(event.data);
+              };
+            }
+
+            // Also listen to window storage events for cross-tab multi-user sync
+            window.addEventListener('storage', (e) => {
+              if (e.key === 'kazyon_inventory_v2' && e.newValue) {
+                try {
+                  this.items = JSON.parse(e.newValue);
+                  if (this.detailItem) {
+                    const fresh = this.items.find(i => i.id === this.detailItem.id);
+                    if (fresh) this.detailItem = fresh;
+                  }
+                } catch (err) {}
+              }
+              if (e.key === 'kazyon_activity_logs_v2' && e.newValue) {
+                try {
+                  this.activityLogs = JSON.parse(e.newValue);
+                } catch (err) {}
+              }
+              if (e.key === 'kazyon_active_sessions_v2') {
+                this.refreshActiveSessions();
+              }
+            });
+          } catch (e) {
+            console.warn('Realtime sync setup issue', e);
+          }
+        },
+
+        // Broadcast local mutation to all connected staff/admins
+        broadcastUpdate(type, payload) {
+          const message = {
+            type,
+            sessionId: this.syncSessionId,
+            user: this.currentUser.username,
+            role: this.currentUser.role,
+            ip: this.clientIp,
+            timestamp: Date.now(),
+            payload
+          };
+
+          if (this.syncChannel) {
+            try {
+              this.syncChannel.postMessage(message);
+            } catch (e) {}
+          }
+
+          // Trigger cross-window storage change
+          localStorage.setItem('kazyon_sync_ping', JSON.stringify({ type, user: this.currentUser.username, ts: Date.now() }));
+        },
+
+        // Handle incoming sync event from other active devices/users
+        handleRemoteSync(data) {
+          if (!data || data.sessionId === this.syncSessionId) return;
+
+          // Reload items from cache
+          const cached = localStorage.getItem('kazyon_inventory_v2');
+          if (cached) {
+            try {
+              this.items = JSON.parse(cached);
+              if (this.detailItem) {
+                const fresh = this.items.find(i => i.id === this.detailItem.id);
+                if (fresh) this.detailItem = fresh;
+              }
+            } catch (e) {}
+          }
+
+          // Reload logs
+          const cachedLogs = localStorage.getItem('kazyon_activity_logs_v2');
+          if (cachedLogs) {
+            try {
+              this.activityLogs = JSON.parse(cachedLogs);
+            } catch (e) {}
+          }
+
+          this.refreshActiveSessions();
+
+          // Display floating real-time sync notification
+          let noticeText = `تزامن فوري: تحديث من ${data.user} (${data.ip})`;
+          if (data.type === 'STOCK_CHANGE') {
+            noticeText = `قام ${data.user} بتعديل كمية: ${data.payload?.itemName || 'صنف'}`;
+          } else if (data.type === 'STOCK_TRANSFER') {
+            noticeText = `قام ${data.user} بنقل بضاعة إلى الرف: ${data.payload?.itemName || 'صنف'}`;
+          } else if (data.type === 'ITEM_ADD' || data.type === 'ITEM_EDIT') {
+            noticeText = `تحديث صنف بواسطة ${data.user}: ${data.payload?.itemName || ''}`;
+          } else if (data.type === 'ITEM_DELETE') {
+            noticeText = `قام ${data.user} بحذف صنف من المخزن`;
+          } else if (data.type === 'USER_LOGIN') {
+            noticeText = `انضم مستخدم جديد: ${data.user} من عنوان IP: ${data.ip}`;
+          }
+
+          this.triggerRealtimeNotice(noticeText);
+        },
+
+        triggerRealtimeNotice(text) {
+          if (this.realtimeNotice.timeout) clearTimeout(this.realtimeNotice.timeout);
+          this.realtimeNotice.message = text;
+          this.realtimeNotice.show = true;
+          this.realtimeNotice.timeout = setTimeout(() => {
+            this.realtimeNotice.show = false;
+          }, 4500);
+        },
+
+        // Audit Trail Activity Logger
+        logActivity(actionType, details) {
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const dateStr = now.toISOString().split('T')[0];
+
+          const newLog = {
+            id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 100),
+            user: this.currentUser.username || 'General',
+            role: this.currentUser.role || 'admin',
+            ip: this.clientIp,
+            actionType,
+            details,
+            timestamp: timeStr,
+            date: dateStr
+          };
+
+          this.activityLogs.unshift(newLog);
+          if (this.activityLogs.length > 300) this.activityLogs.pop();
+          this.saveLogsToStorage();
+        },
+
+        // Session Keep-Alive & Active Users Registry
+        heartbeatSession() {
+          try {
+            const raw = localStorage.getItem('kazyon_active_sessions_v2');
+            let sessions = raw ? JSON.parse(raw) : [];
+            const now = Date.now();
+            const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+            // Remove stale sessions (> 45s)
+            sessions = sessions.filter(s => s.id !== this.syncSessionId && (now - s.lastSeen) < 45000);
+
+            // Add/update current session
+            sessions.unshift({
+              id: this.syncSessionId,
+              username: this.currentUser.username,
+              name: this.currentUser.name,
+              role: this.currentUser.role,
+              ip: this.clientIp,
+              device: navigator.userAgent.includes('Android') ? 'Android Mobile Floor' : 'Workstation Terminal',
+              loginTime: timeStr,
+              lastSeen: now
+            });
+
+            localStorage.setItem('kazyon_active_sessions_v2', JSON.stringify(sessions));
+            this.activeSessions = sessions;
+          } catch (e) {}
+        },
+
+        refreshActiveSessions() {
+          try {
+            const raw = localStorage.getItem('kazyon_active_sessions_v2');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              const now = Date.now();
+              this.activeSessions = parsed.filter(s => (now - s.lastSeen) < 45000);
+            }
+            if (this.activeSessions.length === 0) {
+              this.activeSessions = [
+                {
+                  id: this.syncSessionId,
+                  username: this.currentUser.username || 'General',
+                  name: this.currentUser.name || 'المشرف General',
+                  role: this.currentUser.role || 'admin',
+                  ip: this.clientIp,
+                  device: 'Android Terminal 01',
+                  loginTime: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                  lastSeen: Date.now()
+                }
+              ];
+            }
+          } catch (e) {}
+        },
+
+        // Filter Activity Logs
+        filteredActivityLogs() {
+          if (this.logFilterUser === 'all') {
+            return this.activityLogs;
+          }
+          return this.activityLogs.filter(l => l.user === this.logFilterUser);
+        },
+
+        clearActivityLogs() {
+          if (this.currentUser.role !== 'admin') {
+            this.showToast('غير مصرح: للمشرف العام فقط', 'error');
+            return;
+          }
+          if (confirm('هل ترغب بمسح كافة سجلات الأمان والتدقيق الحالية؟')) {
+            this.activityLogs = [];
+            this.saveLogsToStorage();
+            this.showToast('تم إفراغ سجل العمليات', 'info');
+          }
+        },
+
+        // Export Activity Logs to Excel
+        exportActivityLogsExcel() {
+          const headers = ['معرف العملية', 'التاريخ', 'الوقت', 'المستخدم', 'الدور (Role)', 'عنوان IP', 'نوع العملية', 'تفاصيل العملية'];
+          const rows = this.activityLogs.map(l => [
+            l.id,
+            l.date,
+            l.timestamp,
+            l.user,
+            l.role === 'admin' ? 'مشرف عام' : 'موظف فرع',
+            l.ip,
+            l.actionType,
+            l.details
+          ]);
+
+          const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'سجل الأمان');
+          XLSX.writeFile(wb, `سجل_امان_كازيون_${this.clientIp}_${new Date().toISOString().split('T')[0]}.xlsx`);
+          this.showToast('تم تصدير سجل الأمان إلى Excel بنجاح', 'success');
+        },
+
+        // Strict Role-Based Login Authentication
+        login() {
+          this.loginError = '';
+          const u = this.credentials.username.trim();
+          const p = this.credentials.password.trim();
+
+          // Role 1: Main Admin (General / 6060)
+          if (u === 'General' && p === '6060') {
+            this.currentUser = {
+              username: 'General',
+              name: 'المشرف General',
+              role: 'admin',
+              roleBadge: 'MAIN ADMIN'
+            };
+            this.isAuth = true;
+            localStorage.setItem('kazyon_auth_user_v2', JSON.stringify(this.currentUser));
+            this.heartbeatSession();
+
+            this.logActivity('LOGIN', `تسجيل دخول المشرف العام General من عنوان IP: ${this.clientIp}`);
+            this.broadcastUpdate('USER_LOGIN', { user: 'General', role: 'admin' });
+
+            this.showToast('مرحباً بك يا مشرف General! تم تسجيل الدخول بنجاح.', 'success');
+            if (window.confetti) {
+              window.confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+            }
+          }
+          // Role 2: Store Employee / Staff (admin / 123)
+          else if (u === 'admin' && p === '123') {
+            this.currentUser = {
+              username: 'admin',
+              name: 'موظف الفرع admin',
+              role: 'staff',
+              roleBadge: 'STORE STAFF'
+            };
+            this.isAuth = true;
+            localStorage.setItem('kazyon_auth_user_v2', JSON.stringify(this.currentUser));
+            if (this.activeTab === 'security-logs' || this.activeTab === 'importer') {
+              this.activeTab = 'inventory';
+            }
+            this.heartbeatSession();
+
+            this.logActivity('LOGIN', `تسجيل دخول موظف الفرع admin من عنوان IP: ${this.clientIp}`);
+            this.broadcastUpdate('USER_LOGIN', { user: 'admin', role: 'staff' });
+
+            this.showToast('مرحباً بك يا موظف كازيون admin! تم الدخول للمنظومة.', 'success');
+            if (window.confetti) {
+              window.confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+            }
+          } else {
+            this.loginError = 'بيانات غير صحيحة! تأكد من الحساب (المشرف: General / 6060 | موظف الفرع: admin / 123).';
+          }
+        },
+
+        logout() {
+          if (confirm('هل ترغب بتسجيل الخروج من المنظومة؟')) {
+            this.logActivity('LOGOUT', `تسجيل خروج المستخدم ${this.currentUser.username} من IP: ${this.clientIp}`);
+            this.isAuth = false;
+            localStorage.removeItem('kazyon_auth_user_v2');
+            this.credentials = { username: '', password: '' };
+            this.activeTab = 'inventory';
+
+            // Remove from active sessions
+            try {
+              const raw = localStorage.getItem('kazyon_active_sessions_v2');
+              if (raw) {
+                let sessions = JSON.parse(raw).filter(s => s.id !== this.syncSessionId);
+                localStorage.setItem('kazyon_active_sessions_v2', JSON.stringify(sessions));
+              }
+            } catch (e) {}
+          }
+        },
+
+        // 2. ONE-TAP INSTANT QUANTITY ADJUSTMENT (+1 / -1) WITH REAL-TIME BROADCAST
+        updateStock(item, target, delta) {
+          const oldShop = item.shopQty;
+          const oldWh = item.warehouseQty;
+
+          if (target === 'shop') {
+            item.shopQty = Math.max(0, item.shopQty + delta);
+          } else {
+            item.warehouseQty = Math.max(0, item.warehouseQty + delta);
+          }
+
+          // Recalculate status
+          this.recalcItemStatus(item);
+          this.saveToStorage();
+
+          // Audit Log & Real-time Broadcast
+          const targetName = target === 'shop' ? 'الرف (الصالة)' : 'المستودع';
+          const changeText = delta > 0 ? `+${delta}` : `${delta}`;
+          this.logActivity('STOCK_CHANGE', `تعديل رصيد (${item.itemName}) في ${targetName} بمقدار (${changeText}) قطعة`);
+          
+          const payload = {
+            itemId: item.id,
+            itemName: item.itemName,
+            target,
+            delta,
+            shopQty: item.shopQty,
+            warehouseQty: item.warehouseQty
+          };
+
+          if (this.isOnline) {
+            this.broadcastUpdate('STOCK_CHANGE', payload);
+          } else {
+            this.queueOfflineAction('STOCK_CHANGE', payload);
+          }
+
+          // Haptic feedback if supported on Android
+          if (navigator.vibrate) {
+            navigator.vibrate(30);
+          }
+        },
+
+        // 1-Tap Transfer Warehouse to Hall (نقل فوري)
+        transferWarehouseToHall(item, count) {
+          const move = Math.min(count, item.warehouseQty);
+          if (move <= 0) return;
+
+          item.warehouseQty -= move;
+          item.shopQty += move;
+          this.recalcItemStatus(item);
+          this.saveToStorage();
+
+          this.logActivity('STOCK_TRANSFER', `نقل فوري لـ (${move}) قطعة من المستودع إلى الرف: ${item.itemName} (${item.shelfLocation})`);
+          
+          const payload = {
+            itemId: item.id,
+            itemName: item.itemName,
+            count: move,
+            shopQty: item.shopQty,
+            warehouseQty: item.warehouseQty
+          };
+
+          if (this.isOnline) {
+            this.broadcastUpdate('STOCK_TRANSFER', payload);
+          } else {
+            this.queueOfflineAction('STOCK_TRANSFER', payload);
+          }
+
+          this.showToast(`تم تزويد الصالة بـ ${move} قطعة من ${item.itemName}`, 'success');
+          if (navigator.vibrate) {
+            navigator.vibrate([40, 30, 40]);
+          }
+        },
+
+        recalcItemStatus(item) {
+          if (item.expiryDate) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const exp = new Date(item.expiryDate);
+            exp.setHours(0,0,0,0);
+            const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+
+            if (diffDays < 0) {
+              item.status = 'expired';
+              item.statusText = 'منتهي الصلاحية';
+              return;
+            } else if (diffDays <= 15) {
+              item.status = 'expiring_soon';
+              item.statusText = `يوشك على الانتهاء (${diffDays} يوم)`;
+              return;
+            }
+          }
+
+          if (item.shopQty <= 3) {
+            item.status = 'low_stock';
+            item.statusText = 'نقص في الصالة';
+          } else {
+            item.status = 'valid';
+            item.statusText = 'سليم ومتاح';
+          }
+        },
+
+        // KPI calculations
+        calcTotalHall() {
+          return this.items.reduce((acc, curr) => acc + (curr.shopQty || 0), 0);
+        },
+        calcTotalWarehouse() {
+          return this.items.reduce((acc, curr) => acc + (curr.warehouseQty || 0), 0);
+        },
+        calcAlertsCount() {
+          return this.items.filter(i => i.status === 'expired' || i.status === 'low_stock').length;
+        },
+
+        // Real-Time Filtered Items
+        filteredItems() {
+          return this.items.filter(item => {
+            // Category filter
+            if (this.selectedCategory !== 'all' && item.category !== this.selectedCategory) {
+              return false;
+            }
+
+            // Status filter
+            if (this.statusFilter === 'promo') {
+              if (!item.promoPrice || item.promoPrice >= item.regularPrice) return false;
+            } else if (this.statusFilter === 'low_stock') {
+              if (item.status !== 'low_stock') return false;
+            } else if (this.statusFilter === 'expired') {
+              if (item.status !== 'expired') return false;
+            } else if (this.statusFilter === 'alerts') {
+              if (item.status !== 'expired' && item.status !== 'low_stock') return false;
+            }
+
+            // Search query
+            if (this.searchQuery.trim()) {
+              const q = this.searchQuery.toLowerCase().trim();
+              const matchName = item.itemName.toLowerCase().includes(q);
+              const matchBarcode = item.barcode.includes(q);
+              const matchCategory = item.category.toLowerCase().includes(q);
+              return matchName || matchBarcode || matchCategory;
+            }
+
+            return true;
+          });
+        },
+
+        // Quick Price Checker Lookup
+        checkPrice(code) {
+          if (!code) return;
+          const cleanCode = code.trim();
+          this.priceNotFound = false;
+          this.priceResultItem = null;
+
+          const found = this.items.find(i => i.barcode === cleanCode);
+          if (found) {
+            this.priceResultItem = found;
+            this.showToast(`تم فحص السعر: ${found.itemName}`, 'success');
+            this.logActivity('PRICE_CHECK', `فحص سعر سلعة: ${found.itemName} (${found.barcode})`);
+            if (navigator.vibrate) navigator.vibrate(50);
+          } else {
+            this.priceNotFound = true;
+            this.priceNotFoundCode = cleanCode;
+            this.showToast(`الباركود ${cleanCode} غير مسجل`, 'error');
+            this.logActivity('PRICE_CHECK', `محاولة فحص باركود غير مسجل: ${cleanCode}`);
+          }
+        },
+
+        // Debounced Search Inputs for Low-Tier Android Handsets
+        handleSearchInput(val) {
+          this.fastBarcodeInput = val;
+          this.isSearching = true;
+          if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+          this.searchDebounceTimer = setTimeout(() => {
+            this.searchQuery = val;
+            this.isSearching = false;
+          }, 250);
+        },
+
+        clearSearch() {
+          this.fastBarcodeInput = '';
+          this.searchQuery = '';
+          this.isSearching = false;
+          if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+        },
+
+        handlePriceSearchInput(val) {
+          this.priceSearchQuery = val;
+          this.isPriceSearching = true;
+          if (this.priceDebounceTimer) clearTimeout(this.priceDebounceTimer);
+          this.priceDebounceTimer = setTimeout(() => {
+            this.isPriceSearching = false;
+            if (val && val.trim().length >= 3) {
+              this.checkPrice(val);
+            }
+          }, 350);
+        },
+
+        // Offline Queueing & Real-Time Sync Flush
+        queueOfflineAction(type, payload) {
+          const action = {
+            id: 'off_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+            type,
+            payload,
+            timestamp: new Date().toISOString()
+          };
+          this.offlineQueue.push(action);
+          try {
+            localStorage.setItem('kazyon_offline_queue_v2', JSON.stringify(this.offlineQueue));
+          } catch (e) {}
+        },
+
+        flushOfflineQueue() {
+          if (!this.offlineQueue || this.offlineQueue.length === 0) return;
+          const count = this.offlineQueue.length;
+          this.offlineQueue.forEach(item => {
+            this.broadcastUpdate(item.type, item.payload);
+          });
+          this.offlineQueue = [];
+          try {
+            localStorage.removeItem('kazyon_offline_queue_v2');
+          } catch (e) {}
+          this.showToast(`تمت مزامنة (${count}) حركة مسجلة بنجاح مع الخادم`, 'success');
+        },
+
+        // Native Camera Scanner with Auto-Torch & Low-Light Detection
+        async startCameraScanner(target) {
+          this.scannerTarget = target;
+          this.cameraError = '';
+          this.isScannerOpen = true;
+          this.isLowLightDetected = false;
+
+          await this.$nextTick();
+
+          try {
+            if (typeof Html5Qrcode === 'undefined') {
+              this.cameraError = 'مكتبة المسح الضوئي غير محملة حالياً أو لا يوجد اتصال. يمكنك كتابة الباركود يدوياً.';
+              return;
+            }
+
+            if (this.html5QrCode) {
+              await this.html5QrCode.stop().catch(() => {});
+              this.html5QrCode = null;
+            }
+
+            const qrCode = new Html5Qrcode('camera-scanner-viewport');
+            this.html5QrCode = qrCode;
+
+            // Preferred back camera for Android
+            const config = {
+              fps: 15,
+              qrbox: { width: 260, height: 160 },
+              aspectRatio: 1.7777,
+            };
+
+            await qrCode.start(
+              { facingMode: 'environment' },
+              config,
+              (decodedText) => {
+                this.handleScannedBarcode(decodedText);
+              },
+              () => {
+                // scanning frame attempt
+              }
+            );
+
+            // Warm up audio context if suspended
+            if (this.audioCtx && this.audioCtx.state === 'suspended') {
+              this.audioCtx.resume().catch(() => {});
+            }
+
+            // Start ambient light analyzer for automatic low-light torch
+            if (this.lightCheckInterval) clearInterval(this.lightCheckInterval);
+            setTimeout(() => {
+              this.detectAmbientLight();
+            }, 450);
+            this.lightCheckInterval = setInterval(() => {
+              this.detectAmbientLight();
+            }, 800);
+
+          } catch (err) {
+            console.warn('Camera start error', err);
+            this.cameraError = 'تعذر تشغيل الكاميرا مباشرة. تأكد من منح الإذن ("Allow Camera") في متصفح أندرويد.';
+          }
+        },
+
+        // Real-Time Ambient Light Luminance Analyzer from Live Camera Frame
+        detectAmbientLight() {
+          if (!this.isScannerOpen) return;
+          const video = document.querySelector('#camera-scanner-viewport video');
+          if (!video || video.readyState < 2 || !video.videoWidth) return;
+
+          try {
+            if (!this._lightCanvas) {
+              this._lightCanvas = document.createElement('canvas');
+              this._lightCanvas.width = 32;
+              this._lightCanvas.height = 32;
+              this._lightCtx = this._lightCanvas.getContext('2d', { willReadFrequently: true });
+            }
+
+            this._lightCtx.drawImage(video, 0, 0, 32, 32);
+            const frame = this._lightCtx.getImageData(0, 0, 32, 32);
+            const data = frame.data;
+            let totalLuminance = 0;
+            const count = data.length / 4;
+
+            for (let i = 0; i < data.length; i += 4) {
+              // Standard perceived luminance: ITU-R BT.601
+              totalLuminance += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+            }
+
+            const avgLuminance = Math.round(totalLuminance / count);
+            this.ambientLuminance = avgLuminance;
+
+            // Low-light threshold in warehouse / aisles (typical dark setting < 65 out of 255)
+            const isDark = avgLuminance < 65;
+            this.isLowLightDetected = isDark;
+
+            // Auto-trigger torch in low-light if enabled and not already turned on
+            if (this.autoTorchEnabled && isDark && !this.torchOn) {
+              this.setTorch(true, true);
+            }
+          } catch (e) {
+            // Non-blocking frame check
+          }
+        },
+
+        // Apply Torch / Flashlight Constraints to Active Video Track
+        async setTorch(state, isAuto = false) {
+          try {
+            const video = document.querySelector('#camera-scanner-viewport video');
+            const stream = video ? video.srcObject : null;
+            let track = (stream && stream.getVideoTracks) ? stream.getVideoTracks()[0] : null;
+
+            if (!track && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+              const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+              track = tempStream.getVideoTracks()[0];
+            }
+
+            if (!track) {
+              if (!isAuto) this.showToast('تعذر العثور على مسار فيديو الكاميرا', 'info');
+              return;
+            }
+
+            const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+            if ('torch' in capabilities) {
+              await track.applyConstraints({
+                advanced: [{ torch: state }]
+              });
+              this.torchOn = state;
+              if (state && isAuto) {
+                this.showToast('تم تشغيل الفلاش تلقائياً (إضاءة منخفضة)', 'info');
+              } else if (!isAuto) {
+                this.showToast(state ? 'تم تشغيل الفلاش' : 'تم إيقاف الفلاش', 'info');
+              }
+            } else {
+              if (!isAuto) {
+                this.showToast('الفلاش غير مدعوم على هذه الكاميرا', 'info');
+              }
+            }
+          } catch (e) {
+            console.warn('Torch constraint error', e);
+            if (!isAuto) {
+              this.showToast('تعذر التحكم بالفلاش', 'info');
+            }
+          }
+        },
+
+        async toggleTorch() {
+          await this.setTorch(!this.torchOn, false);
+        },
+
+        async closeScanner() {
+          if (this.lightCheckInterval) {
+            clearInterval(this.lightCheckInterval);
+            this.lightCheckInterval = null;
+          }
+
+          // Safely shut off torch if it was active
+          if (this.torchOn) {
+            try {
+              const video = document.querySelector('#camera-scanner-viewport video');
+              const stream = video ? video.srcObject : null;
+              const track = (stream && stream.getVideoTracks) ? stream.getVideoTracks()[0] : null;
+              if (track) {
+                await track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+              }
+            } catch (e) {}
+          }
+
+          if (this.html5QrCode) {
+            try {
+              if (this.html5QrCode.isScanning) {
+                await this.html5QrCode.stop();
+              }
+              await this.html5QrCode.clear();
+            } catch (e) {
+              console.warn('Scanner stop error', e);
+            }
+            this.html5QrCode = null;
+          }
+          this.isScannerOpen = false;
+          this.torchOn = false;
+          this.isLowLightDetected = false;
+        },
+
+        handleScannedBarcode(barcode) {
+          const clean = barcode.trim();
+          this.closeScanner();
+
+          // Audio beep & vibration feedback
+          this.playBeep();
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+
+          if (this.scannerTarget === 'price-checker') {
+            this.priceSearchQuery = clean;
+            this.checkPrice(clean);
+          } else {
+            this.fastBarcodeInput = clean;
+            this.searchQuery = clean;
+            const found = this.items.find(i => i.barcode === clean);
+            if (found) {
+              this.showToast(`تم مسح الباركود بنجاح: ${found.itemName}`, 'success');
+              this.logActivity('BARCODE_SCAN', `مسح باركود سلعة بالكاميرا: ${found.itemName} (${clean})`);
+              this.openDetailModal(found);
+            } else {
+              this.showToast(`باركود غير مسجل (${clean})`, 'info');
+              this.logActivity('BARCODE_SCAN', `مسح باركود جديد غير مسجل: ${clean}`);
+              this.openItemModal({ 
+                barcode: clean, 
+                itemName: '', 
+                regularPrice: 0, 
+                promoPrice: 0, 
+                shopQty: 0, 
+                warehouseQty: 0,
+                shelfLocation: 'رف A-01' 
+              });
+            }
+          }
+        },
+
+        // 1. Open Detailed Product Card Modal
+        openDetailModal(item) {
+          if (!item) return;
+          this.detailItem = item;
+          this.isDetailModalOpen = true;
+          if (navigator.vibrate) navigator.vibrate(40);
+        },
+
+        // 2. Fast-Type Search & Instant Barcode Query
+        quickBarcodeLookup(input) {
+          if (!input || !input.trim()) {
+            this.showToast('يرجى كتابة رقم الباركود أو اسم السلعة', 'info');
+            return;
+          }
+          const clean = input.trim();
+          const cleanLower = clean.toLowerCase();
+
+          // 1. Exact Barcode Match
+          let found = this.items.find(i => i.barcode === clean);
+          // 2. Partial Barcode or Name Match
+          if (!found) {
+            found = this.items.find(i => 
+              i.barcode.toLowerCase().includes(cleanLower) || 
+              i.itemName.toLowerCase().includes(cleanLower)
+            );
+          }
+
+          if (found) {
+            this.openDetailModal(found);
+            this.showToast(`تم فتح بطاقة: ${found.itemName}`, 'success');
+            this.logActivity('BARCODE_SCAN', `استعلام سريع عن صنف: ${found.itemName}`);
+          } else {
+            this.showToast(`الباركود "${clean}" غير مسجل في المخزن`, 'error');
+            if (confirm(`الباركود "${clean}" غير مسجل. هل ترغب بإضافته كصنف جديد الآن؟`)) {
+              this.openItemModal({ 
+                barcode: clean, 
+                itemName: '', 
+                regularPrice: 0, 
+                promoPrice: 0, 
+                shopQty: 0, 
+                warehouseQty: 0,
+                shelfLocation: 'رف A-01'
+              });
+            }
+          }
+        },
+
+        // Copy Barcode to Clipboard
+        copyBarcode(code) {
+          if (!code) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(() => {
+              this.showToast(`تم نسخ الباركود: ${code}`, 'success');
+            }).catch(() => {
+              this.showToast(`الباركود: ${code}`, 'info');
+            });
+          } else {
+            this.showToast(`الباركود: ${code}`, 'info');
+          }
+        },
+
+        // Custom High-Precision Retail POS Scanner Alert Beep (Dual-Harmonic Punch)
+        playBeep(type = 'success') {
+          try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!this.audioCtx) {
+              this.audioCtx = new AudioCtx();
+            }
+            if (this.audioCtx.state === 'suspended') {
+              this.audioCtx.resume().catch(() => {});
+            }
+            const ctx = this.audioCtx;
+            const now = ctx.currentTime;
+
+            if (type === 'success') {
+              // High-clarity Retail POS Scanner Beep (Zebra / Motorola 2.48kHz dual-tone chime)
+              const osc1 = ctx.createOscillator();
+              const osc2 = ctx.createOscillator();
+              const gain = ctx.createGain();
+
+              osc1.type = 'sine';
+              osc1.frequency.setValueAtTime(2480, now); // Primary crisp 2.48 kHz carrier tone
+              osc1.frequency.exponentialRampToValueAtTime(2750, now + 0.08);
+
+              osc2.type = 'triangle';
+              osc2.frequency.setValueAtTime(3720, now); // Upper harmonic for clear penetration in loud store aisles
+
+              gain.gain.setValueAtTime(0.38, now);
+              gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09); // Snappy 90ms decay envelope
+
+              osc1.connect(gain);
+              osc2.connect(gain);
+              gain.connect(ctx.destination);
+
+              osc1.start(now);
+              osc2.start(now);
+              osc1.stop(now + 0.095);
+              osc2.stop(now + 0.095);
+            } else {
+              // Distinct rejection / unregistered barcode tone
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sawtooth';
+              osc.frequency.setValueAtTime(320, now);
+              gain.gain.setValueAtTime(0.22, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now);
+              osc.stop(now + 0.18);
+            }
+          } catch (e) {
+            console.warn('Audio beep error', e);
+          }
+        },
+
+        // Add/Edit Modal
+        openItemModal(item) {
+          if (item) {
+            this.modalItem = { ...item };
+            if (!this.modalItem.shelfLocation) {
+              this.modalItem.shelfLocation = this.modalItem.notes || 'رف A-01';
+            }
+          } else {
+            const today = new Date().toISOString().split('T')[0];
+            const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+            this.modalItem = {
+              id: '',
+              barcode: '',
+              itemName: '',
+              category: this.categories[0],
+              regularPrice: 20,
+              promoPrice: 0,
+              shopQty: 5,
+              warehouseQty: 20,
+              shelfLocation: 'رف A-01',
+              productionDate: today,
+              expiryDate: future,
+              notes: ''
+            };
+          }
+          this.isItemModalOpen = true;
+        },
+
+        saveModalItem() {
+          if (!this.modalItem.barcode || !this.modalItem.itemName) {
+            this.showToast('يرجى ملء اسم المنتج ورقم الباركود', 'error');
+            return;
+          }
+
+          if (this.modalItem.id) {
+            // Update
+            const idx = this.items.findIndex(i => i.id === this.modalItem.id);
+            if (idx !== -1) {
+              this.recalcItemStatus(this.modalItem);
+              this.items[idx] = { ...this.modalItem };
+              if (this.detailItem && this.detailItem.id === this.modalItem.id) {
+                this.detailItem = this.items[idx];
+              }
+              this.showToast('تم تحديث الصنف بنجاح', 'success');
+              this.logActivity('ITEM_EDIT', `تعديل بيانات الصنف: ${this.modalItem.itemName} (${this.modalItem.barcode})`);
+              this.broadcastUpdate('ITEM_EDIT', { item: this.modalItem });
+            }
+          } else {
+            // Add new
+            const newItem = {
+              ...this.modalItem,
+              id: 'k_' + Date.now(),
+            };
+            this.recalcItemStatus(newItem);
+            this.items.unshift(newItem);
+            this.showToast('تمت إضافة المنتج للمخزن', 'success');
+            this.logActivity('ITEM_ADD', `إضافة صنف جديد للمخزن: ${newItem.itemName} (${newItem.barcode})`);
+            this.broadcastUpdate('ITEM_ADD', { item: newItem });
+            this.openDetailModal(newItem);
+          }
+
+          this.saveToStorage();
+          this.isItemModalOpen = false;
+        },
+
+        deleteItem(item) {
+          if (this.currentUser.role !== 'admin') {
+            this.showToast('غير مصرح: صلاحية الحذف مقتصرة على المشرف العام فقط', 'error');
+            return;
+          }
+
+          if (confirm(`هل أنت متأكد من حذف "${item.itemName}" من قائمة المخزون؟`)) {
+            this.items = this.items.filter(i => i.id !== item.id);
+            if (this.detailItem && this.detailItem.id === item.id) {
+              this.isDetailModalOpen = false;
+              this.detailItem = null;
+            }
+            this.saveToStorage();
+            this.logActivity('ITEM_DELETE', `حذف الصنف نهائياً: ${item.itemName} (${item.barcode})`);
+            this.broadcastUpdate('ITEM_DELETE', { itemId: item.id });
+            this.showToast('تم حذف المنتج', 'info');
+          }
+        },
+
+        generateRandomBarcode() {
+          this.modalItem.barcode = '628' + Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        },
+
+        // Bulk File Importer (SheetJS)
+        handleFileInput(e) {
+          const file = e.target.files[0];
+          if (file) this.processFile(file);
+        },
+
+        handleFileDrop(e) {
+          this.dragOver = false;
+          const file = e.dataTransfer.files[0];
+          if (file) this.processFile(file);
+        },
+
+        async processFile(file) {
+          this.isParsing = true;
+          const fileName = (file.name || '').toLowerCase();
+
+          // 1. PDF File Parsing via PDF.js
+          if (fileName.endsWith('.pdf')) {
+            try {
+              if (typeof pdfjsLib === 'undefined') {
+                this.showToast('مكتبة قراءة الـ PDF غير متاحة حالياً', 'error');
+                this.isParsing = false;
+                return;
+              }
+
+              const arrayBuffer = await file.arrayBuffer();
+              const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+              const pdf = await loadingTask.promise;
+              let fullText = '';
+
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+              }
+
+              // Extract lines and items from PDF text
+              const lines = fullText.split('\n').map(l => l.trim()).filter(Boolean);
+              const parsed = [];
+              let itemCounter = 1;
+
+              // Regular expression for international barcodes (8-14 digits)
+              const barcodeRegex = /\b(\d{8,14})\b/g;
+
+              for (const line of lines) {
+                let match;
+                while ((match = barcodeRegex.exec(line)) !== null) {
+                  const barcode = match[1];
+                  // Extract surrounding text for item name if possible
+                  let nameCandidate = line.replace(barcode, '').trim();
+                  nameCandidate = nameCandidate.replace(/[|،,;:\-–—]+/g, ' ').trim();
+                  if (!nameCandidate || nameCandidate.length < 3) {
+                    nameCandidate = `منتج كازيون مستورد #${itemCounter}`;
+                  }
+
+                  // Find potential price numbers in the line
+                  const numbers = line.match(/\b\d+(\.\d{1,2})?\b/g) || [];
+                  const price = numbers.find(n => n !== barcode && parseFloat(n) > 1) ? parseFloat(numbers.find(n => n !== barcode && parseFloat(n) > 1)) : 25.0;
+
+                  parsed.push({
+                    id: 'imp_pdf_' + itemCounter + '_' + Date.now(),
+                    barcode,
+                    itemName: nameCandidate.substring(0, 60),
+                    category: this.categories[itemCounter % this.categories.length],
+                    regularPrice: price,
+                    promoPrice: 0,
+                    shopQty: 8,
+                    warehouseQty: 24,
+                    expiryDate: new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0],
+                    status: 'valid',
+                    statusText: 'مستورد من ملف PDF'
+                  });
+                  itemCounter++;
+                }
+              }
+
+              if (parsed.length > 0) {
+                this.stagedItems = parsed;
+                this.showToast(`تم استخراج ${parsed.length} صنف/باركود من ملف الـ PDF بنجاح!`, 'success');
+              } else {
+                this.showToast('لم يتم العثور على أرقام باركود صالحة داخل ملف الـ PDF', 'error');
+              }
+            } catch (err) {
+              console.error('PDF parsing error', err);
+              this.showToast('تعذر تحليل ملف PDF. تأكد من أن الملف نصي وليس صورة ممسوحة ضوئياً', 'error');
+            } finally {
+              this.isParsing = false;
+            }
+            return;
+          }
+
+          // 2. Excel & CSV File Parsing via SheetJS
+          const reader = new FileReader();
+
+          reader.onload = (e) => {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+              const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+              if (json && json.length > 1) {
+                const parsed = [];
+                for (let i = 1; i < json.length; i++) {
+                  const row = json[i];
+                  const barcode = String(row[0] || '').trim();
+                  const itemName = String(row[1] || '').trim();
+                  if (!barcode && !itemName) continue;
+
+                  const category = String(row[2] || this.categories[0]).trim();
+                  const regularPrice = parseFloat(row[3]) || 25.0;
+                  const promoPrice = parseFloat(row[4]) || 0;
+                  const shopQty = parseInt(row[5], 10) || 5;
+                  const warehouseQty = parseInt(row[6], 10) || 15;
+                  const expiryDate = String(row[7] || '').trim();
+
+                  parsed.push({
+                    id: 'imp_' + i + '_' + Date.now(),
+                    barcode: barcode || ('628' + Math.floor(Math.random() * 1000000000)),
+                    itemName: itemName || 'منتج مستورد',
+                    category,
+                    regularPrice,
+                    promoPrice,
+                    shopQty,
+                    warehouseQty,
+                    expiryDate,
+                    status: 'valid',
+                    statusText: 'مستورد من الشيت'
+                  });
+                }
+
+                this.stagedItems = parsed;
+                this.showToast(`تم قراءة ${parsed.length} صنف من الملف بنجاح!`, 'success');
+              } else {
+                this.showToast('الملف فارغ أو لا يحتوي على صفوف صالحة', 'error');
+              }
+            } catch (err) {
+              console.error('File parsing error', err);
+              this.showToast('تعذر قراءة بيانات هذا الملف. تأكد من صيغة Excel أو CSV', 'error');
+            } finally {
+              this.isParsing = false;
+            }
+          };
+
+          reader.readAsArrayBuffer(file);
+        },
+
+        commitImport(mode) {
+          const count = this.stagedItems.length;
+          if (mode === 'replace') {
+            this.items = [...this.stagedItems];
+            this.showToast('تم استبدال كامل المخزون بالشيت الجديد!', 'success');
+            this.logActivity('BULK_IMPORT', `استبدال شامل لقاعدة المخزون بـ (${count}) صنف من الشيت`);
+          } else {
+            this.items = [...this.stagedItems, ...this.items];
+            this.showToast(`تم دمج ${count} صنف جديد مع المخزون!`, 'success');
+            this.logActivity('BULK_IMPORT', `دمج (${count}) صنف جديد من الشيت مع المخزون القائم`);
+          }
+
+          this.stagedItems.forEach(it => this.recalcItemStatus(it));
+          this.saveToStorage();
+          this.broadcastUpdate('BULK_IMPORT', { mode, count });
+          this.stagedItems = [];
+          this.activeTab = 'inventory';
+
+          if (window.confetti) {
+            window.confetti({ particleCount: 40, spread: 60 });
+          }
+        },
+
+        downloadSampleExcel() {
+          const sampleRows = [
+            ['رقم الباركود', 'اسم المنتج', 'الصنف / القسم', 'السعر العادي', 'سعر البرومو', 'الكمية بالصالة', 'الكمية بالمخزن', 'تاريخ الانتهاء'],
+            ['6281007010115', 'حليب كازيون كامل الدسم 1 لتر', 'ألبان وأجبان', 42, 38.5, 10, 50, '2026-10-15'],
+            ['6221008000421', 'جبنة فيتا دومتي 500 جم', 'ألبان وأجبان', 35, 31, 5, 30, '2026-11-20'],
+            ['6281006540026', 'أرز كازيون بسمتي 5 كجم', 'بقالة جافة وبقوليات', 195, 175, 12, 60, '2027-01-01'],
+            ['6221155000103', 'زيت ذرة نقي 1.6 لتر', 'زيوت وسمن', 120, 109, 4, 25, '2026-12-30']
+          ];
+
+          const ws = XLSX.utils.aoa_to_sheet(sampleRows);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'المخزون');
+          XLSX.writeFile(wb, 'نموذج_جرد_كازيون_A7med606.xlsx');
+          this.showToast('تم تنزيل ملف الإكسيل التجريبي', 'success');
+        },
+
+        exportInventoryExcel() {
+          const headers = ['رقم الباركود', 'اسم المنتج', 'الصنف / القسم', 'السعر العادي', 'سعر البرومو', 'الكمية بالصالة', 'الكمية بالمخزن', 'تاريخ الانتهاء', 'الحالة'];
+          const rows = this.items.map(i => [
+            i.barcode,
+            i.itemName,
+            i.category,
+            i.regularPrice,
+            i.promoPrice || '',
+            i.shopQty,
+            i.warehouseQty,
+            i.expiryDate || '',
+            i.statusText || ''
+          ]);
+
+          const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'مخزون كازيون');
+          XLSX.writeFile(wb, `مخزون_كازيون_${new Date().toISOString().split('T')[0]}.xlsx`);
+          this.showToast('تم تصدير المخزون الحالي إلى ملف Excel بنجاح', 'success');
+        },
+
+        showToast(message, type = 'success') {
+          if (this.toast.timeout) clearTimeout(this.toast.timeout);
+          this.toast.message = message;
+          this.toast.type = type;
+          this.toast.show = true;
+          this.toast.timeout = setTimeout(() => {
+            this.toast.show = false;
+          }, 3500);
+        }
+      };
+    }
+  </script>
+</body>
+</html>
