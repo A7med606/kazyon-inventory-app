@@ -3,19 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kazyon Smart ERP & Inventory Core</title>
+    <title>دليل النظام والتوثيق - Kazyon Smart ERP</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine.js CDN -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- SheetJS for Excel Parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- HTML5 Barcode Scanner CDN -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
     <script>
         tailwind.config = {
             theme: {
@@ -32,169 +22,104 @@
     </script>
     <style>
         body { background-color: #121212; color: #e5e7eb; font-family: system-ui, -apple-system, sans-serif; }
-        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-kazyonOrange selection:text-white" x-data="kazyonApp()">
+<body class="min-h-screen flex flex-col justify-between selection:bg-kazyonOrange selection:text-white">
 
-    <!-- Main Container -->
-    <main class="flex-grow">
-        
-        <!-- 1. LOGIN SCREEN -->
-        <div x-show="!isLoggedIn" x-cloak class="flex items-center justify-center min-h-[85vh] px-4">
-            <div class="bg-kazyonCard border border-zinc-800 p-8 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
-                <div class="absolute top-0 left-0 right-0 h-1 bg-kazyonOrange"></div>
-                
-                <div class="text-center mb-8">
-                    <h1 class="text-3xl font-black tracking-wider text-white mb-2">KAZYON <span class="text-kazyonOrange">ERP</span></h1>
-                    <p class="text-zinc-400 text-sm">نظام إدارة المخزون الذكي - فرع العمليات</p>
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto p-4 md:p-8 space-y-10 my-6">
+
+        <!-- Hero Section -->
+        <div class="bg-kazyonCard border border-zinc-800 p-8 md:p-12 rounded-3xl text-center space-y-4 relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 left-0 right-0 h-1.5 bg-kazyonOrange"></div>
+            <span class="text-xs font-bold tracking-widest text-kazyonOrange uppercase bg-kazyonOrange/10 px-4 py-1.5 rounded-full inline-block">وثائق النظام الرسمية</span>
+            <h1 class="text-3xl md:text-5xl font-black text-white tracking-wide">Kazyon Smart ERP & Inventory Core</h1>
+            <p class="text-sm md:text-base text-zinc-400 max-w-2xl mx-auto">منظومة رقمية متطورة لإدارة عمليات فروع كازيون، مصممة لأداء فائق السرعة، ومزامنة سحابية لحظية، ودعم كامل لأجهزة الأندرويد والهواتف الذكية.</p>
+            <div class="pt-4 flex flex-wrap justify-center gap-4">
+                <a href="index.html" class="bg-kazyonOrange hover:bg-kazyonOrangeHover text-white font-bold py-3 px-6 rounded-xl transition text-sm shadow-lg shadow-kazyonOrange/20">
+                    🚀 الانتقال للنظام المباشر
+                </a>
+                <a href="https://github.com/A7med606/kazyon-inventory-app" target="_blank" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold py-3 px-6 rounded-xl transition text-sm border border-zinc-700">
+                    📂 استعراض الكود (GitHub)
+                </a>
+            </div>
+        </div>
+
+        <!-- Tech Stack & Languages -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">🛠️ التقنيات واللغات المستخدمة (Tech Stack)</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl space-y-2">
+                    <div class="text-kazyonOrange font-bold text-lg">HTML5 & Tailwind</div>
+                    <p class="text-xs text-zinc-400">هيكلة نظيفة وتصميم مرن ومتجاوب بالكامل مع الشاشات المختلفة بفضل إطار العمل السريع.</p>
                 </div>
-
-                <form @.prevent="handleLogin" class="space-y-5">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">اسم المستخدم</label>
-                        <input type="text" x-model="loginForm.username" required placeholder="أدخل اسم المستخدم"
-                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-kazyonOrange transition text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">كلمة المرور</label>
-                        <input type="password" x-model="loginForm.password" required placeholder="••••••••"
-                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-kazyonOrange transition text-sm">
-                    </div>
-
-                    <p x-show="loginError" class="text-red-500 text-xs text-center font-medium" x-text="loginError"></p>
-
-                    <button type="submit" class="w-full bg-kazyonOrange hover:bg-kazyonOrangeHover text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-kazyonOrange/20 min-h-[55px] flex items-center justify-center">
-                        تسجيل الدخول للنظام
-                    </button>
-                </form>
-
-                <div class="mt-6 pt-6 border-t border-zinc-800 text-center">
-                    <a :href="whatsappLink" target="_blank" class="inline-flex items-center justify-center w-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-semibold py-3 px-4 rounded-xl transition text-sm min-h-[50px]">
-                        💬 طلب حساب خاص (واتساب)
-                    </a>
+                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl space-y-2">
+                    <div class="text-kazyonOrange font-bold text-lg">Alpine.js</div>
+                    <p class="text-xs text-zinc-400">إدارة تفاعلية خفيفة وسريعة للبيانات وحالات الواجهة دون الحاجة لمكتبات معقدة ثقيلة.</p>
+                </div>
+                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl space-y-2">
+                    <div class="text-kazyonOrange font-bold text-lg">Firebase Cloud</div>
+                    <p class="text-xs text-zinc-400">قاعدة بيانات سحابية متزامنة تضمن ظهور تعديلات وإضافات الموظفين لجميع الأجهزة في نفس اللحظة.</p>
+                </div>
+                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl space-y-2">
+                    <div class="text-kazyonOrange font-bold text-lg">SheetJS & Barcode</div>
+                    <p class="text-xs text-zinc-400">مكتبات معالجة ملفات الإكسيل (.xlsx) وقراءة الباركود عبر كاميرا الموبايل بكفاءة عالية.</p>
                 </div>
             </div>
         </div>
 
-        <!-- 2. DASHBOARD & APP INTERFACE -->
-        <div x-show="isLoggedIn" x-cloak class="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
-            
-            <!-- Top Navbar / Header -->
-            <header class="bg-kazyonCard border border-zinc-800 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-3 space-x-reverse">
-                    <div class="w-10 h-10 rounded-xl bg-kazyonOrange/10 border border-kazyonOrange/30 flex items-center justify-center text-kazyonOrange font-black text-xl">K</div>
-                    <div>
-                        <h2 class="font-bold text-white text-base" x-text="currentUser.role === 'admin' ? 'مدير النظام (General)' : 'موظف الفرع (Staff)'"></h2>
-                        <span class="text-xs text-emerald-400 flex items-center gap-1">● متصل سحابياً (Real-time)</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <button @click="logout" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-xl text-xs font-semibold transition min-h-[44px]">
-                        تسجيل الخروج
-                    </button>
-                </div>
-            </header>
-
-            <!-- Main Operational Dashboard -->
+        <!-- Core Features -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">✨ المميزات والخصائص الرئيسية</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                
-                <!-- Quick Scanner & Actions Card -->
-                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl space-y-4 md:col-span-1">
-                    <h3 class="font-bold text-white text-sm flex items-center gap-2">📷 ماسح الباركود السريع</h3>
-                    <div class="space-y-3">
-                        <button @click="startScanner" class="w-full bg-kazyonOrange hover:bg-kazyonOrangeHover text-white font-bold py-3.5 rounded-xl transition min-h-[55px] text-sm shadow-md">
-                            فتح الكاميرا للمسح
-                        </button>
-                        <input type="text" x-model="searchQuery" @input.debounce.300ms="searchProduct" placeholder="أو ابحث برقم الباركود / الاسم..." 
-                            class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-kazyonOrange">
-                    </div>
-
-                    <!-- Admin Only Bulk Upload -->
-                    <template x-if="currentUser.role === 'admin'">
-                        <div class="pt-4 border-t border-zinc-800 space-y-3">
-                            <h3 class="font-bold text-white text-sm">📊 رفع شيت جماعي (.xlsx / .pdf)</h3>
-                            <input type="file" @click.stop @change="handleFileUpload" accept=".xlsx, .xls, .pdf" class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-kazyonOrange hover:file:bg-zinc-700 cursor-pointer">
-                        </div>
-                    </template>
+                <div class="bg-kazyonCard border border-zinc-800 p-6 rounded-2xl space-y-3">
+                    <span class="text-2xl">⚡</span>
+                    <h3 class="font-bold text-white text-base">وضع العمل دون اتصال (Offline-First)</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed">يعتمد على التخزين المحلي المؤقت لفتح البيانات في أجزاء من الثانية حتى عند ضعف الإنترنت بين ممرات الفرع.</p>
                 </div>
-
-                <!-- Product Display & Results Grid -->
-                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl md:col-span-2 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-bold text-white text-sm">📦 قاعدة بيانات المنتجات الحية</h3>
-                        <span class="text-xs bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full" x-text="products.length + ' منتج متاح'"></span>
-                    </div>
-
-                    <!-- Scanner Viewfinder Modal / Area -->
-                    <div x-show="showScanner" class="bg-zinc-900 p-4 rounded-xl border border-zinc-700 text-center space-y-3">
-                        <div id="reader" class="overflow-hidden rounded-lg"></div>
-                        <button @click="stopScanner" class="bg-red-600/20 text-red-400 border border-red-500/30 px-4 py-2 rounded-xl text-xs font-bold">إغلاق الكاميرا</button>
-                    </div>
-
-                    <!-- Products List Grid -->
-                    <div class="space-y-3 max-h-[450px] overflow-y-auto pr-1">
-                        <template x-for="product in filteredProducts" :key="product.id">
-                            <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-xl flex items-center justify-between gap-4">
-                                <div class="space-y-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-white font-bold text-sm" x-text="product.name"></span>
-                                        <span class="text-xs bg-kazyonOrange/20 text-kazyonOrange px-2 py-0.5 rounded" x-text="product.category"></span>
-                                    </div>
-                                    <p class="text-xs text-zinc-400">الباركود: <span class="font-mono text-zinc-200" x-text="product.barcode"></span></p>
-                                    <div class="flex gap-4 text-xs pt-1">
-                                        <span class="text-zinc-300">مخزن: <strong class="text-white" x-text="product.warehouseQty"></strong></span>
-                                        <span class="text-zinc-300">صالة: <strong class="text-white" x-text="product.hallQty"></strong></span>
-                                        <span class="text-emerald-400">السعر: <strong x-text="product.price + ' ج.م'"></strong></span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button @click="adjustQty(product.id, 'hallQty', 1)" class="w-10 h-10 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold text-sm flex items-center justify-center">+</button>
-                                    <button @click="adjustQty(product.id, 'hallQty', -1)" class="w-10 h-10 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-bold text-sm flex items-center justify-center">-</button>
-                                </div>
-                            </div>
-                        </template>
-                        <p x-show="products.length === 0" class="text-center text-zinc-500 text-xs py-8">لا توجد منتجات مسجلة حالياً. أضف منتجاً أو ارفع شيت البيانات.</p>
-                    </div>
+                <div class="bg-kazyonCard border border-zinc-800 p-6 rounded-2xl space-y-3">
+                    <span class="text-2xl">📷</span>
+                    <h3 class="font-bold text-white text-base">ماسح باركود ذكي ومتطور</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed">دعم كاميرا الهواتف الذكية والأندرويد لالتقاط وقراءة الأكواد واستعراض بطاقة المنتج التفصيلية فورياً.</p>
                 </div>
-
+                <div class="bg-kazyonCard border border-zinc-800 p-6 rounded-2xl space-y-3">
+                    <span class="text-2xl">📊</span>
+                    <h3 class="font-bold text-white text-base">استيراد جماعي للملفات</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed">إمكانية رفع ملفات الإكسيل أو الـ PDF لإنشاء وإضافة أصناف جديدة للمخزون دفعة واحدة بدون إدخال يدوي.</p>
+                </div>
             </div>
+        </div>
 
-            <!-- Admin Security & IP Logs Section -->
-            <template x-if="currentUser.role === 'admin'">
-                <div class="bg-kazyonCard border border-zinc-800 p-5 rounded-2xl space-y-4">
-                    <h3 class="font-bold text-white text-sm flex items-center gap-2">🛡️ سجل النشاطات وعناوين الـ IP (للإدارة)</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-right text-xs text-zinc-400">
-                            <thead class="bg-zinc-900 text-zinc-200 uppercase">
-                                <tr>
-                                    <th class="p-3">المستخدم</th>
-                                    <th class="p-3">عنوان IP الجهاز</th>
-                                    <th class="p-3">وقت الدخول</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="log in activityLogs">
-                                    <tr class="border-b border-zinc-800">
-                                        <td class="p-3 font-semibold text-white" x-text="log.user"></td>
-                                        <td class="p-3 font-mono text-kazyonOrange" x-text="log.ip"></td>
-                                        <td class="p-3 text-zinc-500" x-text="log.time"></td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+        <!-- Authentication & Roles Guide -->
+        <div class="bg-kazyonCard border border-zinc-800 p-6 md:p-8 rounded-3xl space-y-6">
+            <h2 class="text-xl font-bold text-white text-center">🔑 صلاحيات ومستويات الدخول للنظام</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Admin Role -->
+                <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-white text-sm">👑 المدير العام (Main Admin)</span>
+                        <span class="text-emerald-400 text-xs bg-emerald-500/10 px-2.5 py-1 rounded-full">صلاحيات كاملة</span>
                     </div>
+                    <p class="text-xs text-zinc-400">اسم المستخدم: <code class="text-kazyonOrange font-mono">General</code> | كلمة المرور: <code class="text-kazyonOrange font-mono">6060</code></p>
+                    <p class="text-xs text-zinc-500">يتحكم في إدارة المخزون، استيراد الشيتات، مراقبة أسعار المنتجات، ومتابعة سجلات عناوين الـ IP الخاصة بالمستخدمين المتصلين.</p>
                 </div>
-            </template>
-
+                <!-- Staff Role -->
+                <div class="bg-zinc-900 border border-zinc-800 p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-white text-sm">⚡ موظف الفرع (Store Staff)</span>
+                        <span class="text-kazyonOrange text-xs bg-kazyonOrange/10 px-2.5 py-1 rounded-full">صلاحيات التشغيل الميداني</span>
+                    </div>
+                    <p class="text-xs text-zinc-400">اسم المستخدم: <code class="text-kazyonOrange font-mono">admin</code> | كلمة المرور: <code class="text-kazyonOrange font-mono">123</code></p>
+                    <p class="text-xs text-zinc-500">واجهة مبسطة للغاية مصممة للإبهام الواحد، مخصصة لإضافة المنتجات، فحص الأسعار بالكاميرا، والتحديث الفوري للكميات.</p>
+                </div>
+            </div>
         </div>
 
     </main>
 
-    <!-- Personalized Sticky Footer -->
-    <footer class="bg-kazyonCard border-t border-zinc-800 py-4 px-6 text-center text-xs text-zinc-400 mt-8">
-        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+    <!-- Footer -->
+    <footer class="bg-kazyonCard border-t border-zinc-800 py-6 px-6 text-center text-xs text-zinc-400">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <span class="font-medium text-zinc-300">Developed with precision by web dev A7med606</span>
             <div class="flex items-center gap-4">
                 <a href="https://www.facebook.com/a7med6060" target="_blank" class="hover:text-kazyonOrange transition">Facebook</a>
@@ -205,138 +130,5 @@
         </div>
     </footer>
 
-    <!-- Application Script Logic -->
-    <script>
-        function kazyonApp() {
-            return {
-                isLoggedIn: false,
-                currentUser: { role: '', username: '' },
-                loginForm: { username: '', password: '' },
-                loginError: '',
-                searchQuery: '',
-                showScanner: false,
-                products: [],
-                activityLogs: [],
-                clientIp: '192.168.1.' + Math.floor(Math.random() * 200 + 10),
-                
-                get whatsappLink() {
-                    let msg = encodeURIComponent("السلام عليكم، أرغب في طلب حساب خاص للوصول إلى نظام إدارة مخزون كازيون.");
-                    return `https://wa.me/201016558430?text=${msg}`;
-                },
-
-                init() {
-                    // Offline First Cache load
-                    const cached = localStorage.getItem('kazyon_products');
-                    if (cached) {
-                        this.products = JSON.parse(cached);
-                    } else {
-                        this.products = [
-                            { id: 1, barcode: '6221234567890', name: 'جبنة فريكو 500جم', category: 'ألبان', warehouseQty: 45, hallQty: 12, price: 45.00 },
-                            { id: 2, barcode: '6229876543210', name: 'مسحوق اتوماتيك 2كجم', category: 'منظفات', warehouseQty: 20, hallQty: 8, price: 95.50 }
-                        ];
-                    }
-                },
-
-                handleLogin() {
-                    this.loginError = '';
-                    if (this.loginForm.username === 'General' && this.loginForm.password === '6060') {
-                        this.currentUser = { role: 'admin', username: 'General' };
-                        this.isLoggedIn = true;
-                        this.logActivity('General', this.clientIp);
-                    } else if (this.loginForm.username === 'admin' && this.loginForm.password === '123') {
-                        this.currentUser = { role: 'staff', username: 'admin' };
-                        this.isLoggedIn = true;
-                        this.logActivity('admin (Staff)', this.clientIp);
-                    } else {
-                        this.loginError = 'اسم المستخدم أو كلمة المرور غير صحيحة.';
-                    }
-                },
-
-                logout() {
-                    this.isLoggedIn = false;
-                    this.loginForm = { username: '', password: '' };
-                },
-
-                logActivity(user, ip) {
-                    this.activityLogs.unshift({
-                        user: user,
-                        ip: ip,
-                        time: new Date().toLocaleTimeString('ar-EG')
-                    });
-                },
-
-                get filteredProducts() {
-                    if (!this.searchQuery) return this.products;
-                    return this.products.filter(p => 
-                        p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
-                        p.barcode.includes(this.searchQuery)
-                    );
-                },
-
-                adjustQty(id, field, val) {
-                    const product = this.products.find(p => p.id === id);
-                    if (product) {
-                        product[field] = Math.max(0, product[field] + val);
-                        this.saveToStorage();
-                    }
-                },
-
-                saveToStorage() {
-                    localStorage.setItem('kazyon_products', JSON.stringify(this.products));
-                },
-
-                startScanner() {
-                    this.showScanner = true;
-                    setTimeout(() => {
-                        const html5QrCode = new Html5Qrcode("reader");
-                        html5QrCode.start(
-                            { facingMode: "environment" },
-                            { fps: 10, qrbox: { width: 250, height: 150 } },
-                            (decodedText) => {
-                                this.searchQuery = decodedText;
-                                html5QrCode.stop();
-                                this.showScanner = false;
-                            },
-                            (error) => {}
-                        ).catch(err => {
-                            alert("تعذر الوصول للكاميرا. تأكد من إعطاء إذن السماح.");
-                            this.showScanner = false;
-                        });
-                    }, 300);
-                },
-
-                stopScanner() {
-                    this.showScanner = false;
-                },
-
-                handleFileUpload(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const rows = XLSX.utils.sheet_to_json(firstSheet);
-                        
-                        rows.forEach((r, idx) => {
-                            this.products.push({
-                                id: Date.now() + idx,
-                                barcode: String(r.Barcode || r.باركود || 'N/A'),
-                                name: String(r.Name || r.الاسم || 'منتج جديد'),
-                                category: String(r.Category || r.القسم أو الفئة || 'عام'),
-                                warehouseQty: Number(r.Warehouse || r.المخزن || 10),
-                                hallQty: Number(r.Hall || r.الصالة || 5),
-                                price: Number(r.Price || r.السعر || 0)
-                            });
-                        });
-                        this.saveToStorage();
-                        alert("تم استيراد الملف وإضافة المنتجات بنجاح!");
-                    };
-                    reader.readAsArrayBuffer(file);
-                }
-            }
-        }
-    </script>
 </body>
 </html>
