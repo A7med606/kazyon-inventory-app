@@ -146,30 +146,31 @@
         <span class="text-[10px] font-mono text-kazyon font-bold bg-kazyon/15 px-2 py-0.5 rounded-md">RBAC SECURITY</span>
       </div>
 
-      <!-- Dynamic Client IP Tracking Box -->
+      <!-- Real Device Fingerprinting Box (Hardware Model & OS Detection) -->
       <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-xs shrink-0">
-            <i class="fa-solid fa-network-wired" :class="isDetectingIp ? 'fa-spin' : ''"></i>
+          <div class="w-8 h-8 rounded-xl bg-kazyon/20 border border-kazyon/40 text-kazyon flex items-center justify-center text-xs shrink-0">
+            <i :class="deviceInfo.icon || 'fa-solid fa-mobile-screen-button'"></i>
           </div>
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="text-[10px] text-stone-400 block font-medium">عنوان IP الخاص بجهازك</span>
+              <span class="text-[10px] text-stone-400 block font-medium">بصمة الجهاز الفعلي المكتشف</span>
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             </div>
-            <div class="text-xs font-bold font-mono text-white mt-0.5 flex items-center gap-1">
-              <span x-text="clientIp"></span>
-              <span class="text-[10px] font-sans text-emerald-400 font-semibold">(متصل بالشبكة)</span>
+            <div class="text-xs font-bold text-white mt-0.5 flex items-center gap-1.5 flex-wrap">
+              <span x-text="deviceName"></span>
+              <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-bold">معتمد للجرد</span>
             </div>
+            <div class="text-[9px] text-stone-400 mt-0.5 font-mono" x-text="(deviceInfo.os || 'Android') + ' • ' + (deviceInfo.browser || 'Chrome')"></div>
           </div>
         </div>
         <button 
           type="button" 
-          @click="initIpDetection()"
-          class="w-7 h-7 bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white rounded-lg flex items-center justify-center text-[10px]"
-          title="إعادة فحص IP"
+          @click="detectDeviceProfile()"
+          class="w-7 h-7 bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white rounded-lg flex items-center justify-center text-[10px] touch-btn"
+          title="إعادة فحص بصمة الجهاز"
         >
-          <i class="fa-solid fa-rotate-right" :class="isDetectingIp ? 'fa-spin text-kazyon' : ''"></i>
+          <i class="fa-solid fa-rotate-right"></i>
         </button>
       </div>
 
@@ -291,6 +292,12 @@
               :class="currentUser.role === 'admin' ? 'bg-kazyon/20 border border-kazyon/40 text-kazyon' : 'bg-sky-500/20 border border-sky-500/40 text-sky-400'"
               x-text="currentUser.roleBadge || (currentUser.role === 'admin' ? 'MAIN ADMIN' : 'STAFF')"
             ></span>
+            <template x-if="cameraPreWarmed">
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-kazyon/15 border border-kazyon/40 text-kazyon text-[9px] font-mono font-bold" title="تم تفويض الكاميرا مسبقاً لجلسة سريعة">
+                <i class="fa-solid fa-camera-rotate text-[8px]"></i>
+                <span>كاميرا مفوضة 0ms</span>
+              </span>
+            </template>
             <template x-if="isOnline">
               <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-mono">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -311,7 +318,10 @@
           <div class="flex items-center gap-2 text-[10px] text-stone-400 mt-0.5">
             <span>المستخدم: <strong class="text-white" x-text="currentUser.username || 'General'"></strong></span>
             <span>•</span>
-            <span class="font-mono text-emerald-400 font-bold" x-text="'IP: ' + clientIp"></span>
+            <span class="font-sans text-stone-300 flex items-center gap-1">
+              <i :class="deviceInfo.icon || 'fa-solid fa-mobile-screen-button'" class="text-kazyon text-[10px]"></i>
+              <span class="font-bold truncate max-w-[140px] sm:max-w-[200px]" x-text="deviceName"></span>
+            </span>
           </div>
         </div>
       </div>
@@ -1004,7 +1014,7 @@
         <!-- 3 Quick KPI Status Cards -->
         <div class="grid grid-cols-3 gap-2 pt-2 border-t border-dark-750">
           <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
-            <span class="text-[10px] text-stone-400 block font-medium">الجلسات النشطة</span>
+            <span class="text-[10px] text-stone-400 block font-medium">الأجهزة النشطة</span>
             <div class="text-xl font-black font-mono text-emerald-400 mt-0.5" x-text="activeSessions.length || 1"></div>
           </div>
           <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
@@ -1012,57 +1022,144 @@
             <div class="text-xl font-black font-mono text-kazyon mt-0.5" x-text="activityLogs.length"></div>
           </div>
           <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
-            <span class="text-[10px] text-stone-400 block font-medium">عنوان IP الحالي</span>
-            <div class="text-xs font-black font-mono text-stone-200 mt-1 truncate" x-text="clientIp"></div>
+            <span class="text-[10px] text-stone-400 block font-medium">الجهاز الفعلي الحالي</span>
+            <div class="text-xs font-black font-sans text-stone-200 mt-1 truncate" x-text="deviceName"></div>
           </div>
         </div>
       </div>
 
-      <!-- Active Logged-In Sessions Card (المستخدمون النشطون وعناوين IP) -->
-      <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-users text-kazyon text-sm"></i>
-            <h3 class="text-xs font-bold text-white">المستخدمون النشطون في المنظومة (Active Logged-In Users & IPs)</h3>
+      <!-- Dedicated Admin Active Devices Security Dashboard (لوحة تفويض الأجهزة المتصلة) -->
+      <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3.5">
+        <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-dark-750">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-kazyon/20 border border-kazyon/40 text-kazyon flex items-center justify-center text-sm shrink-0">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+              <h3 class="text-xs font-black text-white">جدول الأجهزة المتصلة النشطة والتفويض الأمني</h3>
+              <p class="text-[10px] text-stone-400 mt-0.5">بصمة العتاد الفعلي من المتصفح، هوية الموظف، وحالة المزامنة الحية</p>
+            </div>
           </div>
-          <span class="text-[10px] text-stone-400">تحديث لحظي عبر الشبكة</span>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span>تحديث حي (Live Ping)</span>
+            </span>
+            <button 
+              type="button" 
+              @click="refreshActiveSessions()"
+              class="h-8 px-2.5 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 hover:text-white rounded-xl text-[11px] font-bold flex items-center gap-1 touch-btn"
+              title="تحديث قائمة الأجهزة"
+            >
+              <i class="fa-solid fa-rotate-right"></i>
+              <span>تحديث</span>
+            </button>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <!-- Dedicated Security Log Table (Table View for Tablet / Desktop) -->
+        <div class="overflow-x-auto rounded-2xl border border-dark-800 bg-dark-900/80 hidden sm:block">
+          <table class="w-full text-right text-xs">
+            <thead>
+              <tr class="bg-dark-950/80 text-stone-400 border-b border-dark-800 text-[11px] font-bold">
+                <th class="py-3 px-4">المستخدم والصلاحية</th>
+                <th class="py-3 px-4">اسم وطراز الجهاز الفعلي (Detected Device)</th>
+                <th class="py-3 px-4">النظام والمتصفح</th>
+                <th class="py-3 px-4 text-center">حالة الاتصال</th>
+                <th class="py-3 px-4 text-left">وقت تسجيل الدخول</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-dark-800/60 font-medium">
+              <template x-for="sess in activeSessions" :key="sess.id || sess.username">
+                <tr class="hover:bg-dark-850/60 transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2.5">
+                      <div 
+                        class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
+                        :class="sess.role === 'admin' ? 'bg-gradient-to-tr from-kazyon to-amber-500 shadow-sm' : 'bg-gradient-to-tr from-sky-600 to-indigo-600 shadow-sm'"
+                      >
+                        <i :class="sess.role === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-user'"></i>
+                      </div>
+                      <div>
+                        <div class="font-bold text-white text-xs" x-text="sess.name || sess.username"></div>
+                        <span 
+                          class="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold inline-block mt-0.5"
+                          :class="sess.role === 'admin' ? 'bg-kazyon/20 text-kazyon border border-kazyon/30' : 'bg-sky-500/20 text-sky-400 border border-sky-500/30'"
+                          x-text="sess.role === 'admin' ? 'MAIN ADMIN' : 'STORE STAFF'"
+                        ></span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2 text-stone-200">
+                      <i :class="sess.deviceIcon || 'fa-solid fa-mobile-screen-button'" class="text-kazyon text-sm shrink-0"></i>
+                      <span class="font-bold text-xs" x-text="sess.device || 'Android Smartphone'"></span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 font-mono text-[11px] text-stone-400">
+                    <span class="text-stone-300 font-sans font-semibold" x-text="sess.os || 'Android'"></span>
+                    <span class="text-stone-500 mx-1">&bull;</span>
+                    <span x-text="sess.browser || 'Chrome'"></span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-bold">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>متصل الآن</span>
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-left font-mono text-[11px] text-stone-400">
+                    <span class="font-bold text-stone-300" x-text="sess.loginTime"></span>
+                    <span class="text-emerald-400 text-[9px] block">نشط حالياً</span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Dedicated Security Card View for Mobile Phones (< 640px) -->
+        <div class="grid grid-cols-1 gap-2.5 sm:hidden">
           <template x-for="sess in activeSessions" :key="sess.id || sess.username">
-            <div class="p-3.5 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div 
-                  class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white"
-                  :class="sess.role === 'admin' ? 'bg-gradient-to-tr from-kazyon to-amber-500' : 'bg-gradient-to-tr from-sky-600 to-indigo-600'"
-                >
-                  <i :class="sess.role === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-user'"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-white" x-text="sess.name || sess.username"></span>
+            <div class="p-3.5 bg-dark-900 rounded-2xl border border-dark-750 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div 
+                    class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
+                    :class="sess.role === 'admin' ? 'bg-gradient-to-tr from-kazyon to-amber-500' : 'bg-gradient-to-tr from-sky-600 to-indigo-600'"
+                  >
+                    <i :class="sess.role === 'admin' ? 'fa-solid fa-user-shield' : 'fa-solid fa-user'"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-white text-xs" x-text="sess.name || sess.username"></div>
                     <span 
-                      class="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold"
+                      class="text-[9px] font-mono px-1.5 py-0.2 rounded font-bold inline-block"
                       :class="sess.role === 'admin' ? 'bg-kazyon/20 text-kazyon' : 'bg-sky-500/20 text-sky-400'"
-                      x-text="sess.role === 'admin' ? 'MAIN ADMIN' : 'STAFF'"
+                      x-text="sess.role === 'admin' ? 'MAIN ADMIN' : 'STORE STAFF'"
                     ></span>
                   </div>
-                  <div class="flex items-center gap-2 text-[11px] font-mono text-stone-400 mt-1">
-                    <span class="flex items-center gap-1 text-emerald-400 font-bold">
-                      <i class="fa-solid fa-network-wired text-[10px]"></i>
-                      <span x-text="sess.ip"></span>
-                    </span>
-                    <span>•</span>
-                    <span class="font-sans text-[10px]" x-text="sess.device || 'Android Station'"></span>
-                  </div>
                 </div>
-              </div>
-              <div class="text-left font-mono text-[10px]">
-                <span class="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700/60 font-sans font-bold flex items-center gap-1">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-mono font-bold">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>متصل</span>
                 </span>
-                <span class="text-stone-500 block mt-1" x-text="sess.loginTime"></span>
+              </div>
+
+              <div class="p-2.5 bg-dark-950 rounded-xl border border-dark-800 space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-stone-400 text-[10px]">بصمة الجهاز الفعلي:</span>
+                  <div class="flex items-center gap-1.5 text-stone-200 font-bold">
+                    <i :class="sess.deviceIcon || 'fa-solid fa-mobile-screen-button'" class="text-kazyon text-xs"></i>
+                    <span x-text="sess.device"></span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-stone-400 pt-1 border-t border-dark-850">
+                  <span>النظام والمتصفح:</span>
+                  <span x-text="(sess.os || 'Android') + ' • ' + (sess.browser || 'Chrome')"></span>
+                </div>
+                <div class="flex items-center justify-between text-[11px] font-mono text-stone-400">
+                  <span>توقيت الدخول:</span>
+                  <span class="text-stone-300 font-bold" x-text="sess.loginTime"></span>
+                </div>
               </div>
             </div>
           </template>
@@ -1148,6 +1245,10 @@
                       x-text="log.role === 'admin' ? 'ADMIN' : 'STAFF'"
                     ></span>
                     <span class="text-[10px] font-mono text-stone-400 bg-dark-800 px-1.5 py-0.2 rounded border border-dark-750" x-text="'IP: ' + log.ip"></span>
+                    <span class="text-[10px] font-sans text-stone-300 bg-dark-800 px-1.5 py-0.2 rounded border border-dark-750 flex items-center gap-1">
+                      <i class="fa-solid fa-mobile-screen-button text-kazyon text-[9px]"></i>
+                      <span x-text="log.device || 'Android Floor Terminal'"></span>
+                    </span>
                   </div>
                   <p class="text-[11px] text-stone-300 mt-1 font-medium" x-text="log.details"></p>
                 </div>
@@ -2086,7 +2187,7 @@
       class="flex items-center gap-1.5 font-medium text-stone-300 hover:text-white transition-colors cursor-pointer group text-right"
       title="عرض ملف المطور Ahmed Said Ahmed"
     >
-      <span class="text-stone-400">Developed with precision by</span>
+      <span class="text-stone-400">Developed with precision by web dev</span>
       <span class="text-kazyon font-black group-hover:underline flex items-center gap-1">
         <span>A7med606</span>
         <i class="fa-solid fa-code text-[10px] text-stone-400 group-hover:text-kazyon"></i>
@@ -2243,6 +2344,20 @@
         showPass: false,
         loginError: '',
 
+        // Real Device Fingerprinting (Physical Hardware Model & OS Extraction)
+        deviceName: 'Android Floor Terminal',
+        deviceInfo: {
+          name: 'Android Floor Terminal',
+          type: 'mobile',
+          icon: 'fa-solid fa-mobile-screen-button',
+          os: 'Android',
+          browser: 'Chrome'
+        },
+
+        // One-Time Camera Permission & Pre-Warming
+        cameraPreWarmed: false,
+        cameraPermissionGranted: false,
+
         // IP Tracking & Network Status
         clientIp: '192.168.1.104',
         isDetectingIp: false,
@@ -2318,6 +2433,9 @@
 
         // 1. OFFLINE-FIRST CACHING & INITIALIZATION (0ms Instant Load)
         async init() {
+          // Detect Real Physical Device Hardware Profile from User-Agent
+          this.detectDeviceProfile();
+
           // Detect IP on launch
           this.initIpDetection();
 
@@ -2339,6 +2457,8 @@
             try {
               this.currentUser = JSON.parse(authUser);
               this.isAuth = true;
+              // Proactively pre-warm camera on restored session for zero scan latency
+              setTimeout(() => this.preWarmCamera(), 600);
             } catch (e) {
               this.isAuth = false;
             }
@@ -2446,6 +2566,134 @@
             if (this.isAuth) {
               this.heartbeatSession();
             }
+          }
+        },
+
+        // Real Device Fingerprinting from navigator.userAgent (Hardware Model & OS)
+        detectDeviceProfile() {
+          const ua = navigator.userAgent || '';
+          let name = 'هاتف أندرويد محمول';
+          let type = 'mobile';
+          let icon = 'fa-solid fa-mobile-screen-button';
+          let os = 'Android';
+          let browser = 'Chrome';
+
+          // 1. Android Phones & Tablets Detection
+          if (/Android/i.test(ua)) {
+            const isTablet = /Tablet|Tab/i.test(ua) || (screen.width >= 768 && screen.height >= 1024);
+            type = isTablet ? 'tablet' : 'mobile';
+            icon = isTablet ? 'fa-solid fa-tablet-screen-button' : 'fa-solid fa-mobile-screen-button';
+
+            const verMatch = ua.match(/Android\s+([\d.]+)/i);
+            const ver = verMatch ? `Android ${verMatch[1]}` : 'Android';
+            os = ver;
+
+            // Extract specific hardware model
+            let model = '';
+            const buildMatch = ua.match(/;\s*([^;]+?)\s*Build\//i);
+            if (buildMatch && buildMatch[1]) {
+              model = buildMatch[1].trim();
+            } else {
+              const altMatch = ua.match(/Android[^;]+;\s*([^;)]+)/i);
+              if (altMatch && altMatch[1]) {
+                model = altMatch[1].trim();
+              }
+            }
+
+            // Normalize hardware brand names
+            if (model) {
+              if (/^SM-|^GT-|^SCH-/i.test(model) || /Samsung/i.test(model)) {
+                const smCode = model.replace(/^SM-/i, '').trim();
+                name = `Samsung Galaxy ${smCode} (${ver})`;
+              } else if (/Pixel/i.test(model)) {
+                name = `Google ${model} (${ver})`;
+              } else if (/Redmi|POCO|Xiaomi|2201|2109|M21/i.test(model)) {
+                name = `Xiaomi ${model} (${ver})`;
+              } else if (/CPH|OPPO/i.test(model)) {
+                name = `OPPO ${model} (${ver})`;
+              } else if (/RMX|Realme/i.test(model)) {
+                name = `Realme ${model} (${ver})`;
+              } else if (/vivo|V20|V21|V22/i.test(model)) {
+                name = `Vivo ${model} (${ver})`;
+              } else if (/Infinix|X68/i.test(model)) {
+                name = `Infinix ${model} (${ver})`;
+              } else if (/TECNO/i.test(model)) {
+                name = `Tecno ${model} (${ver})`;
+              } else if (/HUAWEI|HONOR/i.test(model)) {
+                name = `Huawei ${model} (${ver})`;
+              } else {
+                name = `${model} (${ver})`;
+              }
+            } else {
+              name = isTablet ? `جهاز لوحي أندرويد (${ver})` : `هاتف أندرويد ميداني (${ver})`;
+            }
+          } 
+          // 2. Apple iOS Devices (iPhone & iPad)
+          else if (/iPhone/i.test(ua)) {
+            type = 'mobile';
+            icon = 'fa-solid fa-mobile-screen-button';
+            const osMatch = ua.match(/OS\s+([\d_]+)/i);
+            os = osMatch ? `iOS ${osMatch[1].replace(/_/g, '.')}` : 'iOS';
+            name = `Apple iPhone (${os})`;
+          } else if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            type = 'tablet';
+            icon = 'fa-solid fa-tablet-screen-button';
+            os = 'iPadOS';
+            name = 'Apple iPad (iPadOS)';
+          } 
+          // 3. Desktop Workstations & POS Terminals
+          else if (/Windows NT/i.test(ua)) {
+            type = 'desktop';
+            icon = 'fa-solid fa-desktop';
+            let winVer = 'Windows';
+            if (/Windows NT 10.0/i.test(ua)) winVer = 'Windows 10/11';
+            else if (/Windows NT 6.3/i.test(ua)) winVer = 'Windows 8.1';
+            os = winVer;
+            name = `محطة كاشير (${winVer})`;
+          } else if (/Macintosh|Mac OS X/i.test(ua)) {
+            type = 'desktop';
+            icon = 'fa-solid fa-laptop';
+            os = 'macOS';
+            name = 'محطة Apple Mac Workstation';
+          } else if (/Linux/i.test(ua)) {
+            type = 'desktop';
+            icon = 'fa-solid fa-computer';
+            os = 'Linux';
+            name = 'محطة Linux الميدانية';
+          }
+
+          // Browser Engine Detection
+          if (/Edg/i.test(ua)) browser = 'Edge';
+          else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = 'Chrome';
+          else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+          else if (/Firefox/i.test(ua)) browser = 'Firefox';
+          else if (/SamsungBrowser/i.test(ua)) browser = 'Samsung Internet';
+
+          this.deviceName = name;
+          this.deviceInfo = { name, type, icon, os, browser, raw: ua };
+          localStorage.setItem('kazyon_device_name_v2', name);
+          return this.deviceInfo;
+        },
+
+        // One-Time Camera Permission & Pre-Warming (Primes browser & eliminates repeated prompts)
+        async preWarmCamera() {
+          if (this.cameraPreWarmed) return;
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280, max: 1280 },
+                height: { ideal: 720, max: 720 }
+              }
+            });
+            // Stop tracks immediately to free hardware lock while keeping browser permission authorized
+            stream.getTracks().forEach(track => track.stop());
+            this.cameraPreWarmed = true;
+            this.cameraPermissionGranted = true;
+            this.showToast('تم تفويض الكاميرا مسبقاً (جاهزة للمسح الفوري 0ms)', 'success');
+          } catch (err) {
+            console.warn('Camera pre-warming status:', err);
           }
         },
 
@@ -2813,6 +3061,7 @@
             user: this.currentUser.username || 'General',
             role: this.currentUser.role || 'admin',
             ip: this.clientIp,
+            device: this.deviceName,
             actionType,
             details,
             timestamp: timeStr,
@@ -2824,7 +3073,7 @@
           this.saveLogsToStorage();
         },
 
-        // Session Keep-Alive & Active Users Registry
+        // Session Keep-Alive & Active Users Registry with Real Hardware Fingerprint
         heartbeatSession() {
           try {
             const raw = localStorage.getItem('kazyon_active_sessions_v2');
@@ -2835,14 +3084,17 @@
             // Remove stale sessions (> 45s)
             sessions = sessions.filter(s => s.id !== this.syncSessionId && (now - s.lastSeen) < 45000);
 
-            // Add/update current session
+            // Add/update current session with real detected device
             sessions.unshift({
               id: this.syncSessionId,
               username: this.currentUser.username,
               name: this.currentUser.name,
               role: this.currentUser.role,
               ip: this.clientIp,
-              device: navigator.userAgent.includes('Android') ? 'Android Mobile Floor' : 'Workstation Terminal',
+              device: this.deviceName,
+              deviceIcon: this.deviceInfo.icon,
+              os: this.deviceInfo.os,
+              browser: this.deviceInfo.browser,
               loginTime: timeStr,
               lastSeen: now
             });
@@ -2868,7 +3120,10 @@
                   name: this.currentUser.name || 'المشرف General',
                   role: this.currentUser.role || 'admin',
                   ip: this.clientIp,
-                  device: 'Android Terminal 01',
+                  device: this.deviceName,
+                  deviceIcon: this.deviceInfo.icon,
+                  os: this.deviceInfo.os,
+                  browser: this.deviceInfo.browser,
                   loginTime: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
                   lastSeen: Date.now()
                 }
@@ -2899,13 +3154,14 @@
 
         // Export Activity Logs to Excel
         exportActivityLogsExcel() {
-          const headers = ['معرف العملية', 'التاريخ', 'الوقت', 'المستخدم', 'الدور (Role)', 'عنوان IP', 'نوع العملية', 'تفاصيل العملية'];
+          const headers = ['معرف العملية', 'التاريخ', 'الوقت', 'المستخدم', 'الدور (Role)', 'طراز الجهاز الفعلي', 'عنوان IP', 'نوع العملية', 'تفاصيل العملية'];
           const rows = this.activityLogs.map(l => [
             l.id,
             l.date,
             l.timestamp,
             l.user,
             l.role === 'admin' ? 'مشرف عام' : 'موظف فرع',
+            l.device || this.deviceName,
             l.ip,
             l.actionType,
             l.details
@@ -2914,7 +3170,7 @@
           const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, 'سجل الأمان');
-          XLSX.writeFile(wb, `سجل_امان_كازيون_${this.clientIp}_${new Date().toISOString().split('T')[0]}.xlsx`);
+          XLSX.writeFile(wb, `سجل_امان_كازيون_${this.deviceName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
           this.showToast('تم تصدير سجل الأمان إلى Excel بنجاح', 'success');
         },
 
@@ -2936,8 +3192,11 @@
             localStorage.setItem('kazyon_auth_user_v2', JSON.stringify(this.currentUser));
             this.heartbeatSession();
 
-            this.logActivity('LOGIN', `تسجيل دخول المشرف العام General من عنوان IP: ${this.clientIp}`);
-            this.broadcastUpdate('USER_LOGIN', { user: 'General', role: 'admin' });
+            this.logActivity('LOGIN', `تسجيل دخول المشرف العام General من جهاز: ${this.deviceName} (IP: ${this.clientIp})`);
+            this.broadcastUpdate('USER_LOGIN', { user: 'General', role: 'admin', device: this.deviceName });
+
+            // Proactive one-time camera permission pre-warming
+            setTimeout(() => this.preWarmCamera(), 350);
 
             this.showToast('مرحباً بك يا مشرف General! تم تسجيل الدخول بنجاح.', 'success');
             if (window.confetti) {
@@ -2959,8 +3218,11 @@
             }
             this.heartbeatSession();
 
-            this.logActivity('LOGIN', `تسجيل دخول موظف الفرع admin من عنوان IP: ${this.clientIp}`);
-            this.broadcastUpdate('USER_LOGIN', { user: 'admin', role: 'staff' });
+            this.logActivity('LOGIN', `تسجيل دخول موظف الفرع admin من جهاز: ${this.deviceName} (IP: ${this.clientIp})`);
+            this.broadcastUpdate('USER_LOGIN', { user: 'admin', role: 'staff', device: this.deviceName });
+
+            // Proactive one-time camera permission pre-warming upon staff login
+            setTimeout(() => this.preWarmCamera(), 350);
 
             this.showToast('مرحباً بك يا موظف كازيون admin! تم الدخول للمنظومة.', 'success');
             if (window.confetti) {
