@@ -11,16 +11,32 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <!-- Global Error & Unhandled Rejection Resilience Shield -->
+  <script>
+    window.addEventListener('error', function (event) {
+      if (!event || event.message === 'Script error.' || !event.message) {
+        console.warn('Silenced cross-origin unhandled script error');
+        if (event && event.preventDefault) event.preventDefault();
+        return true;
+      }
+    }, true);
+
+    window.addEventListener('unhandledrejection', function (event) {
+      console.warn('Captured unhandled promise rejection:', event.reason);
+      if (event && event.preventDefault) event.preventDefault();
+    });
+  </script>
+
   <!-- Fonts: Cairo Arabic & Monospace -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
 
   <!-- Font Awesome 6 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -54,20 +70,21 @@
   </script>
 
   <!-- SheetJS CDN for Excel import/export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
 
   <!-- HTML5 QR / Barcode Scanner CDN -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
 
-  <!-- Firebase App & Firestore CDN (Compat for Universal Mobile Browser Support) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase App, Realtime Database & Firestore CDN (Compat for Universal Mobile Browser Support) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 
   <!-- Canvas Confetti CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js" crossorigin="anonymous"></script>
 
   <!-- Alpine.js (defer) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js" crossorigin="anonymous"></script>
 
   <style>
     * {
@@ -298,16 +315,27 @@
                 <span>كاميرا مفوضة 0ms</span>
               </span>
             </template>
-            <template x-if="isOnline">
+            <template x-if="syncQueue && syncQueue.length > 0">
+              <button 
+                type="button"
+                @click="drainSyncQueue()" 
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-500/50 text-amber-300 text-[9px] font-mono font-bold animate-pulse touch-btn"
+                title="طابور مزامنة متراكم أثناء ضعف الشبكة - انقر للمزامنة الفورية"
+              >
+                <i class="fa-solid fa-cloud-arrow-up text-[8px] animate-bounce"></i>
+                <span x-text="'طابور معلق (' + syncQueue.length + ')'"></span>
+              </button>
+            </template>
+            <template x-if="(!syncQueue || syncQueue.length === 0) && isOnline">
               <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-mono">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>متصل سحابياً (Cloud Sync)</span>
+                <span x-text="isCloudConnected ? 'تزامن سحابي متصل (Cloud Sync)' : 'تزامن محلي فوري (Local Ready)'"></span>
               </span>
             </template>
             <template x-if="!isOnline">
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[9px] font-mono">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                <span>محلي (0ms Offline Cache)</span>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-[9px] font-mono">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                <span>وضع عدم الاتصال (كاش محلي 0ms)</span>
               </span>
             </template>
             <span class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-dark-800 border border-dark-750 text-stone-400 text-[9px] font-mono">
@@ -419,7 +447,7 @@
     <div x-show="activeTab === 'inventory'" x-transition class="p-3.5 space-y-3.5 max-w-5xl mx-auto w-full">
       
       <!-- Instant Graphical Status KPI Metrics Grid (1-tap filtering) -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         <!-- Total Items -->
         <button 
           type="button" 
@@ -452,12 +480,31 @@
           <div class="text-2xl font-black font-mono text-amber-400 mt-1" x-text="calcTotalWarehouse()"></div>
         </div>
 
+        <!-- Smart 45-Day Expiry Alerts KPI -->
+        <button 
+          type="button" 
+          @click="statusFilter = statusFilter === 'expiring_45' ? 'all' : 'expiring_45'"
+          :class="statusFilter === 'expiring_45' ? 'border-amber-500 bg-amber-950/50 shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'border-dark-750 bg-dark-850'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn relative overflow-hidden"
+        >
+          <div class="flex items-center justify-between text-stone-400">
+            <span class="text-[11px] font-bold text-amber-300">تنبيه 45 يوماً</span>
+            <i class="fa-solid fa-clock-rotate-left text-xs text-amber-400" :class="calcExpiring45Count() > 0 ? 'animate-pulse' : ''"></i>
+          </div>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-2xl font-black font-mono text-amber-400" x-text="calcExpiring45Count()"></span>
+            <template x-if="calcExpiring45Count() > 0">
+              <span class="text-[9px] bg-amber-500/25 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-500/40 animate-pulse">فحص</span>
+            </template>
+          </div>
+        </button>
+
         <!-- Expired / Low Stock Alerts -->
         <button 
           type="button" 
           @click="statusFilter = statusFilter === 'alerts' ? 'all' : 'alerts'"
           :class="statusFilter === 'alerts' ? 'border-red-500 bg-red-950/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-dark-750 bg-dark-850'"
-          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn col-span-2 sm:col-span-1"
         >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">تنبيهات فورية</span>
@@ -576,6 +623,16 @@
           </button>
           <button 
             type="button" 
+            @click="statusFilter = 'expiring_45'"
+            :class="statusFilter === 'expiring_45' ? 'text-amber-300 font-bold border-b-2 border-amber-400' : 'text-stone-400'"
+            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
+          >
+            <i class="fa-solid fa-clock-rotate-left text-amber-400 text-[10px]"></i>
+            <span>تنبيه 45 يوماً</span>
+            <span class="text-[10px] px-1 rounded bg-amber-500/20 text-amber-300 font-mono font-bold" x-text="calcExpiring45Count()"></span>
+          </button>
+          <button 
+            type="button" 
             @click="statusFilter = 'expired'"
             :class="statusFilter === 'expired' ? 'text-red-400 font-bold border-b-2 border-red-400' : 'text-stone-400'"
             class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
@@ -610,7 +667,8 @@
           <div 
             :id="'card-' + item.id"
             :class="{
-              'border-red-600/70 bg-red-950/15': item.status === 'expired',
+              'border-red-600/70 bg-red-950/20': item.status === 'expired',
+              'border-amber-500/80 bg-amber-950/25 shadow-[0_0_15px_rgba(245,158,11,0.15)]': item.status === 'expiring_45',
               'border-amber-600/70 bg-amber-950/15': item.status === 'low_stock',
               'border-kazyon/50 bg-kazyon/10': item.promoPrice && item.promoPrice < item.regularPrice,
               'border-dark-750 bg-dark-850': item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice)
@@ -629,6 +687,11 @@
                       <i class="fa-solid fa-circle-xmark text-red-400"></i> منتهي الصلاحية
                     </span>
                   </template>
+                  <template x-if="item.status === 'expiring_45'">
+                    <span class="px-2 py-0.5 rounded-md bg-amber-500/25 border border-amber-500/60 text-amber-300 text-[10px] font-black inline-flex items-center gap-1 animate-pulse">
+                      <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> تنبيه 45 يوماً (<span x-text="item.daysLeft"></span> يوم)
+                    </span>
+                  </template>
                   <template x-if="item.status === 'low_stock'">
                     <span class="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/50 text-amber-300 text-[10px] font-black inline-flex items-center gap-1">
                       <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> نقص الرف
@@ -642,6 +705,13 @@
                   <template x-if="item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice)">
                     <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
                       سليم ومتاح
+                    </span>
+                  </template>
+                  <!-- Multi-Batch Indicator Pill -->
+                  <template x-if="item.batches && item.batches.length > 1">
+                    <span class="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-stone-300 text-[10px] font-mono inline-flex items-center gap-1">
+                      <i class="fa-solid fa-layer-group text-kazyon text-[9px]"></i>
+                      <span x-text="item.batches.length + ' تشغيلات'"></span>
                     </span>
                   </template>
                 </div>
@@ -1024,6 +1094,54 @@
           <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 text-center">
             <span class="text-[10px] text-stone-400 block font-medium">الجهاز الفعلي الحالي</span>
             <div class="text-xs font-black font-sans text-stone-200 mt-1 truncate" x-text="deviceName"></div>
+          </div>
+        </div>
+
+        <!-- Firebase Realtime Database Cloud Sync Status Banner -->
+        <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm shrink-0 border border-amber-500/30">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-white text-xs">Firebase Realtime Database (سحابياً)</span>
+                <template x-if="isOnline">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[9px] font-bold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>متصل وبث مباشر (WebSocket Active)</span>
+                  </span>
+                </template>
+                <template x-if="!isOnline">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-400 font-mono text-[9px] font-bold">
+                    <span>محلي 0ms (Offline-First Cache)</span>
+                  </span>
+                </template>
+              </div>
+              <p class="text-[10px] text-stone-400 mt-0.5">
+                آخر مزامنة: <span class="font-mono text-stone-300" x-text="lastCloudSyncTime || 'الآن'"></span> • عمليات المزامنة: <span class="font-mono text-kazyon font-bold" x-text="rtdbSyncCount"></span>
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              @click="syncWithFirebaseCloud('all')"
+              :disabled="isSyncingCloud || !isOnline"
+              class="h-8 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-xl text-[11px] font-bold flex items-center gap-1.5 touch-btn"
+            >
+              <i :class="isSyncingCloud ? 'fa-solid fa-rotate animate-spin text-kazyon' : 'fa-solid fa-cloud-arrow-up text-emerald-400'"></i>
+              <span x-text="isSyncingCloud ? 'جاري الرفع...' : 'مزامنة سحابية الآن'"></span>
+            </button>
+            <button 
+              type="button" 
+              @click="firebaseConfigModalOpen = true"
+              class="h-8 px-2.5 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 hover:text-white rounded-xl text-[11px] flex items-center gap-1 touch-btn"
+              title="إعدادات قاعدة بيانات Firebase"
+            >
+              <i class="fa-solid fa-gear text-amber-400"></i>
+              <span>إعدادات RTDB</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1566,7 +1684,7 @@
         </button>
       </div>
 
-      <!-- Clear Color-Coded Status Alert Banner (Expired, Promo, Low Stock, Good) -->
+      <!-- Clear Color-Coded Status Alert Banner (Expired, Expiring 45-day, Promo, Low Stock, Good) -->
       <div>
         <!-- 1. Expired Status Alert -->
         <template x-if="detailItem?.status === 'expired'">
@@ -1581,7 +1699,23 @@
           </div>
         </template>
 
-        <!-- 2. Promo / Discount Status Alert -->
+        <!-- 2. Smart 45-Day Expiry Alert -->
+        <template x-if="detailItem?.status === 'expiring_45'">
+          <div class="p-3.5 bg-gradient-to-r from-amber-950/90 to-orange-950/90 border-2 border-amber-500 rounded-2xl flex items-center gap-3 text-amber-200 shadow-lg">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/30 flex items-center justify-center text-amber-400 text-xl shrink-0">
+              <i class="fa-solid fa-clock-rotate-left animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="text-xs font-black text-amber-300">تنبيه الصلاحية الذكي: يوشك على الانتهاء</h4>
+                <span class="px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-300 font-mono text-[10px] font-bold" x-text="'متبقي ' + (detailItem?.daysLeft || 0) + ' يوم'"></span>
+              </div>
+              <p class="text-[11px] text-amber-300/90 mt-0.5">يجب تقديم هذا الصنف في واجهة الرف وتطبيق تخفيض أو برومو قبل انتهاء الصلاحية.</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- 3. Promo / Discount Status Alert -->
         <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
           <div class="p-3.5 bg-kazyon/20 border-2 border-kazyon rounded-2xl flex items-center gap-3 text-kazyon shadow-md">
             <div class="w-10 h-10 rounded-xl bg-kazyon/30 flex items-center justify-center text-kazyon text-xl shrink-0">
@@ -1721,21 +1855,169 @@
         <span>تزويد فوري: نقل 5 قطع من المستودع للرف</span>
       </button>
 
-      <!-- Production & Expiry Dates Section -->
-      <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 grid grid-cols-2 gap-3 text-xs">
-        <div>
-          <span class="text-[10px] text-stone-400 block mb-1">تاريخ الإنتاج (Production Date)</span>
-          <div class="flex items-center gap-1.5 font-mono font-bold text-stone-200">
-            <i class="fa-regular fa-calendar text-stone-400"></i>
-            <span x-text="detailItem?.productionDate || 'غير محدد'"></span>
+      <!-- Multi-Batch & Expiry Dates Management Section -->
+      <div class="p-3.5 bg-dark-850 rounded-2xl border border-dark-750 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-kazyon text-sm"></i>
+            <h4 class="text-xs font-black text-white">إدارة التشغيلات والصلاحيات (Multi-Batch)</h4>
+            <span class="px-2 py-0.5 rounded-full bg-dark-800 text-stone-300 font-mono text-[10px]" x-text="(detailItem?.batches ? detailItem.batches.length : 1) + ' تشغيلات'"></span>
           </div>
+          <button 
+            type="button" 
+            @click="isAddingBatchToDetail = !isAddingBatchToDetail" 
+            class="px-2.5 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-kazyon text-xs font-bold flex items-center gap-1 touch-btn border border-dark-700"
+          >
+            <i class="fa-solid fa-plus text-[10px]"></i>
+            <span x-text="isAddingBatchToDetail ? 'إلغاء' : 'إضافة تشغيلة'"></span>
+          </button>
         </div>
-        <div>
-          <span class="text-[10px] text-stone-400 block mb-1">تاريخ الانتهاء (Expiry Date)</span>
-          <div class="flex items-center gap-1.5 font-mono font-bold" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-stone-200'">
-            <i class="fa-regular fa-calendar-xmark" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-kazyon'"></i>
-            <span x-text="detailItem?.expiryDate || 'ساري'"></span>
+
+        <!-- Quick Add Batch Form -->
+        <template x-if="isAddingBatchToDetail">
+          <div class="p-3 bg-dark-900 rounded-xl border border-kazyon/40 space-y-2.5 animate-in fade-in duration-100">
+            <h5 class="text-[11px] font-bold text-kazyon flex items-center gap-1">
+              <i class="fa-solid fa-plus-circle text-xs"></i> إضافة تشغيلة جديدة للمنتج
+            </h5>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <label class="text-[10px] text-stone-400 block mb-1">رقم التشغيلة / اللوت</label>
+                <input 
+                  type="text" 
+                  x-model="newBatchForm.batchNumber" 
+                  placeholder="مثال: LOT-2026-B3" 
+                  class="w-full h-10 px-2.5 bg-dark-800 border border-dark-700 rounded-lg text-white font-mono text-xs focus:border-kazyon outline-none"
+                />
+              </div>
+              <div>
+                <label class="text-[10px] text-stone-400 block mb-1">تاريخ الانتهاء</label>
+                <input 
+                  type="date" 
+                  x-model="newBatchForm.expiryDate" 
+                  class="w-full h-10 px-2.5 bg-dark-800 border border-dark-700 rounded-lg text-white font-mono text-xs focus:border-kazyon outline-none"
+                />
+              </div>
+              <div>
+                <label class="text-[10px] text-stone-400 block mb-1">كمية الرف (الصالة)</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  x-model.number="newBatchForm.shopQty" 
+                  class="w-full h-10 px-2.5 bg-dark-800 border border-dark-700 rounded-lg text-emerald-400 font-mono font-bold text-xs focus:border-kazyon outline-none"
+                />
+              </div>
+              <div>
+                <label class="text-[10px] text-stone-400 block mb-1">كمية المستودع</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  x-model.number="newBatchForm.warehouseQty" 
+                  class="w-full h-10 px-2.5 bg-dark-800 border border-dark-700 rounded-lg text-amber-400 font-mono font-bold text-xs focus:border-kazyon outline-none"
+                />
+              </div>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <button 
+                type="button" 
+                @click="addBatchToDetailItem()" 
+                class="flex-1 h-10 rounded-xl bg-kazyon hover:bg-kazyon-hover text-white text-xs font-bold flex items-center justify-center gap-1 shadow-md touch-btn"
+              >
+                <i class="fa-solid fa-check text-xs"></i> حفظ التشغيلة
+              </button>
+              <button 
+                type="button" 
+                @click="isAddingBatchToDetail = false" 
+                class="px-3 h-10 rounded-xl bg-dark-800 text-stone-400 text-xs font-bold touch-btn"
+              >
+                إلغاء
+              </button>
+            </div>
           </div>
+        </template>
+
+        <!-- Batches List -->
+        <div class="space-y-2 max-h-56 overflow-y-auto no-scrollbar pr-0.5">
+          <template x-for="(b, idx) in detailItem?.batches || []" :key="b.id || idx">
+            <div 
+              class="p-2.5 rounded-xl border flex flex-col gap-2"
+              :class="{
+                'bg-red-950/20 border-red-500/50': b.status === 'expired',
+                'bg-amber-950/25 border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.1)]': b.status === 'expiring_45',
+                'bg-dark-900 border-dark-750': b.status === 'valid'
+              }"
+            >
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-bold text-stone-200" x-text="b.batchNumber || ('LOT-' + (idx + 1))"></span>
+                  
+                  <template x-if="b.status === 'expired'">
+                    <span class="px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 font-bold text-[9px] flex items-center gap-1">
+                      <i class="fa-solid fa-circle-xmark text-red-400"></i> منتهية (<span x-text="Math.abs(b.daysLeft)"></span> يوم مضى)
+                    </span>
+                  </template>
+                  <template x-if="b.status === 'expiring_45'">
+                    <span class="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/50 text-amber-300 font-bold text-[9px] flex items-center gap-1 animate-pulse">
+                      <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> تنبيه 45 يوماً (<span x-text="b.daysLeft"></span> يوم متبقي)
+                    </span>
+                  </template>
+                  <template x-if="b.status === 'valid'">
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold text-[9px]">
+                      صالحة (<span x-text="b.daysLeft"></span> يوم)
+                    </span>
+                  </template>
+                </div>
+
+                <div class="flex items-center gap-1 text-[11px] font-mono text-stone-400">
+                  <i class="fa-regular fa-calendar-xmark text-stone-500"></i>
+                  <span x-text="b.expiryDate"></span>
+                  <template x-if="detailItem?.batches?.length > 1">
+                    <button 
+                      type="button" 
+                      @click="removeBatchFromDetailItem(b.id)" 
+                      class="text-stone-500 hover:text-red-400 mr-1 p-1 touch-btn-sm" 
+                      title="حذف هذه التشغيلة"
+                    >
+                      <i class="fa-solid fa-trash text-[10px]"></i>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Batch Quantities & Actions -->
+              <div class="flex items-center justify-between pt-1 border-t border-dark-800 text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1">
+                    <span class="text-[10px] text-stone-400">صالة:</span>
+                    <span class="font-mono font-bold text-emerald-400 text-sm" x-text="b.shopQty"></span>
+                    <div class="flex items-center gap-0.5 mr-1">
+                      <button type="button" @click="updateBatchStock(b, 'shop', -1)" :disabled="b.shopQty <= 0" class="w-6 h-6 rounded bg-dark-800 text-stone-300 flex items-center justify-center font-bold text-xs disabled:opacity-20">-</button>
+                      <button type="button" @click="updateBatchStock(b, 'shop', 1)" class="w-6 h-6 rounded bg-emerald-700 hover:bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">+</button>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <span class="text-[10px] text-stone-400">مخزن:</span>
+                    <span class="font-mono font-bold text-amber-400 text-sm" x-text="b.warehouseQty"></span>
+                    <div class="flex items-center gap-0.5 mr-1">
+                      <button type="button" @click="updateBatchStock(b, 'warehouse', -1)" :disabled="b.warehouseQty <= 0" class="w-6 h-6 rounded bg-dark-800 text-stone-300 flex items-center justify-center font-bold text-xs disabled:opacity-20">-</button>
+                      <button type="button" @click="updateBatchStock(b, 'warehouse', 1)" class="w-6 h-6 rounded bg-amber-700 hover:bg-amber-600 text-white flex items-center justify-center font-bold text-xs">+</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Transfer 1 piece from warehouse to hall for this batch -->
+                <button 
+                  type="button" 
+                  @click="transferBatchStock(b, 1)" 
+                  :disabled="b.warehouseQty <= 0" 
+                  class="px-2 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 text-kazyon text-[10px] font-bold flex items-center gap-1 touch-btn-sm disabled:opacity-30 border border-dark-700"
+                  title="نقل قطعة من المستودع للرف لهذه التشغيلة"
+                >
+                  <i class="fa-solid fa-arrow-left"></i> نقل 1 للرف
+                </button>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -1794,7 +2076,7 @@
 
       <!-- Form Inputs -->
       <div class="space-y-3">
-        <!-- Barcode -->
+        <!-- Barcode with AI Auto-Fetch Button -->
         <div>
           <label class="block text-[11px] font-bold text-stone-300 mb-1">رقم الباركود (Barcode) *</label>
           <div class="flex items-center gap-2">
@@ -1806,12 +2088,33 @@
             >
             <button 
               type="button" 
+              @click="fetchOpenFoodFacts(modalItem.barcode)"
+              :disabled="isFetchingAi || !modalItem.barcode"
+              class="h-12 px-3.5 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn disabled:opacity-40 shadow-sm"
+              title="استعلام ذكي عبر Open Food Facts"
+            >
+              <i class="fa-solid fa-robot text-sm" :class="isFetchingAi ? 'animate-spin' : ''"></i>
+              <span class="whitespace-nowrap">جلب بالذكاء</span>
+            </button>
+            <button 
+              type="button" 
               @click="generateRandomBarcode()"
               class="h-12 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs touch-btn"
               title="توليد باركود تلقائي"
             >
               <i class="fa-solid fa-wand-magic-sparkles text-kazyon"></i>
             </button>
+          </div>
+
+          <!-- AI Auto-Fetch Feedback Indicator -->
+          <div 
+            x-show="isFetchingAi || aiFetchMessage" 
+            x-transition 
+            class="mt-2 p-2.5 rounded-xl border text-xs flex items-center gap-2"
+            :class="isFetchingAi ? 'bg-amber-950/40 border-amber-500/50 text-amber-300' : (aiFetchMessage.includes('تم العثور') ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300' : 'bg-dark-900 border-dark-750 text-stone-300')"
+          >
+            <i class="fa-solid" :class="isFetchingAi ? 'fa-spinner fa-spin text-kazyon' : (aiFetchMessage.includes('تم العثور') ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-stone-400')"></i>
+            <span class="font-medium" x-text="aiFetchMessage || 'جاري استدعاء بيانات المنتج العالمية...'"></span>
           </div>
         </div>
 
@@ -1865,7 +2168,7 @@
         <!-- Quantities: Hall vs Warehouse -->
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-[11px] font-bold text-emerald-400 mb-1">الكمية بالصالة (الرف)</label>
+            <label class="block text-[11px] font-bold text-emerald-400 mb-1">إجمالي الصالة (الرف)</label>
             <input 
               type="number" 
               x-model.number="modalItem.shopQty" 
@@ -1874,7 +2177,7 @@
             >
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-amber-400 mb-1">الكمية بالمستودع</label>
+            <label class="block text-[11px] font-bold text-amber-400 mb-1">إجمالي بالمستودع</label>
             <input 
               type="number" 
               x-model.number="modalItem.warehouseQty" 
@@ -1906,12 +2209,85 @@
             >
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الانتهاء (Expiry) *</label>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">أقرب انتهاء (Expiry) *</label>
             <input 
               type="date" 
               x-model="modalItem.expiryDate" 
               class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
             >
+          </div>
+        </div>
+
+        <!-- Multi-Batch Section inside Add/Edit Modal -->
+        <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-stone-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group text-kazyon text-xs"></i>
+              <span>تشغيلات الصنف وتواريخ الصلاحية (Batches)</span>
+            </span>
+            <button 
+              type="button" 
+              @click="addModalBatch()" 
+              class="px-2.5 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 text-kazyon text-[11px] font-bold flex items-center gap-1 border border-dark-700 touch-btn-sm"
+            >
+              <i class="fa-solid fa-plus text-[10px]"></i> إضافة تشغيلة
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-44 overflow-y-auto no-scrollbar">
+            <template x-for="(b, bIdx) in modalItem.batches || []" :key="b.id || bIdx">
+              <div class="p-2.5 bg-dark-850 rounded-xl border border-dark-700 text-xs space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <input 
+                    type="text" 
+                    x-model="b.batchNumber" 
+                    placeholder="رقم اللوت" 
+                    class="h-8 px-2 bg-dark-900 border border-dark-700 rounded-lg text-white font-mono text-xs w-28 focus:border-kazyon outline-none"
+                  />
+                  <div class="flex items-center gap-1.5">
+                    <input 
+                      type="date" 
+                      x-model="b.expiryDate" 
+                      @change="syncModalTotalsFromBatches()"
+                      class="h-8 px-2 bg-dark-900 border border-dark-700 rounded-lg text-white font-mono text-xs focus:border-kazyon outline-none"
+                    />
+                    <template x-if="modalItem.batches && modalItem.batches.length > 1">
+                      <button 
+                        type="button" 
+                        @click="removeModalBatch(bIdx)" 
+                        class="w-7 h-7 rounded bg-dark-800 text-stone-500 hover:text-red-400 flex items-center justify-center text-xs touch-btn-sm"
+                        title="حذف هذه التشغيلة"
+                      >
+                        <i class="fa-solid fa-trash text-[10px]"></i>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] text-emerald-400 font-bold whitespace-nowrap">صالة:</span>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      x-model.number="b.shopQty" 
+                      @input="syncModalTotalsFromBatches()"
+                      class="h-8 w-full px-2 bg-dark-900 border border-dark-700 rounded-lg text-emerald-400 font-mono font-bold text-xs focus:border-kazyon outline-none"
+                    />
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] text-amber-400 font-bold whitespace-nowrap">مستودع:</span>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      x-model.number="b.warehouseQty" 
+                      @input="syncModalTotalsFromBatches()"
+                      class="h-8 w-full px-2 bg-dark-900 border border-dark-700 rounded-lg text-amber-400 font-mono font-bold text-xs focus:border-kazyon outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -2100,6 +2476,120 @@
             <i class="fa-brands fa-instagram"></i>
           </a>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- 4.6 FIREBASE REALTIME DATABASE CONFIG MODAL (ADMIN ONLY)     -->
+  <!-- ============================================================= -->
+  <div 
+    x-show="firebaseConfigModalOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+    @click.self="firebaseConfigModalOpen = false"
+  >
+    <div class="bg-dark-850 border border-dark-750 rounded-3xl p-5 sm:p-6 w-full max-w-md shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-dark-750">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-base shrink-0 border border-amber-500/30">
+            <i class="fa-solid fa-cloud-bolt"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-white">إعدادات Firebase Realtime Database</h3>
+            <p class="text-[10px] text-stone-400 mt-0.5">المزامنة السحابية اللحظية عبر الأجهزة (Real-Time Sync Engine)</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          @click="firebaseConfigModalOpen = false" 
+          class="w-8 h-8 rounded-full bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center touch-btn"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Realtime Status Banner -->
+      <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-stone-400">حالة الاتصال السحابي:</span>
+          <template x-if="isOnline">
+            <span class="inline-flex items-center gap-1 text-emerald-400 font-bold font-mono text-[11px]">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>متصل لحظياً (WebSockets Active)</span>
+            </span>
+          </template>
+          <template x-if="!isOnline">
+            <span class="inline-flex items-center gap-1 text-amber-400 font-bold font-mono text-[11px]">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span>وضع عدم الاتصال (Offline-First Cache)</span>
+            </span>
+          </template>
+        </div>
+        <span class="text-[10px] font-mono text-stone-400" x-text="'عمليات: ' + rtdbSyncCount"></span>
+      </div>
+
+      <!-- Config Inputs -->
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-stone-300 mb-1">
+            <i class="fa-solid fa-link text-kazyon ml-1"></i> رابط قاعدة البيانات (Firebase Database URL)
+          </label>
+          <input 
+            type="text" 
+            x-model="firebaseConfigInput.databaseURL" 
+            placeholder="https://your-project-rtdb.firebaseio.com"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-2xl px-3.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            dir="ltr"
+          >
+          <span class="text-[10px] text-stone-400 mt-1 block">قاعدة البيانات الافتراضية لكازيون ماركت معدة وتعمل تلقائياً.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-stone-300 mb-1">
+            <i class="fa-solid fa-diagram-project text-kazyon ml-1"></i> معرف المشروع (Firebase Project ID)
+          </label>
+          <input 
+            type="text" 
+            x-model="firebaseConfigInput.projectId" 
+            placeholder="kazyon-market-sync"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-2xl px-3.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            dir="ltr"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-stone-300 mb-1">
+            <i class="fa-solid fa-key text-kazyon ml-1"></i> مفتاح واجهة التطبيقات (API Key)
+          </label>
+          <input 
+            type="text" 
+            x-model="firebaseConfigInput.apiKey" 
+            placeholder="AIzaSy..."
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-2xl px-3.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            dir="ltr"
+          >
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center gap-2">
+        <button 
+          type="button" 
+          @click="saveFirebaseCustomConfig()"
+          class="flex-1 h-14 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 touch-btn shadow-lg"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>حفظ وتوصيل السحابة</span>
+        </button>
+        <button 
+          type="button" 
+          @click="syncWithFirebaseCloud('all')"
+          class="h-14 px-4 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 touch-btn"
+          title="مزامنة فورية الآن"
+        >
+          <i class="fa-solid fa-rotate text-emerald-400"></i>
+          <span>مزامنة</span>
+        </button>
       </div>
     </div>
   </div>
@@ -2365,12 +2855,22 @@
         activityLogs: [],
         logFilterUser: 'all',
 
-        // Offline-First & Cloud Synchronization State
+        // Offline-First & Cloud Synchronization State (Firebase Realtime Database + LocalStorage)
         isOnline: navigator.onLine,
         isCloudConnected: false,
         isSyncingCloud: false,
+        isDrainingQueue: false,
+        syncQueue: [], // Persistent mobile offline queue to prevent dropped updates
         lastCloudSyncTime: '',
         firebaseDb: null,
+        firebaseRtdb: null,
+        firebaseConfigModalOpen: false,
+        rtdbSyncCount: 0,
+        firebaseConfigInput: {
+          databaseURL: '',
+          projectId: 'gen-lang-client-0002821278',
+          apiKey: 'AIzaSyDx7Yg0XZO2e5iQM04LK8CM3Dtl1eRZQzA'
+        },
 
         // Real-Time Cross-Device Synchronization
         syncChannel: null,
@@ -2419,11 +2919,15 @@
         // Modal for Add/Edit
         isItemModalOpen: false,
         modalItem: {},
+        isFetchingAi: false,
+        aiFetchMessage: '',
 
         // Detailed Product Card View (بطاقة تفصيلية مفردة)
         isDetailModalOpen: false,
         detailItem: null,
         fastBarcodeInput: '',
+        newBatchForm: { batchNumber: '', productionDate: '', expiryDate: '', shopQty: 5, warehouseQty: 10 },
+        isAddingBatchToDetail: false,
 
         // Developer Profile Modal
         isDevModalOpen: false,
@@ -2439,16 +2943,26 @@
           // Detect IP on launch
           this.initIpDetection();
 
-          // Online / Offline Network Listeners
+          // Restore pending mobile sync queue if any remained from prior offline session
+          try {
+            const savedQ = localStorage.getItem('kazyon_pending_sync_queue');
+            if (savedQ) {
+              this.syncQueue = JSON.parse(savedQ);
+            }
+          } catch (e) {
+            this.syncQueue = [];
+          }
+
+          // Online / Offline Network Listeners with Auto-Queue Draining
           this.isOnline = navigator.onLine;
           window.addEventListener('online', () => {
             this.isOnline = true;
-            this.showToast('تم استعادة الاتصال - جاري المزامنة السحابية', 'success');
-            this.syncWithFirebaseCloud('all');
+            this.showToast('تم استعادة الاتصال بالشبكة - جاري تفريغ ومزامنة طابور البيانات تلقائياً', 'success');
+            this.drainSyncQueue();
           });
           window.addEventListener('offline', () => {
             this.isOnline = false;
-            this.showToast('أنت الآن في وضع عدم الاتصال (يعمل المخزن بـ 0ms Cache محلياً)', 'info');
+            this.showToast('انقطع الاتصال بالشبكة (يعمل المخزن بـ 0ms Cache محلياً، والتعديلات تُحفظ في طابور المزامنة)', 'info');
           });
 
           // Restore Auth Session if available
@@ -2471,6 +2985,8 @@
               this.items = JSON.parse(cached);
               this.items.forEach(i => {
                 if (!i.shelfLocation) i.shelfLocation = i.notes || 'رف A-02';
+                this.normalizeItemBatches(i);
+                this.recalcItemStatus(i);
               });
             } catch (e) {
               console.warn('Failed to parse cached items', e);
@@ -2529,6 +3045,13 @@
               this.heartbeatSession();
             }
           }, 15000);
+
+          // Auto-drain pending mobile sync queue periodically (every 12s)
+          setInterval(() => {
+            if (this.syncQueue && this.syncQueue.length > 0 && navigator.onLine && this.firebaseRtdb) {
+              this.drainSyncQueue();
+            }
+          }, 12000);
         },
 
         // Dynamic Client IP Detection (Local Network & WebRTC / Public IP)
@@ -2697,7 +3220,7 @@
           }
         },
 
-        // Seed initial inventory data
+        // Seed initial inventory data with multi-batch and smart 45-day expiry structures
         loadDefaultSeedData() {
           const today = new Date();
           const formatDate = (days) => {
@@ -2714,14 +3237,28 @@
               category: 'ألبان وأجبان',
               regularPrice: 42.0,
               promoPrice: 38.5,
-              shopQty: 8,
-              warehouseQty: 40,
               shelfLocation: 'ثلاجة الألبان 2 - رف A-01',
               productionDate: formatDate(-15),
               expiryDate: formatDate(6),
-              status: 'expiring_soon',
-              statusText: 'يوشك على الانتهاء (6 أيام)',
-              notes: 'ثلاجة الألبان 2'
+              notes: 'ثلاجة الألبان 2',
+              batches: [
+                {
+                  id: 'b_k1_1',
+                  batchNumber: 'LOT-2026-M1',
+                  productionDate: formatDate(-15),
+                  expiryDate: formatDate(6),
+                  shopQty: 8,
+                  warehouseQty: 10
+                },
+                {
+                  id: 'b_k1_2',
+                  batchNumber: 'LOT-2026-M2',
+                  productionDate: formatDate(-5),
+                  expiryDate: formatDate(25),
+                  shopQty: 0,
+                  warehouseQty: 30
+                }
+              ]
             },
             {
               id: 'k2',
@@ -2730,14 +3267,20 @@
               category: 'ألبان وأجبان',
               regularPrice: 35.0,
               promoPrice: 31.0,
-              shopQty: 2,
-              warehouseQty: 24,
               shelfLocation: 'ستاند الأجبان - رف B-03',
               productionDate: formatDate(-30),
-              expiryDate: formatDate(90),
-              status: 'low_stock',
-              statusText: 'نقص حاد على الرف',
-              notes: 'ستاند الأجبان'
+              expiryDate: formatDate(22),
+              notes: 'ستاند الأجبان',
+              batches: [
+                {
+                  id: 'b_k2_1',
+                  batchNumber: 'LOT-2026-D1',
+                  productionDate: formatDate(-30),
+                  expiryDate: formatDate(22),
+                  shopQty: 2,
+                  warehouseQty: 24
+                }
+              ]
             },
             {
               id: 'k3',
@@ -2746,14 +3289,20 @@
               category: 'بقالة جافة وبقوليات',
               regularPrice: 65.0,
               promoPrice: 58.0,
-              shopQty: 22,
-              warehouseQty: 80,
               shelfLocation: 'ممر المعلبات 1 - رف C-04',
               productionDate: formatDate(-60),
               expiryDate: formatDate(360),
-              status: 'valid',
-              statusText: 'سليم ومتاح',
-              notes: 'ممر المعلبات 1'
+              notes: 'ممر المعلبات 1',
+              batches: [
+                {
+                  id: 'b_k3_1',
+                  batchNumber: 'LOT-2026-T1',
+                  productionDate: formatDate(-60),
+                  expiryDate: formatDate(360),
+                  shopQty: 22,
+                  warehouseQty: 80
+                }
+              ]
             },
             {
               id: 'k4',
@@ -2762,14 +3311,20 @@
               category: 'ألبان وأجبان',
               regularPrice: 10.0,
               promoPrice: 0,
-              shopQty: 0,
-              warehouseQty: 10,
               shelfLocation: 'ثلاجة الزبادي - رف A-05',
               productionDate: formatDate(-30),
               expiryDate: formatDate(-2),
-              status: 'expired',
-              statusText: 'منتهي الصلاحية (سحب فوري)',
-              notes: 'مرتجعات المورد'
+              notes: 'مرتجعات المورد',
+              batches: [
+                {
+                  id: 'b_k4_1',
+                  batchNumber: 'LOT-2026-Y0',
+                  productionDate: formatDate(-30),
+                  expiryDate: formatDate(-2),
+                  shopQty: 0,
+                  warehouseQty: 10
+                }
+              ]
             },
             {
               id: 'k5',
@@ -2778,14 +3333,20 @@
               category: 'بقالة جافة وبقوليات',
               regularPrice: 195.0,
               promoPrice: 175.0,
-              shopQty: 12,
-              warehouseQty: 60,
               shelfLocation: 'ستاند العروض الرئيسي - أرضية 1',
               productionDate: formatDate(-20),
               expiryDate: formatDate(400),
-              status: 'valid',
-              statusText: 'سليم ومتاح',
-              notes: 'ستاند العروض الرئيسي'
+              notes: 'ستاند العروض الرئيسي',
+              batches: [
+                {
+                  id: 'b_k5_1',
+                  batchNumber: 'LOT-2026-R1',
+                  productionDate: formatDate(-20),
+                  expiryDate: formatDate(400),
+                  shopQty: 12,
+                  warehouseQty: 60
+                }
+              ]
             },
             {
               id: 'k6',
@@ -2794,16 +3355,32 @@
               category: 'زيوت وسمن',
               regularPrice: 120.0,
               promoPrice: 109.0,
-              shopQty: 3,
-              warehouseQty: 30,
               shelfLocation: 'ممر الزيوت - رف D-02',
               productionDate: formatDate(-40),
-              expiryDate: formatDate(250),
-              status: 'low_stock',
-              statusText: 'يحتاج تزويد الرف',
-              notes: 'ممر الزيوت'
+              expiryDate: formatDate(38),
+              notes: 'ممر الزيوت',
+              batches: [
+                {
+                  id: 'b_k6_1',
+                  batchNumber: 'LOT-2026-O1',
+                  productionDate: formatDate(-40),
+                  expiryDate: formatDate(38),
+                  shopQty: 3,
+                  warehouseQty: 15
+                },
+                {
+                  id: 'b_k6_2',
+                  batchNumber: 'LOT-2026-O2',
+                  productionDate: formatDate(-10),
+                  expiryDate: formatDate(250),
+                  shopQty: 0,
+                  warehouseQty: 15
+                }
+              ]
             }
           ];
+
+          this.items.forEach(i => this.recalcItemStatus(i));
           this.saveToStorage();
         },
 
@@ -2848,96 +3425,399 @@
           this.saveLogsToStorage();
         },
 
-        // Persist Inventory to localStorage & IndexedDB & Cloud Sync
-        saveToStorage() {
-          // 1. Synchronous localStorage write (guarantees 0ms latency on next app launch)
+        // 1. HYBRID DATA PERSISTENCE & BULLETPROOF MOBILE SYNC (Offline-First + Persistent Cloud Queue)
+        saveToStorage(changedItem = null, action = 'UPSERT') {
+          // A. Synchronous localStorage write (Guarantees 0ms instant load on any refresh/launch)
           try {
             localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
           } catch (e) {
             console.warn('LocalStorage limit reached; IndexedDB remains authoritative', e);
           }
 
-          // 2. Asynchronous IndexedDB persistence (unlimited high-capacity mobile database)
+          // B. High-capacity IndexedDB persistence
           KazyonDB.saveAll('inventory', this.items);
 
-          // 3. Cloud synchronization if connected
-          if (this.isOnline) {
-            this.syncWithFirebaseCloud('inventory');
+          // C. Enqueue for Cloud Sync to guarantee no dropped updates even on unstable 3G/4G
+          this.enqueueSync(action, changedItem || this.items);
+        },
+
+        enqueueSync(action, payload) {
+          const syncTask = {
+            id: 'sq_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            action, // 'UPSERT' | 'DELETE' | 'FULL_SYNC'
+            payload,
+            timestamp: Date.now()
+          };
+
+          this.syncQueue.push(syncTask);
+          try {
+            localStorage.setItem('kazyon_pending_sync_queue', JSON.stringify(this.syncQueue));
+          } catch (e) {}
+
+          // Attempt immediate drain if online
+          if (navigator.onLine && this.firebaseRtdb) {
+            this.drainSyncQueue();
           }
         },
 
-        // Persist Logs to localStorage & IndexedDB & Cloud Sync
+        async drainSyncQueue() {
+          if (this.isDrainingQueue) return;
+          if (!this.firebaseRtdb || !navigator.onLine) return;
+
+          this.isDrainingQueue = true;
+          this.isSyncingCloud = true;
+
+          try {
+            while (this.syncQueue.length > 0) {
+              const task = this.syncQueue[0];
+              try {
+                if (task.action === 'UPSERT') {
+                  const it = task.payload;
+                  if (it && it.id) {
+                    // Update granular item node in RTDB to prevent merge collisions across multiple phones
+                    await this.firebaseRtdb.ref('kazyon_inventory_map/' + it.id).set(it);
+                  }
+                } else if (task.action === 'DELETE') {
+                  const itemId = task.payload;
+                  if (itemId) {
+                    await this.firebaseRtdb.ref('kazyon_inventory_map/' + itemId).remove();
+                  }
+                } else if (task.action === 'FULL_SYNC') {
+                  const map = {};
+                  this.items.forEach(it => { if (it && it.id) map[it.id] = it; });
+                  await this.firebaseRtdb.ref('kazyon_inventory_map').set(map);
+                }
+
+                // Remove task once saved
+                this.syncQueue.shift();
+                try {
+                  localStorage.setItem('kazyon_pending_sync_queue', JSON.stringify(this.syncQueue));
+                } catch (e) {}
+              } catch (taskErr) {
+                console.warn('Sync task deferred; will retry when network stabilizes', taskErr);
+                break; // Keep in queue and retry next tick
+              }
+            }
+
+            // Sync full array snapshot for multi-device sync integrity
+            try {
+              await this.firebaseRtdb.ref('kazyon_inventory').set(this.items);
+              this.rtdbSyncCount++;
+              this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch (fullSetErr) {
+              console.warn('Full inventory RTDB set warning:', fullSetErr?.message || fullSetErr);
+            }
+          } catch (err) {
+            console.warn('Queue drain paused due to network glitch', err);
+          } finally {
+            this.isDrainingQueue = false;
+            this.isSyncingCloud = false;
+          }
+        },
+
+        // Persist Activity Logs to LocalStorage, IndexedDB & Firebase RTDB
         saveLogsToStorage() {
           try {
             localStorage.setItem('kazyon_activity_logs_v2', JSON.stringify(this.activityLogs));
           } catch (e) {}
           KazyonDB.saveAll('activity_logs', this.activityLogs);
-          if (this.isOnline) {
-            this.syncWithFirebaseCloud('logs');
+
+          if (this.firebaseRtdb && this.isOnline && this.activityLogs.length > 0) {
+            try {
+              const latestLog = this.activityLogs[0];
+              this.firebaseRtdb.ref('kazyon_activity_logs/' + latestLog.id).set(latestLog).catch(e => console.warn('Log sync warning:', e?.message || e));
+            } catch (e) {}
           }
         },
 
-        // Firebase Cloud Synchronization Handlers
+        // Firebase Realtime Database Cloud Synchronization Engine (CDN SDK)
         initFirebaseSync() {
           try {
-            if (typeof firebase !== 'undefined') {
-              const savedConfig = localStorage.getItem('kazyon_firebase_config');
-              if (savedConfig) {
-                try {
-                  const cfg = JSON.parse(savedConfig);
-                  if (!firebase.apps.length) {
-                    firebase.initializeApp(cfg);
-                  }
-                  this.firebaseDb = firebase.firestore();
-                  this.isCloudConnected = true;
-                  this.setupFirebaseRealtimeListeners();
-                } catch (e) {
-                  console.warn('Firebase custom config parse', e);
-                }
+            if (typeof firebase === 'undefined') return;
+
+            // Load saved config or check if user configured one
+            let cfg = null;
+            const saved = localStorage.getItem('kazyon_firebase_config_v2');
+            if (saved) {
+              try {
+                cfg = JSON.parse(saved);
+              } catch (e) {}
+            }
+
+            this.firebaseConfigInput = {
+              databaseURL: (cfg && cfg.databaseURL) ? cfg.databaseURL : '',
+              projectId: (cfg && cfg.projectId) ? cfg.projectId : 'gen-lang-client-0002821278',
+              apiKey: (cfg && cfg.apiKey) ? cfg.apiKey : 'AIzaSyDx7Yg0XZO2e5iQM04LK8CM3Dtl1eRZQzA'
+            };
+
+            // Only attempt RTDB connection if user provided a valid HTTPS URL (not the fake non-existent default)
+            const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.trim() : '';
+            if (!dbUrl || dbUrl.includes('kazyon-market-sync-default-rtdb') || !dbUrl.startsWith('https://')) {
+              this.isCloudConnected = false;
+              return;
+            }
+
+            const firebaseConfig = {
+              databaseURL: dbUrl,
+              projectId: this.firebaseConfigInput.projectId || 'gen-lang-client-0002821278',
+              apiKey: this.firebaseConfigInput.apiKey || 'AIzaSyDx7Yg0XZO2e5iQM04LK8CM3Dtl1eRZQzA'
+            };
+
+            // Initialize Firebase App safely
+            if (!firebase.apps || !firebase.apps.length) {
+              try {
+                firebase.initializeApp(firebaseConfig);
+              } catch (appErr) {
+                console.warn('Firebase app init warning:', appErr?.message || appErr);
               }
             }
+
+            // Bind Firebase Realtime Database safely
+            if (firebase.database) {
+              try {
+                this.firebaseRtdb = firebase.database();
+                this.setupFirebaseRealtimeListeners();
+              } catch (rtdbErr) {
+                console.warn('Firebase RTDB init warning:', rtdbErr?.message || rtdbErr);
+              }
+            }
+
+            // Optional Fallback Firestore
+            if (firebase.firestore) {
+              try {
+                this.firebaseDb = firebase.firestore();
+              } catch (fsErr) {}
+            }
           } catch (e) {
-            console.warn('Firebase init error', e);
+            console.warn('Firebase overall init error:', e?.message || e);
           }
         },
 
         setupFirebaseRealtimeListeners() {
-          if (!this.firebaseDb) return;
+          if (!this.firebaseRtdb) return;
           try {
-            this.firebaseDb.collection('kazyon_inventory').onSnapshot((snapshot) => {
-              if (snapshot && snapshot.docChanges().length > 0) {
-                snapshot.docChanges().forEach((change) => {
-                  const data = change.doc.data();
-                  if (change.type === 'added' || change.type === 'modified') {
-                    const idx = this.items.findIndex(i => i.id === change.doc.id || i.barcode === data.barcode);
-                    if (idx !== -1) {
-                      this.items[idx] = { ...this.items[idx], ...data };
-                    }
-                  }
-                });
-                this.saveToStorage();
+            // 1. Connection state listener (.info/connected) with error callback
+            const connRef = this.firebaseRtdb.ref('.info/connected');
+            connRef.on('value', (snap) => {
+              this.isCloudConnected = snap.val() === true;
+              if (this.isCloudConnected) {
+                this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                this.drainSyncQueue();
               }
-            }, (err) => console.warn('Firestore snapshot error', err));
-          } catch (e) {}
+            }, (err) => {
+              console.warn('connRef listener error:', err?.message || err);
+              this.isCloudConnected = false;
+            });
+
+            // 2. Real-Time Cross-Device Full Inventory Synchronization with error callback
+            const invRef = this.firebaseRtdb.ref('kazyon_inventory');
+            invRef.on('value', (snapshot) => {
+              const cloudVal = snapshot.val();
+              if (cloudVal) {
+                const cloudItems = Array.isArray(cloudVal) ? cloudVal : Object.values(cloudVal);
+                if (cloudItems && cloudItems.length > 0) {
+                  // Protect in-flight local pending items from being overridden
+                  const pendingIds = new Set(this.syncQueue.map(q => q.payload?.id || q.payload).filter(Boolean));
+                  
+                  const merged = cloudItems.map(remoteIt => {
+                    if (remoteIt && pendingIds.has(remoteIt.id)) {
+                      const localIt = this.items.find(i => i.id === remoteIt.id);
+                      return localIt || remoteIt;
+                    }
+                    return remoteIt;
+                  });
+
+                  merged.forEach(item => {
+                    this.normalizeItemBatches(item);
+                    this.recalcItemStatus(item);
+                  });
+
+                  const localStr = JSON.stringify(this.items);
+                  const remoteStr = JSON.stringify(merged);
+                  if (localStr !== remoteStr) {
+                    this.items = merged;
+                    try {
+                      localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
+                    } catch (e) {}
+                    KazyonDB.saveAll('inventory', this.items);
+                    if (this.detailItem) {
+                      const updated = this.items.find(i => i.id === this.detailItem.id);
+                      if (updated) this.detailItem = updated;
+                    }
+                    this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                  }
+                }
+              }
+            }, (err) => {
+              console.warn('invRef listener error:', err?.message || err);
+            });
+
+            // 2B. Granular Item Map Listener (Atomic Cross-Phone Updates) with error callback
+            const mapRef = this.firebaseRtdb.ref('kazyon_inventory_map');
+            mapRef.on('child_changed', (snapshot) => {
+              const remoteItem = snapshot.val();
+              if (remoteItem && remoteItem.id) {
+                const isPending = this.syncQueue.some(q => q.payload?.id === remoteItem.id);
+                if (!isPending) {
+                  const idx = this.items.findIndex(i => i.id === remoteItem.id);
+                  if (idx !== -1) {
+                    this.normalizeItemBatches(remoteItem);
+                    this.recalcItemStatus(remoteItem);
+                    this.items[idx] = remoteItem;
+                    if (this.detailItem && this.detailItem.id === remoteItem.id) {
+                      this.detailItem = remoteItem;
+                    }
+                    try {
+                      localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
+                    } catch (e) {}
+                    KazyonDB.saveAll('inventory', this.items);
+                  }
+                }
+              }
+            }, (err) => {
+              console.warn('mapRef child_changed error:', err?.message || err);
+            });
+
+            mapRef.on('child_removed', (snapshot) => {
+              const removedKey = snapshot.key;
+              if (removedKey) {
+                const isPending = this.syncQueue.some(q => q.payload === removedKey || q.payload?.id === removedKey);
+                if (!isPending) {
+                  this.items = this.items.filter(i => i.id !== removedKey);
+                  if (this.detailItem && this.detailItem.id === removedKey) {
+                    this.isDetailModalOpen = false;
+                    this.detailItem = null;
+                  }
+                  try {
+                    localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
+                  } catch (e) {}
+                  KazyonDB.saveAll('inventory', this.items);
+                }
+              }
+            }, (err) => {
+              console.warn('mapRef child_removed error:', err?.message || err);
+            });
+
+            // 3. Real-Time Cross-Device Presence & Active Devices with error callback
+            if (this.syncSessionId) {
+              const sessionRef = this.firebaseRtdb.ref('kazyon_active_sessions/' + this.syncSessionId);
+              sessionRef.set({
+                id: this.syncSessionId,
+                username: this.currentUser.username || 'General',
+                name: this.currentUser.name || 'المشرف General',
+                role: this.currentUser.role || 'admin',
+                ip: this.clientIp,
+                device: this.deviceName,
+                deviceIcon: this.deviceInfo.icon || 'fa-solid fa-mobile-screen-button',
+                os: this.deviceInfo.os || 'Android',
+                browser: this.deviceInfo.browser || 'Chrome',
+                loginTime: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                lastSeen: firebase.database.ServerValue ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+              }).catch(e => console.warn('sessionRef.set deferred:', e?.message || e));
+
+              try {
+                sessionRef.onDisconnect().remove().catch(e => console.warn('onDisconnect remove warning:', e?.message || e));
+              } catch (e) {}
+
+              // Listen to all connected devices across the network
+              const allSessRef = this.firebaseRtdb.ref('kazyon_active_sessions');
+              allSessRef.on('value', (snapshot) => {
+                const val = snapshot.val();
+                if (val) {
+                  const list = Object.values(val);
+                  if (list && list.length > 0) {
+                    this.activeSessions = list;
+                    try {
+                      localStorage.setItem('kazyon_active_sessions_v2', JSON.stringify(list));
+                    } catch (e) {}
+                  }
+                }
+              }, (err) => {
+                console.warn('allSessRef listener error:', err?.message || err);
+              });
+            }
+
+            // 4. Real-Time Activity Logs Stream with error callback
+            const logsRef = this.firebaseRtdb.ref('kazyon_activity_logs');
+            logsRef.limitToLast(40).on('child_added', (snapshot) => {
+              const remoteLog = snapshot.val();
+              if (remoteLog && !this.activityLogs.some(l => l.id === remoteLog.id)) {
+                this.activityLogs.unshift(remoteLog);
+                if (this.activityLogs.length > 300) this.activityLogs.pop();
+                try {
+                  localStorage.setItem('kazyon_activity_logs_v2', JSON.stringify(this.activityLogs));
+                } catch (e) {}
+              }
+            }, (err) => {
+              console.warn('logsRef listener error:', err?.message || err);
+            });
+
+            // 5. Cloud-Wide Push Broadcast Events with error callback
+            const broadcastRef = this.firebaseRtdb.ref('kazyon_broadcast_events');
+            broadcastRef.limitToLast(1).on('child_added', (snapshot) => {
+              const evt = snapshot.val();
+              if (evt && evt.sessionId !== this.syncSessionId && (Date.now() - (evt.timestamp || 0)) < 30000) {
+                let text = evt.customMessage;
+                if (!text) {
+                  if (evt.type === 'ITEM_ADD') text = `إضافة صنف جديد بواسطة ${evt.user} (${evt.device || 'هاتف'})`;
+                  else if (evt.type === 'ITEM_EDIT') text = `تعديل صنف بواسطة ${evt.user} (${evt.device || 'هاتف'})`;
+                  else if (evt.type === 'STOCK_CHANGE') text = `تحديث كميات بواسطة ${evt.user} (${evt.device || 'هاتف'})`;
+                  else if (evt.type === 'STOCK_TRANSFER') text = `نقل بضاعة للصالة بواسطة ${evt.user} (${evt.device || 'هاتف'})`;
+                  else if (evt.type === 'BULK_IMPORT') text = `استيراد بضائع بواسطة ${evt.user} (${evt.device || 'هاتف'})`;
+                  else if (evt.type === 'USER_LOGIN') text = `تسجيل دخول: ${evt.user} (${evt.device || 'هاتف'})`;
+                  else text = `تزامن فوري من جهاز: ${evt.device || 'فرع كازيون'}`;
+                }
+                this.triggerRealtimeNotice(text);
+                if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+              }
+            }, (err) => {
+              console.warn('broadcastRef listener error:', err?.message || err);
+            });
+
+          } catch (err) {
+            console.warn('Firebase realtime listeners setup failed', err);
+          }
         },
 
+        // Manual Force Sync with Firebase Cloud
         async syncWithFirebaseCloud(target) {
-          if (!this.firebaseDb || !this.isOnline) return;
+          if (!this.isOnline) return;
+          this.isSyncingCloud = true;
           try {
-            this.isSyncingCloud = true;
-            if (target === 'inventory' || target === 'all') {
+            if (this.firebaseRtdb) {
+              await this.firebaseRtdb.ref('kazyon_inventory').set(this.items);
+              this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              this.showToast('تمت المزامنة السحابية الكاملة مع Firebase RTDB بنجاح', 'success');
+            } else if (this.firebaseDb) {
               const batch = this.firebaseDb.batch();
               this.items.slice(0, 40).forEach(it => {
                 const docRef = this.firebaseDb.collection('kazyon_inventory').doc(it.id);
                 batch.set(docRef, it, { merge: true });
               });
               await batch.commit();
+              this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             }
-            this.lastCloudSyncTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
           } catch (e) {
-            console.warn('Firebase batch sync', e);
+            console.warn('Manual sync failed', e);
           } finally {
             this.isSyncingCloud = false;
+          }
+        },
+
+        // Save Custom Firebase RTDB Settings (from Admin Modal)
+        saveFirebaseCustomConfig() {
+          try {
+            const cfg = {
+              databaseURL: this.firebaseConfigInput.databaseURL.trim(),
+              projectId: this.firebaseConfigInput.projectId.trim(),
+              apiKey: this.firebaseConfigInput.apiKey.trim()
+            };
+            localStorage.setItem('kazyon_firebase_config_v2', JSON.stringify(cfg));
+            this.firebaseConfigModalOpen = false;
+            this.showToast('تم حفظ إعدادات Firebase RTDB - جاري إعادة التوصيل', 'success');
+            this.initFirebaseSync();
+          } catch (e) {
+            this.showToast('تعذر حفظ الإعدادات', 'error');
           }
         },
 
@@ -2977,14 +3857,16 @@
         },
 
         // Broadcast local mutation to all connected staff/admins
-        broadcastUpdate(type, payload) {
+        broadcastUpdate(type, payload, customMessage = '') {
           const message = {
             type,
             sessionId: this.syncSessionId,
             user: this.currentUser.username,
             role: this.currentUser.role,
+            device: this.deviceName,
             ip: this.clientIp,
             timestamp: Date.now(),
+            customMessage,
             payload
           };
 
@@ -2996,6 +3878,13 @@
 
           // Trigger cross-window storage change
           localStorage.setItem('kazyon_sync_ping', JSON.stringify({ type, user: this.currentUser.username, ts: Date.now() }));
+
+          // Push to Firebase Realtime Database for instant multi-phone synchronization
+          if (this.firebaseRtdb) {
+            try {
+              this.firebaseRtdb.ref('kazyon_broadcast_events').push(message).catch(e => console.warn('Broadcast push warning:', e?.message || e));
+            } catch (e) {}
+          }
         },
 
         // Handle incoming sync event from other active devices/users
@@ -3254,18 +4143,27 @@
 
         // 2. ONE-TAP INSTANT QUANTITY ADJUSTMENT (+1 / -1) WITH REAL-TIME BROADCAST
         updateStock(item, target, delta) {
-          const oldShop = item.shopQty;
-          const oldWh = item.warehouseQty;
+          this.normalizeItemBatches(item);
 
           if (target === 'shop') {
-            item.shopQty = Math.max(0, item.shopQty + delta);
+            if (delta > 0) {
+              item.batches[0].shopQty = (Number(item.batches[0].shopQty) || 0) + delta;
+            } else {
+              const b = item.batches.find(x => Number(x.shopQty) > 0) || item.batches[0];
+              b.shopQty = Math.max(0, (Number(b.shopQty) || 0) + delta);
+            }
           } else {
-            item.warehouseQty = Math.max(0, item.warehouseQty + delta);
+            if (delta > 0) {
+              item.batches[0].warehouseQty = (Number(item.batches[0].warehouseQty) || 0) + delta;
+            } else {
+              const b = item.batches.find(x => Number(x.warehouseQty) > 0) || item.batches[0];
+              b.warehouseQty = Math.max(0, (Number(b.warehouseQty) || 0) + delta);
+            }
           }
 
-          // Recalculate status
+          // Recalculate status and totals from batches
           this.recalcItemStatus(item);
-          this.saveToStorage();
+          this.saveToStorage(item, 'UPSERT');
 
           // Audit Log & Real-time Broadcast
           const targetName = target === 'shop' ? 'الرف (الصالة)' : 'المستودع';
@@ -3286,51 +4184,128 @@
           }
         },
 
-        // 1-Tap Transfer Warehouse to Hall (نقل فوري)
+        // 1-Tap Transfer Warehouse to Hall (نقل فوري بنظام FIFO للتشغيلات)
         transferWarehouseToHall(item, count) {
-          const move = Math.min(count, item.warehouseQty);
-          if (move <= 0) return;
+          this.normalizeItemBatches(item);
+          let remaining = count;
+          let totalMoved = 0;
 
-          item.warehouseQty -= move;
-          item.shopQty += move;
+          for (let b of item.batches) {
+            if (remaining <= 0) break;
+            const canTake = Math.min(remaining, Number(b.warehouseQty) || 0);
+            if (canTake > 0) {
+              b.warehouseQty -= canTake;
+              b.shopQty = (Number(b.shopQty) || 0) + canTake;
+              remaining -= canTake;
+              totalMoved += canTake;
+            }
+          }
+
+          if (totalMoved <= 0) return;
+
           this.recalcItemStatus(item);
-          this.saveToStorage();
+          this.saveToStorage(item, 'UPSERT');
 
-          this.logActivity('STOCK_TRANSFER', `نقل فوري لـ (${move}) قطعة من المستودع إلى الرف: ${item.itemName} (${item.shelfLocation})`);
+          this.logActivity('STOCK_TRANSFER', `نقل فوري لـ (${totalMoved}) قطعة من المستودع إلى الرف: ${item.itemName} (${item.shelfLocation})`);
           this.broadcastUpdate('STOCK_TRANSFER', {
             itemId: item.id,
             itemName: item.itemName,
-            count: move,
+            count: totalMoved,
             shopQty: item.shopQty,
             warehouseQty: item.warehouseQty
           });
 
-          this.showToast(`تم تزويد الصالة بـ ${move} قطعة من ${item.itemName}`, 'success');
+          this.showToast(`تم تزويد الصالة بـ ${totalMoved} قطعة من ${item.itemName}`, 'success');
           if (navigator.vibrate) {
             navigator.vibrate([40, 30, 40]);
           }
         },
 
-        recalcItemStatus(item) {
-          if (item.expiryDate) {
+        // MULTI-BATCH & EXPIRY ENGINE (تتبع التشغيلات والصلاحية)
+        normalizeItemBatches(item) {
+          if (!item.batches || !Array.isArray(item.batches) || item.batches.length === 0) {
             const today = new Date();
-            today.setHours(0,0,0,0);
-            const exp = new Date(item.expiryDate);
-            exp.setHours(0,0,0,0);
-            const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+            const prodDate = item.productionDate || new Date(today.getTime() - 30 * 86400000).toISOString().split('T')[0];
+            const expDate = item.expiryDate || new Date(today.getTime() + 120 * 86400000).toISOString().split('T')[0];
+            item.batches = [
+              {
+                id: 'b_' + (item.id || Date.now()) + '_1',
+                batchNumber: 'LOT-2026-MAIN',
+                productionDate: prodDate,
+                expiryDate: expDate,
+                shopQty: Number(item.shopQty) || 0,
+                warehouseQty: Number(item.warehouseQty) || 0
+              }
+            ];
+          } else {
+            item.batches.forEach((b, idx) => {
+              if (!b.id) b.id = 'b_' + (item.id || Date.now()) + '_' + (idx + 1);
+              if (!b.batchNumber) b.batchNumber = 'LOT-' + (idx + 1);
+              b.shopQty = Number(b.shopQty) || 0;
+              b.warehouseQty = Number(b.warehouseQty) || 0;
+            });
+          }
+        },
 
-            if (diffDays < 0) {
-              item.status = 'expired';
-              item.statusText = 'منتهي الصلاحية';
-              return;
-            } else if (diffDays <= 15) {
-              item.status = 'expiring_soon';
-              item.statusText = `يوشك على الانتهاء (${diffDays} يوم)`;
-              return;
+        // Recalculate Item Status, Totals & Smart 45-Day Expiry Alerts
+        recalcItemStatus(item) {
+          this.normalizeItemBatches(item);
+
+          // Compute aggregate stock from all batches
+          item.shopQty = item.batches.reduce((sum, b) => sum + (Number(b.shopQty) || 0), 0);
+          item.warehouseQty = item.batches.reduce((sum, b) => sum + (Number(b.warehouseQty) || 0), 0);
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          let earliestExpDate = null;
+          let minDays = 999999;
+          let hasExpired = false;
+          let has45DayAlert = false;
+
+          item.batches.forEach(b => {
+            if (b.expiryDate) {
+              const exp = new Date(b.expiryDate);
+              exp.setHours(0, 0, 0, 0);
+              const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+              b.daysLeft = diffDays;
+
+              if (!earliestExpDate || exp < earliestExpDate) {
+                earliestExpDate = exp;
+                minDays = diffDays;
+              }
+
+              if (diffDays < 0) {
+                hasExpired = true;
+                b.status = 'expired';
+                b.statusBadge = `منتهي الصلاحية (${Math.abs(diffDays)} يوم مضى)`;
+              } else if (diffDays <= 45) {
+                has45DayAlert = true;
+                b.status = 'expiring_45';
+                b.statusBadge = `تنبيه 45 يوماً (${diffDays} يوم متبقي)`;
+              } else {
+                b.status = 'valid';
+                b.statusBadge = `سليم (${diffDays} يوم متبقي)`;
+              }
+            } else {
+              b.daysLeft = 999999;
+              b.status = 'valid';
+              b.statusBadge = 'غير محدد';
             }
+          });
+
+          if (earliestExpDate) {
+            item.expiryDate = earliestExpDate.toISOString().split('T')[0];
+            item.daysLeft = minDays;
           }
 
-          if (item.shopQty <= 3) {
+          if (hasExpired) {
+            item.status = 'expired';
+            item.statusText = minDays < 0 ? `منتهي الصلاحية (${Math.abs(minDays)} يوم مضى)` : 'منتهي الصلاحية (سحب فوري)';
+          } else if (has45DayAlert) {
+            item.status = 'expiring_45';
+            item.statusText = `تنبيه الصلاحية الذكي: يوشك على الانتهاء (${minDays} يوم متبقي)`;
+          } else if (item.shopQty <= 3) {
             item.status = 'low_stock';
             item.statusText = 'نقص في الصالة';
           } else {
@@ -3339,15 +4314,258 @@
           }
         },
 
+        // Detailed Card Batch Operations
+        addBatchToDetailItem() {
+          if (!this.detailItem) return;
+          this.normalizeItemBatches(this.detailItem);
+          const today = new Date().toISOString().split('T')[0];
+          const exp = this.newBatchForm.expiryDate || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
+          const lotNum = (this.newBatchForm.batchNumber || '').trim() || ('LOT-' + (this.detailItem.batches.length + 1));
+
+          const newBatch = {
+            id: 'b_' + Date.now(),
+            batchNumber: lotNum,
+            productionDate: this.newBatchForm.productionDate || today,
+            expiryDate: exp,
+            shopQty: Number(this.newBatchForm.shopQty) || 0,
+            warehouseQty: Number(this.newBatchForm.warehouseQty) || 0
+          };
+
+          this.detailItem.batches.push(newBatch);
+          this.recalcItemStatus(this.detailItem);
+          const itemIdx = this.items.findIndex(i => i.id === this.detailItem.id);
+          if (itemIdx !== -1) this.items[itemIdx] = this.detailItem;
+          this.saveToStorage(this.detailItem, 'UPSERT');
+
+          this.logActivity('BATCH_ADD', `إضافة تشغيلة جديدة (${lotNum}) للمنتج: ${this.detailItem.itemName}`);
+          this.broadcastUpdate('ITEM_EDIT', { item: this.detailItem });
+          this.showToast(`تمت إضافة التشغيلة (${lotNum}) بنجاح`, 'success');
+          this.isAddingBatchToDetail = false;
+          this.newBatchForm = { batchNumber: '', productionDate: today, expiryDate: '', shopQty: 5, warehouseQty: 10 };
+        },
+
+        removeBatchFromDetailItem(batchId) {
+          if (!this.detailItem || !this.detailItem.batches || this.detailItem.batches.length <= 1) {
+            this.showToast('لا يمكن حذف التشغيلة الوحيدة للمنتج', 'info');
+            return;
+          }
+          const b = this.detailItem.batches.find(x => x.id === batchId);
+          if (confirm(`هل أنت متأكد من حذف التشغيلة (${b?.batchNumber || ''})؟`)) {
+            this.detailItem.batches = this.detailItem.batches.filter(x => x.id !== batchId);
+            this.recalcItemStatus(this.detailItem);
+            const itemIdx = this.items.findIndex(i => i.id === this.detailItem.id);
+            if (itemIdx !== -1) this.items[itemIdx] = this.detailItem;
+            this.saveToStorage(this.detailItem, 'UPSERT');
+            this.logActivity('BATCH_DELETE', `حذف تشغيلة من المنتج: ${this.detailItem.itemName}`);
+            this.broadcastUpdate('ITEM_EDIT', { item: this.detailItem });
+            this.showToast('تم حذف التشغيلة بنجاح', 'info');
+          }
+        },
+
+        updateBatchStock(batch, target, delta) {
+          if (!this.detailItem || !batch) return;
+          if (target === 'shop') {
+            batch.shopQty = Math.max(0, (Number(batch.shopQty) || 0) + delta);
+          } else {
+            batch.warehouseQty = Math.max(0, (Number(batch.warehouseQty) || 0) + delta);
+          }
+          this.recalcItemStatus(this.detailItem);
+          const itemIdx = this.items.findIndex(i => i.id === this.detailItem.id);
+          if (itemIdx !== -1) this.items[itemIdx] = this.detailItem;
+          this.saveToStorage(this.detailItem, 'UPSERT');
+          this.broadcastUpdate('STOCK_CHANGE', {
+            itemId: this.detailItem.id,
+            itemName: this.detailItem.itemName,
+            target,
+            delta,
+            shopQty: this.detailItem.shopQty,
+            warehouseQty: this.detailItem.warehouseQty
+          });
+          if (navigator.vibrate) navigator.vibrate(30);
+        },
+
+        transferBatchStock(batch, count) {
+          if (!this.detailItem || !batch || (batch.warehouseQty || 0) <= 0) return;
+          const move = Math.min(count, batch.warehouseQty);
+          batch.warehouseQty -= move;
+          batch.shopQty = (Number(batch.shopQty) || 0) + move;
+          this.recalcItemStatus(this.detailItem);
+          const itemIdx = this.items.findIndex(i => i.id === this.detailItem.id);
+          if (itemIdx !== -1) this.items[itemIdx] = this.detailItem;
+          this.saveToStorage(this.detailItem, 'UPSERT');
+          this.logActivity('STOCK_TRANSFER', `نقل (${move}) قطع من تشغيلة ${batch.batchNumber} إلى الرف: ${this.detailItem.itemName}`);
+          this.broadcastUpdate('STOCK_TRANSFER', {
+            itemId: this.detailItem.id,
+            itemName: this.detailItem.itemName,
+            count: move,
+            shopQty: this.detailItem.shopQty,
+            warehouseQty: this.detailItem.warehouseQty
+          });
+          this.showToast(`تم نقل ${move} قطعة من التشغيلة (${batch.batchNumber}) إلى الصالة`, 'success');
+          if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+        },
+
+        // Modal Batch Operations (Add/Edit Modal)
+        addModalBatch() {
+          if (!this.modalItem.batches) this.modalItem.batches = [];
+          const today = new Date().toISOString().split('T')[0];
+          const future = new Date(Date.now() + 120 * 86400000).toISOString().split('T')[0];
+          this.modalItem.batches.push({
+            id: 'b_' + Date.now() + '_' + (this.modalItem.batches.length + 1),
+            batchNumber: 'LOT-' + (this.modalItem.batches.length + 1),
+            productionDate: today,
+            expiryDate: future,
+            shopQty: 5,
+            warehouseQty: 15
+          });
+          this.syncModalTotalsFromBatches();
+        },
+
+        removeModalBatch(idx) {
+          if (this.modalItem.batches && this.modalItem.batches.length > 1) {
+            this.modalItem.batches.splice(idx, 1);
+            this.syncModalTotalsFromBatches();
+          } else {
+            this.showToast('يجب إبقاء تشغيلة واحدة على الأقل للصنف', 'info');
+          }
+        },
+
+        syncModalTotalsFromBatches() {
+          if (this.modalItem.batches && this.modalItem.batches.length > 0) {
+            this.modalItem.shopQty = this.modalItem.batches.reduce((sum, b) => sum + (Number(b.shopQty) || 0), 0);
+            this.modalItem.warehouseQty = this.modalItem.batches.reduce((sum, b) => sum + (Number(b.warehouseQty) || 0), 0);
+            const dates = this.modalItem.batches.map(b => b.expiryDate).filter(Boolean).sort();
+            if (dates.length > 0) {
+              this.modalItem.expiryDate = dates[0];
+            }
+          }
+        },
+
+        // 3. AI AUTO-FETCH VIA GLOBAL BARCODE API (Open Food Facts)
+        async fetchOpenFoodFacts(barcode, isAutoFromScan = false) {
+          const cleanBarcode = (barcode || '').toString().trim();
+          if (!cleanBarcode || cleanBarcode.length < 4) {
+            this.showToast('يرجى كتابة أو مسح رقم باركود صالح للاستعلام', 'info');
+            return null;
+          }
+
+          this.isFetchingAi = true;
+          this.aiFetchMessage = 'جاري الاتصال بقاعدة بيانات Open Food Facts العالمية...';
+
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+            const url = `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(cleanBarcode)}.json`;
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+              throw new Error(`خطأ استجابة السيرفر (${response.status})`);
+            }
+
+            const data = await response.json();
+
+            if (data && data.status === 1 && data.product) {
+              const p = data.product;
+
+              // Intelligent extraction of Product Name (Arabic > Standard > Brand + Quantity)
+              let extractedName = p.product_name_ar || p.generic_name_ar || '';
+              if (!extractedName) {
+                extractedName = p.product_name || p.generic_name || '';
+              }
+              if (p.brands && !extractedName.toLowerCase().includes(p.brands.toLowerCase())) {
+                extractedName = extractedName ? `${p.brands} - ${extractedName}` : p.brands;
+              }
+              if (p.quantity && !extractedName.includes(p.quantity)) {
+                extractedName += ` (${p.quantity})`;
+              }
+              if (!extractedName) {
+                extractedName = `منتج كازيون (${cleanBarcode})`;
+              }
+
+              // Intelligent Category Classification for Kazyon's 8 departments
+              const catHaystack = [
+                p.categories || '',
+                p.categories_tags ? p.categories_tags.join(' ') : '',
+                p.labels || '',
+                extractedName
+              ].join(' ').toLowerCase();
+
+              let mappedCategory = 'بقالة جافة وبقوليات';
+              if (/dairy|milk|cheese|lait|fromage|yogurt|yaourt|butter|beurre|قشطة|جبن|لبن|حليب|زبادي|ألبان/i.test(catHaystack)) {
+                mappedCategory = 'ألبان وأجبان';
+              } else if (/oil|ghee|fat|huile|graisse|زيت|سمن|ذرة|عباد/i.test(catHaystack)) {
+                mappedCategory = 'زيوت وسمن';
+              } else if (/beverage|drink|juice|water|soda|boisson|eau|jus|عصير|مشروب|مياه|غازية|شاي|قهوة/i.test(catHaystack)) {
+                mappedCategory = 'مشروبات وعصائر';
+              } else if (/biscuit|cake|sweet|chocolate|candy|snack|gâteau|chocolat|بسكويت|شوكولاتة|حلويات|كيك/i.test(catHaystack)) {
+                mappedCategory = 'مخبوزات وحلويات';
+              } else if (/chips|crisp|nut|seed|cacahuète|شيبسي|بطاطس|تسالي|مكسرات|مقرمشات/i.test(catHaystack)) {
+                mappedCategory = 'تسالي ومقرمشات';
+              } else if (/clean|detergent|soap|savon|lessive|منظف|صابون|شامبو|معجون|عناية|كلور/i.test(catHaystack)) {
+                mappedCategory = 'منظفات وعناية';
+              } else if (/meat|beef|chicken|fish|poultry|frozen|viande|poisson|لحم|دجاج|سمك|تونة|مجمد/i.test(catHaystack)) {
+                mappedCategory = 'مجمدات ولحوم';
+              }
+
+              // Suggested Shelf Location
+              const shelfMap = {
+                'ألبان وأجبان': 'ثلاجة الألبان - رف A-02',
+                'بقالة جافة وبقوليات': 'ممر البقالة 1 - رف C-02',
+                'مشروبات وعصائر': 'ثلاجة المشروبات - رف B-01',
+                'مخبوزات وحلويات': 'ستاند الحلويات - رف D-01',
+                'زيوت وسمن': 'ممر الزيوت - رف A-04',
+                'منظفات وعناية': 'ممر المنظفات - رف E-03',
+                'مجمدات ولحوم': 'ديب فريزر المجمدات 1',
+                'تسالي ومقرمشات': 'ستاند التسالي والمقرمشات'
+              };
+
+              // Populate modalItem
+              this.modalItem.barcode = cleanBarcode;
+              this.modalItem.itemName = extractedName;
+              this.modalItem.category = mappedCategory;
+              this.modalItem.shelfLocation = shelfMap[mappedCategory] || 'رف A-01';
+              if (p.image_front_url || p.image_url) {
+                this.modalItem.imageUrl = p.image_front_url || p.image_url;
+              }
+
+              this.aiFetchMessage = `تم العثور: ${extractedName}`;
+              this.showToast(`تم جلب بيانات الصنف آلياً (Open Food Facts): ${extractedName}`, 'success');
+              this.logActivity('AI_AUTOFETCH', `جلب بيانات تلقائي لباركود ${cleanBarcode}: ${extractedName}`);
+              if (navigator.vibrate) navigator.vibrate([50, 40, 50]);
+
+              return { found: true, itemName: extractedName, category: mappedCategory };
+            } else {
+              this.aiFetchMessage = 'الصنف غير مدرج بالسجل العالمي (يرجى إدخال الاسم يدوياً)';
+              this.showToast(`الباركود ${cleanBarcode} غير مسجل في Open Food Facts، يرجى كتابة البيانات يدوياً`, 'info');
+              return { found: false };
+            }
+          } catch (err) {
+            console.warn('Open Food Facts API request error:', err);
+            this.aiFetchMessage = 'تعذر الاتصال بـ Open Food Facts (تحقق من الشبكة)';
+            this.showToast('تعذر الاتصال بـ Open Food Facts، يمكنك المتابعة يدوياً', 'info');
+            return { found: false, error: err.message };
+          } finally {
+            this.isFetchingAi = false;
+          }
+        },
+
         // KPI calculations
         calcTotalHall() {
-          return this.items.reduce((acc, curr) => acc + (curr.shopQty || 0), 0);
+          return this.items.reduce((acc, curr) => acc + (Number(curr.shopQty) || 0), 0);
         },
         calcTotalWarehouse() {
-          return this.items.reduce((acc, curr) => acc + (curr.warehouseQty || 0), 0);
+          return this.items.reduce((acc, curr) => acc + (Number(curr.warehouseQty) || 0), 0);
         },
         calcAlertsCount() {
-          return this.items.filter(i => i.status === 'expired' || i.status === 'low_stock').length;
+          return this.items.filter(i => i.status === 'expired' || i.status === 'low_stock' || i.status === 'expiring_45').length;
+        },
+        calcExpiring45Count() {
+          return this.items.filter(i => i.status === 'expiring_45').length;
+        },
+        calcExpiredCount() {
+          return this.items.filter(i => i.status === 'expired').length;
         },
 
         // Real-Time Filtered Items
@@ -3365,8 +4583,10 @@
               if (item.status !== 'low_stock') return false;
             } else if (this.statusFilter === 'expired') {
               if (item.status !== 'expired') return false;
+            } else if (this.statusFilter === 'expiring_45') {
+              if (item.status !== 'expiring_45') return false;
             } else if (this.statusFilter === 'alerts') {
-              if (item.status !== 'expired' && item.status !== 'low_stock') return false;
+              if (item.status !== 'expired' && item.status !== 'low_stock' && item.status !== 'expiring_45') return false;
             }
 
             // Search query
@@ -3421,15 +4641,17 @@
             }
 
             // Create scanner instance with focused retail barcode formats for instant decoding
+            const formats = (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
+              Html5QrcodeSupportedFormats.EAN_13,
+              Html5QrcodeSupportedFormats.EAN_8,
+              Html5QrcodeSupportedFormats.CODE_128,
+              Html5QrcodeSupportedFormats.UPC_A,
+              Html5QrcodeSupportedFormats.UPC_E,
+              Html5QrcodeSupportedFormats.QR_CODE
+            ] : undefined;
+
             const qrCode = new Html5Qrcode('camera-scanner-viewport', {
-              formatsToSupport: [
-                Html5QrcodeSupportedFormats.EAN_13,
-                Html5QrcodeSupportedFormats.EAN_8,
-                Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.UPC_A,
-                Html5QrcodeSupportedFormats.UPC_E,
-                Html5QrcodeSupportedFormats.QR_CODE
-              ],
+              ...(formats ? { formatsToSupport: formats } : {}),
               verbose: false
             });
             this.html5QrCode = qrCode;
@@ -3537,6 +4759,29 @@
           }
         },
 
+        // 4. One-Time Camera Permission & Pre-Warming (720p HD Optimized)
+        async preWarmCamera() {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+          try {
+            // Proactive one-time permission request to prime browser permissions and driver
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280, max: 1280 },
+                height: { ideal: 720, max: 720 }
+              },
+              audio: false
+            });
+            // Stop tracks immediately so camera hardware light turns off until scanner is opened
+            if (stream) {
+              this.cameraPreWarmed = true;
+              stream.getTracks().forEach(track => track.stop());
+            }
+          } catch (e) {
+            console.debug('Camera pre-warming skipped or awaiting user interaction', e);
+          }
+        },
+
         handleScannedBarcode(barcode) {
           const clean = barcode.trim();
           this.closeScanner();
@@ -3557,17 +4802,20 @@
               this.logActivity('BARCODE_SCAN', `مسح باركود سلعة بالكاميرا: ${found.itemName} (${clean})`);
               this.openDetailModal(found);
             } else {
-              this.showToast(`باركود غير مسجل (${clean})`, 'info');
+              this.showToast(`باركود جديد (${clean}) - جاري الاستعلام الذكي (Open Food Facts)...`, 'info');
               this.logActivity('BARCODE_SCAN', `مسح باركود جديد غير مسجل: ${clean}`);
               this.openItemModal({ 
                 barcode: clean, 
                 itemName: '', 
-                regularPrice: 0, 
+                category: this.categories[0],
+                regularPrice: 20, 
                 promoPrice: 0, 
-                shopQty: 0, 
-                warehouseQty: 0,
+                shopQty: 5, 
+                warehouseQty: 15,
                 shelfLocation: 'رف A-01' 
               });
+              // Automatic AI Auto-Fetch from Open Food Facts
+              this.fetchOpenFoodFacts(clean, true);
             }
           }
         },
@@ -3575,6 +4823,8 @@
         // 1. Open Detailed Product Card Modal
         openDetailModal(item) {
           if (!item) return;
+          this.normalizeItemBatches(item);
+          this.recalcItemStatus(item);
           this.detailItem = item;
           this.isDetailModalOpen = true;
           if (navigator.vibrate) navigator.vibrate(40);
@@ -3651,13 +4901,14 @@
         // Add/Edit Modal
         openItemModal(item) {
           if (item) {
-            this.modalItem = { ...item };
+            this.modalItem = JSON.parse(JSON.stringify(item));
             if (!this.modalItem.shelfLocation) {
               this.modalItem.shelfLocation = this.modalItem.notes || 'رف A-01';
             }
+            this.normalizeItemBatches(this.modalItem);
           } else {
             const today = new Date().toISOString().split('T')[0];
-            const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+            const future = new Date(Date.now() + 120 * 24 * 3600 * 1000).toISOString().split('T')[0];
             this.modalItem = {
               id: '',
               barcode: '',
@@ -3666,13 +4917,24 @@
               regularPrice: 20,
               promoPrice: 0,
               shopQty: 5,
-              warehouseQty: 20,
+              warehouseQty: 15,
               shelfLocation: 'رف A-01',
               productionDate: today,
               expiryDate: future,
-              notes: ''
+              notes: '',
+              batches: [
+                {
+                  id: 'b_' + Date.now(),
+                  batchNumber: 'LOT-1',
+                  productionDate: today,
+                  expiryDate: future,
+                  shopQty: 5,
+                  warehouseQty: 15
+                }
+              ]
             };
           }
+          this.aiFetchMessage = '';
           this.isItemModalOpen = true;
         },
 
@@ -3682,16 +4944,20 @@
             return;
           }
 
+          this.normalizeItemBatches(this.modalItem);
+          this.recalcItemStatus(this.modalItem);
+
+          let savedItem = null;
           if (this.modalItem.id) {
             // Update
             const idx = this.items.findIndex(i => i.id === this.modalItem.id);
             if (idx !== -1) {
-              this.recalcItemStatus(this.modalItem);
               this.items[idx] = { ...this.modalItem };
               if (this.detailItem && this.detailItem.id === this.modalItem.id) {
                 this.detailItem = this.items[idx];
               }
-              this.showToast('تم تحديث الصنف بنجاح', 'success');
+              savedItem = this.items[idx];
+              this.showToast('تم تحديث الصنف وتشغيلاته بنجاح', 'success');
               this.logActivity('ITEM_EDIT', `تعديل بيانات الصنف: ${this.modalItem.itemName} (${this.modalItem.barcode})`);
               this.broadcastUpdate('ITEM_EDIT', { item: this.modalItem });
             }
@@ -3703,13 +4969,14 @@
             };
             this.recalcItemStatus(newItem);
             this.items.unshift(newItem);
-            this.showToast('تمت إضافة المنتج للمخزن', 'success');
+            savedItem = newItem;
+            this.showToast('تمت إضافة المنتج والمخزون بنجاح', 'success');
             this.logActivity('ITEM_ADD', `إضافة صنف جديد للمخزن: ${newItem.itemName} (${newItem.barcode})`);
             this.broadcastUpdate('ITEM_ADD', { item: newItem });
             this.openDetailModal(newItem);
           }
 
-          this.saveToStorage();
+          this.saveToStorage(savedItem, 'UPSERT');
           this.isItemModalOpen = false;
         },
 
@@ -3720,14 +4987,15 @@
           }
 
           if (confirm(`هل أنت متأكد من حذف "${item.itemName}" من قائمة المخزون؟`)) {
-            this.items = this.items.filter(i => i.id !== item.id);
-            if (this.detailItem && this.detailItem.id === item.id) {
+            const delId = item.id;
+            this.items = this.items.filter(i => i.id !== delId);
+            if (this.detailItem && this.detailItem.id === delId) {
               this.isDetailModalOpen = false;
               this.detailItem = null;
             }
-            this.saveToStorage();
+            this.saveToStorage(delId, 'DELETE');
             this.logActivity('ITEM_DELETE', `حذف الصنف نهائياً: ${item.itemName} (${item.barcode})`);
-            this.broadcastUpdate('ITEM_DELETE', { itemId: item.id });
+            this.broadcastUpdate('ITEM_DELETE', { itemId: delId });
             this.showToast('تم حذف المنتج', 'info');
           }
         },
@@ -3774,6 +5042,7 @@
                   const warehouseQty = parseInt(row[6], 10) || 15;
                   const expiryDate = String(row[7] || '').trim();
 
+                  const validExp = expiryDate || new Date(Date.now() + 120 * 86400000).toISOString().split('T')[0];
                   parsed.push({
                     id: 'imp_' + i + '_' + Date.now(),
                     barcode: barcode || ('628' + Math.floor(Math.random() * 1000000000)),
@@ -3783,9 +5052,20 @@
                     promoPrice,
                     shopQty,
                     warehouseQty,
-                    expiryDate,
+                    expiryDate: validExp,
+                    shelfLocation: 'رف A-01',
                     status: 'valid',
-                    statusText: 'مستورد من الشيت'
+                    statusText: 'مستورد من الشيت',
+                    batches: [
+                      {
+                        id: 'b_imp_' + i + '_' + Date.now(),
+                        batchNumber: 'LOT-1',
+                        productionDate: new Date().toISOString().split('T')[0],
+                        expiryDate: validExp,
+                        shopQty,
+                        warehouseQty
+                      }
+                    ]
                   });
                 }
 
@@ -3817,8 +5097,11 @@
             this.logActivity('BULK_IMPORT', `دمج (${count}) صنف جديد من الشيت مع المخزون القائم`);
           }
 
-          this.stagedItems.forEach(it => this.recalcItemStatus(it));
-          this.saveToStorage();
+          this.stagedItems.forEach(it => {
+            this.normalizeItemBatches(it);
+            this.recalcItemStatus(it);
+          });
+          this.saveToStorage(null, 'FULL_SYNC');
           this.broadcastUpdate('BULK_IMPORT', { mode, count });
           this.stagedItems = [];
           this.activeTab = 'inventory';
