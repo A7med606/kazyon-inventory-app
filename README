@@ -1,68 +1,64 @@
-<div align="center">
-
-# 🛒 KAZYON SMART ERP & INVENTORY CORE
-### *Next-Gen Enterprise Retail Management System for Branch Operations*
-
-<p align="center">
-  <img src="https://img.shields.io/badge/STATUS-ACTIVE%20%26%20PRODUCTION-FF6600?style=for-the-badge&logo=databricks&logoColor=white" />
-  <img src="https://img.shields.io/badge/PLATFORM-ANDROID%20%2F%20PWA-121212?style=for-the-badge&logo=android&logoColor=FF6600" />
-  <img src="https://img.shields.io/badge/ARCHITECTURE-OFFLINE%20FIRST-FF6600?style=for-the-badge&logo=javascript&logoColor=white" />
-</p>
-
-[🌐 **Explore Live Demo**](https://a7med606.github.io/kazyon-inventory-app/) • [🔑 **Access Credentials**](#-authentication-matrix) • [⚡ **Core Features**](#-core-architectural-highlights)
-
-</div>
+إليك صفحة تعريف النظام بصيغة نصية عادية ومنسقة بطريقة نظيفة ومرتبة، بحيث يمكنك قراءتها بسهولة أو نسخها واستخدامها في أي مستند نصي:
 
 ---
 
-## 🎯 System Overview
+# 🛒 نظام إدارة فروع كازيون الذكي (Kazyon Smart ERP & Inventory Core)
 
-**Kazyon Smart ERP Core** هو نظام ويب سحابي متطور وعالي الأداء، تم هندسته وتصميمه خصيصاً ليلبي احتياجات العمل الميداني السريع داخل فروع "كازيون ماركت". يهدف النظام إلى الانتقال بالعمليات من الشيتات اليدوية إلى منصة رقمية فائقة السرعة تعمل بكفاءة مطلقة على هواتف الأندرويد والتابلت، مع دعم كامل للتشغيل الميداني ومزامنة العمليات بلحظتها.
+### 📌 نبذة عن النظام
 
----
-
-## 🔑 Authentication Matrix
-
-حفاظاً على أعلى معايير الأمان، تم إلغاء أزرار الدخول السريع. يمكنك استخدام بيانات الاعتماد التالية حسب صلاحياتك التشغيلية:
-
-| Role | Username | Password | Operational Capabilities & Permissions |
-| :--- | :--- | :--- | :--- |
-| 👑 **Main Admin** | `General` | `6060` | تحكم كامل وشامل في النظام، إدارة المخزون، استيراد شيتات البضائع الجماعية (`.xlsx` و `.pdf`)، ومتابعة لوحة الأنشطة الأمنية وأسماء الأجهزة المتصلة. |
-| ⚡ **Store Staff** | `admin` | `123` | واجهة رسومية مبسطة مصممة للإبهام الواحد، مخصصة لإضافة المنتجات، فحص الأسعار السريع عبر الكاميرا، وتحديث الكميات في الصالة أو المخزن. |
-
-*💬 هل تحتاج لصلاحيات خاصة؟ يمكنك النقل مباشرة من صفحة الدخول لطلب حساب خاص عبر واتساب.*
+نظام ويب سحابي متطور وعالي الأداء، تم هندسته وتصميمه خصيصاً ليلبي احتياجات العمل الميداني السريع داخل فروع "كازيون ماركت". يهدف النظام إلى الانتقال بالعمليات من الشيتات اليدوية إلى منصة رقمية فائقة السرعة تعمل بكفاءة مطلقة على هواتف الأندرويد والتابلت، مع دعم كامل للتشغيل الميداني ومزامنة العمليات بلحظتها.
 
 ---
 
-## 🚀 Live Environment
-* **Live Web App:** [https://a7med606.github.io/kazyon-inventory-app/](https://a7med606.github.io/kazyon-inventory-app/)
-* **Compatibility:** متوافق تماماً ومحسن خصيصاً لهواتف الأندرويد، التابلت، وأجهزة الكمبيوتر.
+### 🔑 صلاحيات ومستويات الدخول
+
+حفاظاً على أعلى معايير الأمان، تم إلغاء أزرار الدخول السريع، ويمكن استخدام بيانات الاعتماد التالية حسب الصلاحيات:
+
+1. **المدير العام (Main Admin):**
+* **اسم المستخدم:** `********`
+* **كلمة المرور:** `********`
+* **الصلاحيات:** تحكم كامل وشامل في النظام، إدارة المخزون، استيراد شيتات البضائع الجماعية (`.xlsx` و `.pdf`)، ومتابعة لوحة الأنشطة الأمنية وأسماء الأجهزة المتصلة.
+
+
+2. **موظف الفرع (Store Staff):**
+* **اسم المستخدم:** `admin`
+* **كلمة المرور:** `123`
+* **الصلاحيات:** واجهة رسومية مبسطة مصممة للإبهام الواحد، مخصصة لإضافة المنتجات، فحص الأسعار السريع عبر الكاميرا، وتحديث الكميات في الصالة أو المخزن.
+
+
+
+*(ملاحظة: يتوفر زر مباشر في صفحة الدخول لطلب حساب خاص عبر واتساب عند الحاجة).*
 
 ---
 
-## ⚡ Core Architectural Highlights
+### 🚀 روابط التشغيل
 
-1. **📷 Hyper-Fast Camera & One-Time Permission:** إذن كاميرا ذكي يتم طلبه لمرة واحدة فقط لضمان عمل ماسح الباركود بسرعة الصاروخ في المرات اللاحقة دون إزعاج الموظف.
-2. **🛡️ Real Device Fingerprinting:** استبدال تتبع الـ IP بالتعرف الذكي على اسم ونوع الجهاز الفعلي المستخدم (`Device Model`) وعرضه في لوحة تحكم المدير العام.
-3. **💾 Offline-First Caching Engine:** الاعتماد على الذاكرة المحلية (`LocalStorage`) لفتح البيانات واستعراضها في `0 ثانية` حتى مع انقطاع الإنترنت بين ثلاجات الفرع.
-4. **📊 Smart Bulk Importer:** إمكانية سحب ورفع ملفات الإكسيل (`.xlsx`) والـ PDF لإضافة مئات المنتجات دفعة واحدة دون كتابة يدوية.
-5. **🔄 Multi-User Ergonomic Dashboard:** واجهة رسومية خفيفة وخالية من التعقيد مصممة لتسريع مهام الموظفين وسط زحمة العملاء.
+* **رابط النظام المباشر (Live Demo):** [https://a7med606.github.io/kazyon-inventory-app/](https://a7med606.github.io/kazyon-inventory-app/?utm_source=gemini)
+* **التوافق:** محسن ومحسّن خصيصاً لهواتف الأندرويد، التابلت، وأجهزة الكمبيوتر.
 
 ---
 
-## 🛠️ Developed With Precision
+### ⚡ المميزات والخصائص الهندسية
 
-تم تصميم وتطوير النظام بالكامل بعناية واحترافية هندسية بواسطة:  
-**Ahmed Said (web dev A7med606)** — مهندس برمجيات ومطور تطبيقات الويب.
-
-<p align="center">
-  <a href="https://github.com/A7med606"><img src="https://img.shields.io/badge/GitHub-A7med606-121212?style=for-the-badge&logo=github&logoColor=FF6600" /></a>
-  <a href="https://a7med6060.blogspot.com/"><img src="https://img.shields.io/badge/Blog-Portfolio-FF6600?style=for-the-badge&logo=blogger&logoColor=white" /></a>
-  <a href="https://www.facebook.com/a7med6060"><img src="https://img.shields.io/badge/Facebook-a7med6060-1877F2?style=for-the-badge&logo=facebook&logoColor=white" /></a>
-  <a href="https://www.instagram.com/a7med.606"><img src="https://img.shields.io/badge/Instagram-a7med.606-E4405F?style=for-the-badge&logo=instagram&logoColor=white" /></a>
-</p>
+1. **ماسح باركود ذكي وإذن كاميرا لمرة واحدة:** إذن كاميرا ذكي يتم طلبه لمرة واحدة فقط لضمان عمل ماسح الباركود بسرعة الصاروخ في المرات اللاحقة دون إزعاج الموظف.
+2. **التعرف على نوع الجهاز (Device Fingerprinting):** استبدال تتبع الـ IP بالتعرف الذكي على اسم ونوع الجهاز الفعلي المستخدم (`Device Model`) وعرضه في لوحة تحكم المدير العام.
+3. **محرك تخزين محلي (Offline-First):** الاعتماد على الذاكرة المحلية (`LocalStorage`) لفتح البيانات واستعراضها في `0 ثانية` حتى مع انقطاع الإنترنت بين ثلاجات الفرع.
+4. **استيراد جماعي ذكي (Bulk Importer):** إمكانية سحب ورفع ملفات الإكسيل (`.xlsx`) والـ PDF لإضافة مئات المنتجات دفعة واحدة دون كتابة يدوية.
+5. **لوحة تحكم تفاعلية:** واجهة رسومية خفيفة وخالية من التعقيد مصممة لتسريع مهام الموظفين وسط زحمة العملاء.
 
 ---
-<div align="center">
-  <sub>© 2026 Kazyon Branch Automation Project. Engineered with precision.</sub>
-</div>
+
+### 🛠️ معلومات المطور
+
+تم تصميم وتطوير النظام بالكامل بعناية واحترافية هندسية بواسطة:
+
+**أحمد سعيد (Ahmed Said)** — مهندس برمجيات ومطور تطبيقات الويب.
+
+* **GitHub:** [github.com/A7med606](https://github.com/A7med606?utm_source=gemini)
+* **Blog / Portfolio:** [a7med6060.blogspot.com](https://a7med6060.blogspot.com/?utm_source=gemini)
+* **Facebook:** [facebook.com/a7med6060](https://www.facebook.com/a7med6060?utm_source=gemini)
+* **Instagram:** [instagram.com/a7med.606](https://www.instagram.com/a7med.606?utm_source=gemini)
+
+---
+
+*© 2026 Kazyon Branch Automation Project. All rights reserved.*
