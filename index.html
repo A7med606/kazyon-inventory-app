@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>نظام إدارة مخزون كازيون | A7med606</title>
-  <meta name="description" content="تطبيق الجرد الميداني السريع وكاشف الأسعار المخصص لموظفي كازيون ماركت على أندرويد.">
+  <title>Kazyon Market Inventory Pro | كازيون ماركت</title>
+  <meta name="description" content="نظام إدارة ومخزون كازيون ماركت الميداني، كاشف الأسعار والعروض، سجل الهوالك والمرتجعات، مسح الباركود السريع والتزامن الفوري للأندرويد">
+  <meta property="og:title" content="Kazyon Market Inventory Pro | كازيون ماركت">
+  <meta property="og:description" content="نظام إدارة ومخزون كازيون ماركت الميداني، كاشف الأسعار والعروض، سجل الهوالك والمرتجعات، مسح الباركود السريع والتزامن الفوري للأندرويد">
 
   <!-- Mobile Browser Theme -->
   <meta name="theme-color" content="#121212">
@@ -310,18 +312,18 @@
             <span class="text-[9px] text-stone-400 mt-0.5">تحكم كامل وسجل الأمان</span>
           </button>
 
-          <!-- Role 2: Staff (Store Employee) -->
+          <!-- Role 2: Staff (Ahmed Said - Store Employee) -->
           <button 
             type="button" 
             @click="credentials.username = 'admin'; credentials.password = '123'; login()"
             class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-cyber-teal text-right text-xs touch-btn flex flex-col justify-between"
           >
             <div class="flex items-center justify-between text-[11px] font-bold text-cyber-teal">
-              <span>موظف فرع</span>
-              <i class="fa-solid fa-user"></i>
+              <span>أحمد سعيد (موظف الفرع)</span>
+              <i class="fa-solid fa-user-check"></i>
             </div>
             <span class="font-mono text-white text-[11px] font-bold mt-1">admin (123)</span>
-            <span class="text-[9px] text-stone-400 mt-0.5">جرد سريع ومسح باركود</span>
+            <span class="text-[9px] text-stone-400 mt-0.5">المساعد الشخصي وكاشف الأسعار</span>
           </button>
         </div>
 
@@ -398,7 +400,7 @@
             </template>
           </div>
           <div class="flex items-center gap-2 text-[10px] text-stone-400 mt-0.5">
-            <span>المستخدم: <strong class="text-white" x-text="currentUser.username || 'General'"></strong></span>
+            <span>المستخدم: <strong class="text-white" x-text="currentUser.name || currentUser.username || 'أحمد سعيد (Ahmed Said)'"></strong></span>
             <span>•</span>
             <span class="font-mono text-emerald-400 font-bold" x-text="'IP: ' + clientIp"></span>
           </div>
@@ -546,6 +548,45 @@
     <!-- ============================================================= -->
     <div x-show="activeTab === 'inventory'" class="p-3.5 space-y-3.5 max-w-5xl mx-auto w-full">
       
+      <!-- Ahmed Said Personal Assistant Banner (المساعد الشخصي الذكي لموظف كازيون) -->
+      <div class="p-3 bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 rounded-3xl border border-dark-750 flex items-center justify-between flex-wrap gap-2 shadow-lg">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-cyber-deep border border-cyber-teal/40 text-cyber-teal flex items-center justify-center text-base shadow-sm shrink-0">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-black text-white">المساعد الشخصي لموظف كازيون:</span>
+              <span class="text-xs font-extrabold text-kazyon">أحمد سعيد (Ahmed Said)</span>
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold">0ms POCKET ASSISTANT</span>
+            </div>
+            <p class="text-[10px] text-stone-400 mt-0.5">
+              كاشف الأسعار الفوري، تحديد مواقع الصالة مقابل المستودع، الدفعات والساب كود
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            @click="startCameraScanner('inventory')"
+            class="h-9 px-3 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-md"
+            title="فتح الكاميرا لمسح باركود سلعة فوراً"
+          >
+            <i class="fa-solid fa-camera"></i>
+            <span>مسح كاميرا</span>
+          </button>
+          <button 
+            type="button" 
+            @click="openItemModal()"
+            class="h-9 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center gap-1 touch-btn"
+            title="إضافة سلعة ودفعات يدوياً"
+          >
+            <i class="fa-solid fa-plus text-kazyon"></i>
+            <span>+ صنف جديد</span>
+          </button>
+        </div>
+      </div>
+      
       <!-- Instant Graphical Status KPI Metrics Grid (1-tap filtering) -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <!-- Total Items -->
@@ -624,7 +665,7 @@
                 x-model="fastBarcodeInput" 
                 @keydown.enter="quickBarcodeLookup(fastBarcodeInput)"
                 @input="handleSearchInput($event.target.value)"
-                placeholder="اكتب الباركود أو اسم السلعة..." 
+                placeholder="اكتب الباركود، الساب كود (Sub-Code)، أو اسم السلعة..." 
                 class="w-full min-h-[55px] h-14 bg-dark-950/90 border border-white/25 rounded-2xl pr-10 pl-10 text-xs sm:text-sm font-mono font-bold text-white placeholder:text-stone-400 placeholder:font-sans focus:outline-none focus:border-white focus:ring-2 focus:ring-white/50"
               >
               <!-- Searching Debounce Spinner -->
@@ -812,12 +853,19 @@
                 <!-- Product Name -->
                 <h3 class="text-base font-extrabold text-white leading-snug pt-0.5 truncate hover:text-kazyon transition-colors" x-text="item.itemName"></h3>
                 
-                <!-- Barcode Tag with Shelf Location -->
+                <!-- Barcode Tag with Sub-Code & Shelf Location -->
                 <div class="flex items-center gap-2 text-xs font-mono text-stone-400 flex-wrap">
                   <div class="flex items-center gap-1">
                     <i class="fa-solid fa-barcode text-stone-500 text-[11px]"></i>
                     <span class="font-bold text-stone-300" x-text="item.barcode"></span>
                   </div>
+                  <template x-if="item.subCode">
+                    <div class="flex items-center gap-1 text-[11px] font-mono font-bold text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded-md border border-cyan-500/40">
+                      <i class="fa-solid fa-hashtag text-[9px] text-cyan-400"></i>
+                      <span class="text-stone-400 font-sans text-[10px]">ساب كود:</span>
+                      <span x-text="item.subCode"></span>
+                    </div>
+                  </template>
                   <div class="flex items-center gap-1 text-[11px] font-sans font-semibold text-kazyon bg-kazyon/10 px-2 py-0.5 rounded-md border border-kazyon/20">
                     <i class="fa-solid fa-location-dot text-[10px]"></i>
                     <span x-text="item.shelfLocation || item.notes || 'رف A-01'"></span>
@@ -1110,7 +1158,7 @@
             x-model="priceSearchQuery" 
             @input="handlePriceSearchInput($event.target.value)"
             @keydown.enter="checkPrice(priceSearchQuery)"
-            placeholder="مثال: 6281007010115"
+            placeholder="اكتب الباركود أو الساب كود (Sub-Code)..."
             class="flex-1 min-h-[55px] h-14 bg-dark-900 border border-dark-700 rounded-2xl px-4 text-sm font-mono font-bold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon"
           >
           <button 
@@ -1147,9 +1195,12 @@
             <div>
               <span class="px-2 py-0.5 rounded-lg bg-dark-800 text-stone-300 text-[10px] font-bold" x-text="priceResultItem.category"></span>
               <h3 class="text-base font-black text-white mt-1" x-text="priceResultItem.itemName"></h3>
-              <p class="text-xs font-mono text-stone-400 mt-0.5">
-                الباركود: <strong class="text-stone-200" x-text="priceResultItem.barcode"></strong>
-              </p>
+              <div class="text-xs font-mono text-stone-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                <span>الباركود: <strong class="text-stone-200" x-text="priceResultItem.barcode"></strong></span>
+                <template x-if="priceResultItem.subCode">
+                  <span class="text-cyan-300 font-bold bg-cyan-950/70 px-2 py-0.5 rounded-md border border-cyan-500/40 text-[11px]">ساب كود: <strong x-text="priceResultItem.subCode"></strong></span>
+                </template>
+              </div>
             </div>
             <div class="w-11 h-11 rounded-2xl bg-kazyon/20 border border-kazyon text-kazyon flex items-center justify-center text-lg shrink-0">
               <i class="fa-solid fa-tag"></i>
@@ -1433,12 +1484,18 @@
               </div>
             </div>
 
-            <!-- Barcode & Shelf Location Row -->
-            <div class="flex items-center justify-between text-xs bg-dark-850 p-2 rounded-xl border border-dark-750">
+            <!-- Barcode, Sub-Code & Shelf Location Row -->
+            <div class="flex items-center justify-between text-xs bg-dark-850 p-2 rounded-xl border border-dark-750 flex-wrap gap-1.5">
               <div class="flex items-center gap-1.5 font-mono text-stone-300">
                 <i class="fa-solid fa-barcode text-kazyon"></i>
                 <span x-text="tag.barcode"></span>
               </div>
+              <template x-if="tag.subCode">
+                <div class="flex items-center gap-1 font-mono text-[10px] text-cyan-300 bg-cyan-950/70 px-1.5 py-0.5 rounded border border-cyan-500/40">
+                  <span class="text-stone-400 font-sans">ساب:</span>
+                  <span x-text="tag.subCode"></span>
+                </div>
+              </template>
               <div class="text-[11px] text-stone-400 flex items-center gap-1">
                 <i class="fa-solid fa-location-dot text-amber-400"></i>
                 <span x-text="tag.shelfLocation || 'ستاند العروض 1'"></span>
@@ -1719,7 +1776,11 @@
                       :class="log.role === 'admin' ? 'bg-kazyon/20 text-kazyon' : 'bg-sky-500/20 text-sky-400'"
                       x-text="log.role === 'admin' ? 'ADMIN' : 'STAFF'"
                     ></span>
-                    <span class="text-[10px] font-mono text-stone-400 bg-dark-800 px-1.5 py-0.2 rounded border border-dark-750" x-text="'IP: ' + log.ip"></span>
+                    <span class="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded-md border border-cyan-500/40 flex items-center gap-1">
+                      <i class="fa-solid fa-mobile-screen-button text-[9px] text-cyan-400"></i>
+                      <span x-text="log.device || clientDevice || 'محطة كازيون'"></span>
+                    </span>
+                    <span class="text-[10px] font-mono text-stone-400 bg-dark-800 px-1.5 py-0.5 rounded-md border border-dark-750" x-text="'IP: ' + log.ip"></span>
                   </div>
                   <p class="text-[11px] text-stone-300 mt-1 font-medium" x-text="log.details"></p>
                 </div>
@@ -1819,7 +1880,12 @@
               <div class="p-2.5 bg-dark-900 rounded-xl border border-dark-800 flex items-center justify-between text-xs">
                 <div>
                   <h4 class="font-bold text-stone-200 text-[11px]" x-text="st.itemName"></h4>
-                  <span class="font-mono text-stone-400 text-[10px]" x-text="'كود: ' + st.barcode"></span>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="font-mono text-stone-400 text-[10px]" x-text="'كود: ' + st.barcode"></span>
+                    <template x-if="st.subCode">
+                      <span class="font-mono text-cyan-300 text-[10px] bg-cyan-950/70 px-1.5 py-0.2 rounded border border-cyan-500/40" x-text="'ساب: ' + st.subCode"></span>
+                    </template>
+                  </div>
                 </div>
                 <div class="text-right font-mono">
                   <span class="font-bold text-kazyon" x-text="st.regularPrice + ' ج.م'"></span>
@@ -2062,6 +2128,27 @@
         </button>
       </div>
 
+      <!-- Sub-Code Bar if available -->
+      <template x-if="detailItem?.subCode">
+        <div class="p-2.5 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-hashtag text-cyan-400 text-lg"></i>
+            <div>
+              <span class="text-[10px] text-cyan-300 block font-medium">الساب كود (Sub-Code - الرقم التعريفي الخاص)</span>
+              <span class="text-sm font-mono font-black text-cyan-200" x-text="detailItem?.subCode"></span>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            @click="copyBarcode(detailItem?.subCode)"
+            class="h-8 px-3 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-500/40 text-cyan-200 rounded-xl text-xs font-bold flex items-center gap-1 touch-btn"
+          >
+            <i class="fa-solid fa-copy text-cyan-400"></i>
+            <span>نسخ الكود</span>
+          </button>
+        </div>
+      </template>
+
       <!-- Clear Color-Coded Status Alert Banner (Expired, Promo, Low Stock, Good) -->
       <div>
         <!-- 1. Expired Status Alert -->
@@ -2300,12 +2387,23 @@
               placeholder="مثال: 6281007010115"
               class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
             >
+            <!-- Smart Camera Scan Button (زر السكان الذكي المدمج بالكاميرا) -->
+            <button 
+              type="button" 
+              @click="startCameraScanner('modalItem')"
+              class="h-12 px-3 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs touch-btn flex items-center gap-1.5 shadow-md shrink-0"
+              title="توجيه الكاميرا لمسح الباركود أو المنتج والتعرف عليه آلياً"
+            >
+              <i class="fa-solid fa-camera"></i>
+              <span class="text-[10px] font-bold hidden sm:inline">سكان ذكي</span>
+            </button>
+
             <!-- AI Auto-Fetch Button -->
             <button 
               type="button" 
               @click="fetchOpenFoodFacts(modalItem.barcode, 'itemModal')"
               :disabled="isFetchingAI || !modalItem.barcode"
-              class="h-12 px-3 bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyber-teal rounded-xl text-xs touch-btn flex items-center gap-1.5 disabled:opacity-40"
+              class="h-12 px-3 bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyber-teal rounded-xl text-xs touch-btn flex items-center gap-1.5 disabled:opacity-40 shrink-0"
               title="جلب ذكي لبيانات المنتج عبر الباركود (Open Food Facts)"
             >
               <i :class="isFetchingAI ? 'fa-solid fa-circle-notch fa-spin' : 'fa-solid fa-wand-magic-sparkles text-cyber-teal'"></i>
@@ -2316,12 +2414,29 @@
             <button 
               type="button" 
               @click="generateRandomBarcode()"
-              class="h-12 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs touch-btn"
+              class="h-12 px-2.5 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs touch-btn shrink-0"
               title="توليد باركود تلقائي"
             >
               <i class="fa-solid fa-barcode text-kazyon"></i>
             </button>
           </div>
+        </div>
+
+        <!-- Sub-Code (الساب كود - الرقم التعريفي الخاص - اختياري) -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold text-cyan-300 flex items-center gap-1">
+              <i class="fa-solid fa-hashtag text-[10px] text-cyan-400"></i>
+              <span>الساب كود (Sub-Code) - اختياري</span>
+            </label>
+            <span class="text-[10px] text-stone-400 font-sans">رقم تعريفي فريد خاص بالصنف</span>
+          </div>
+          <input 
+            type="text" 
+            x-model="modalItem.subCode" 
+            placeholder="مثال: KZ-1001 أو كود الصنف الداخلي"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-cyan-300 placeholder:text-stone-500 placeholder:font-sans focus:outline-none focus:border-cyan-400"
+          >
         </div>
 
         <!-- Name -->
@@ -2642,12 +2757,23 @@
               placeholder="مثال: 6281007010115"
               class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
             >
+            <!-- Smart Camera Scan Button -->
+            <button 
+              type="button" 
+              @click="startCameraScanner('promoModal')"
+              class="h-12 px-3 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs touch-btn flex items-center gap-1.5 shadow-md shrink-0"
+              title="توجيه الكاميرا لمسح باركود العرض"
+            >
+              <i class="fa-solid fa-camera"></i>
+              <span class="text-[10px] font-bold hidden sm:inline">سكان</span>
+            </button>
+
             <!-- AI Auto-Fetch -->
             <button 
               type="button" 
               @click="fetchOpenFoodFacts(promoModalItem.barcode, 'promoModal')"
               :disabled="isFetchingAI || !promoModalItem.barcode"
-              class="h-12 px-3 bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyber-teal rounded-xl text-xs touch-btn flex items-center gap-1.5 disabled:opacity-40"
+              class="h-12 px-3 bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyber-teal rounded-xl text-xs touch-btn flex items-center gap-1.5 disabled:opacity-40 shrink-0"
               title="جلب ذكي لبيانات المنتج بالباركود (Open Food Facts)"
             >
               <i :class="isFetchingAI ? 'fa-solid fa-circle-notch fa-spin' : 'fa-solid fa-wand-magic-sparkles text-cyber-teal'"></i>
@@ -2668,6 +2794,20 @@
               </template>
             </div>
           </template>
+        </div>
+
+        <!-- Sub-Code (الساب كود - اختياري) -->
+        <div>
+          <label class="block text-[11px] font-bold text-cyan-300 mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-hashtag text-[10px] text-cyan-400"></i>
+            <span>الساب كود (Sub-Code) - اختياري</span>
+          </label>
+          <input 
+            type="text" 
+            x-model="promoModalItem.subCode" 
+            placeholder="مثال: KZ-1001"
+            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-400"
+          >
         </div>
 
         <!-- Product Name -->
@@ -2829,8 +2969,11 @@
           <div class="text-right pb-2 border-b border-stone-300">
             <div class="text-[10px] text-stone-600 font-bold" x-text="printTagItem?.category"></div>
             <div class="text-base font-black text-black leading-tight mt-0.5" x-text="printTagItem?.itemName"></div>
-            <div class="text-[10px] text-stone-500 font-mono mt-0.5 flex items-center justify-between">
+            <div class="text-[10px] text-stone-500 font-mono mt-0.5 flex items-center justify-between flex-wrap gap-1">
               <span>الباركود: <strong x-text="printTagItem?.barcode"></strong></span>
+              <template x-if="printTagItem?.subCode">
+                <span class="text-stone-700 font-bold">ساب كود: <strong x-text="printTagItem?.subCode"></strong></span>
+              </template>
               <span x-text="'الموقع: ' + (printTagItem?.shelfLocation || 'ستاند العروض')"></span>
             </div>
           </div>
@@ -3159,14 +3302,25 @@
   <!-- ============================================================= -->
   <!-- 6. FIXED STICKY FOOTER BAR (Developed by A7med606)            -->
   <!-- ============================================================= -->
-  <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950 border-t border-dark-800 px-3 py-2 flex items-center justify-between text-[11px] shadow-md">
+  <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950 border-t border-dark-800 px-3 py-2 flex items-center justify-between text-[11px] shadow-md flex-wrap gap-2">
     <div class="flex items-center gap-1.5 font-medium text-stone-300">
       <span>Developed with precision by web dev</span>
       <span class="text-kazyon font-black">A7med606</span>
+      <span class="text-stone-400 hidden sm:inline">(أحمد سعيد)</span>
     </div>
 
-    <!-- Clickable Styled Social & Profile Icons -->
-    <div class="flex items-center gap-2.5">
+    <!-- Live Demo Link & Clickable Styled Social & Profile Icons -->
+    <div class="flex items-center gap-2">
+      <a 
+        href="https://a7med606.github.io/kazyon-inventory-app/" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="px-2 py-0.5 rounded-lg bg-cyber-deep border border-cyber-teal/40 text-cyber-teal text-[10px] font-mono font-bold flex items-center gap-1 hover:border-cyber-teal transition-all"
+        title="رابط المنظومة المباشر على GitHub Pages"
+      >
+        <i class="fa-solid fa-globe"></i>
+        <span>Live Demo</span>
+      </a>
       <a 
         href="https://www.facebook.com/a7med6060" 
         target="_blank" 
@@ -3225,8 +3379,10 @@
         showPass: false,
         loginError: '',
 
-        // IP Tracking & Network Status
+        // IP Tracking, Device Fingerprinting & Network Status
         clientIp: '192.168.1.104',
+        clientDevice: '',
+        cameraPermissionGranted: false,
         isDetectingIp: false,
         activeSessions: [],
         activityLogs: [],
@@ -3364,6 +3520,15 @@
               this.items = JSON.parse(cached);
               this.items.forEach(i => {
                 if (!i.shelfLocation) i.shelfLocation = i.notes || 'رف A-02';
+                if (!i.subCode) {
+                  if (i.id === 'k1') i.subCode = 'KZ-1001';
+                  else if (i.id === 'k2') i.subCode = 'KZ-1002';
+                  else if (i.id === 'k3') i.subCode = 'KZ-1003';
+                  else if (i.id === 'k4') i.subCode = 'KZ-1004';
+                  else if (i.id === 'k5') i.subCode = 'KZ-1005';
+                  else if (i.id === 'k6') i.subCode = 'KZ-1006';
+                  else i.subCode = '';
+                }
                 // Ensure batches array exists and is well-formed
                 if (!Array.isArray(i.batches) || i.batches.length === 0) {
                   i.batches = [
@@ -3460,6 +3625,59 @@
           }, 15000);
         },
 
+        // Device Fingerprinting: Extract actual device brand and model from userAgent
+        detectDeviceDetails() {
+          const ua = navigator.userAgent || '';
+          let model = '';
+          let os = 'جهاز غير معروف';
+
+          if (/Android/i.test(ua)) {
+            os = 'Android';
+            const match = ua.match(/Android[^;]+;\s*([^;)]+)/i);
+            if (match && match[1]) {
+              model = match[1].replace(/Build\/.+/i, '').trim();
+            }
+            if (!model) model = 'هاتف كازيون أندرويد';
+          } else if (/iPhone/i.test(ua)) {
+            os = 'iOS';
+            model = 'Apple iPhone';
+          } else if (/iPad/i.test(ua)) {
+            os = 'iPadOS';
+            model = 'Apple iPad';
+          } else if (/Windows NT 10.0/i.test(ua)) {
+            os = 'Windows';
+            model = 'كمبيوتر ويندوز 10/11';
+          } else if (/Windows/i.test(ua)) {
+            os = 'Windows';
+            model = 'كمبيوتر فرع (Windows)';
+          } else if (/Macintosh/i.test(ua)) {
+            os = 'macOS';
+            model = 'Apple Mac';
+          } else if (/Linux/i.test(ua)) {
+            os = 'Linux';
+            model = 'محطة طرفية (Linux)';
+          } else {
+            model = 'محطة فحص المتجر';
+          }
+
+          this.clientDevice = model ? `${model} (${os})` : os;
+          return this.clientDevice;
+        },
+
+        // Camera Permission Pre-Warming: Request once upon login to eliminate repetitive prompts
+        async prewarmCameraPermission() {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { facingMode: 'environment' }
+            });
+            stream.getTracks().forEach(track => track.stop());
+            this.cameraPermissionGranted = true;
+          } catch (err) {
+            console.log('Camera pre-warming note:', err.message);
+          }
+        },
+
         // Dynamic Client IP Detection (Local Network & WebRTC / Public IP)
         async initIpDetection() {
           this.isDetectingIp = true;
@@ -3511,6 +3729,7 @@
             {
               id: 'k1',
               barcode: '6281007010115',
+              subCode: 'KZ-1001',
               itemName: 'حليب المراعي كامل الدسم 1 لتر',
               category: 'ألبان وأجبان',
               regularPrice: 42.0,
@@ -3543,6 +3762,7 @@
             {
               id: 'k2',
               barcode: '6221008000421',
+              subCode: 'KZ-1002',
               itemName: 'جبنة دومتي فيتا بلس 500 جم',
               category: 'ألبان وأجبان',
               regularPrice: 35.0,
@@ -3568,6 +3788,7 @@
             {
               id: 'k3',
               barcode: '6221155021894',
+              subCode: 'KZ-1003',
               itemName: 'تونة صن شاين قطع سهلة الفتح 185 جم',
               category: 'بقالة جافة وبقوليات',
               regularPrice: 65.0,
@@ -3600,6 +3821,7 @@
             {
               id: 'k4',
               barcode: '6223000551029',
+              subCode: 'KZ-1004',
               itemName: 'زبادي نستله طبيعي 105 جم',
               category: 'ألبان وأجبان',
               regularPrice: 10.0,
@@ -3625,6 +3847,7 @@
             {
               id: 'k5',
               barcode: '6281006540026',
+              subCode: 'KZ-1005',
               itemName: 'أرز كازيون بسمتي ممتاز 5 كجم',
               category: 'بقالة جافة وبقوليات',
               regularPrice: 195.0,
@@ -3650,6 +3873,7 @@
             {
               id: 'k6',
               barcode: '6221155000103',
+              subCode: 'KZ-1006',
               itemName: 'زيت ذرة كازيون نقي 1.6 لتر',
               category: 'زيوت وسمن',
               regularPrice: 120.0,
@@ -3695,6 +3919,7 @@
               user: 'General',
               role: 'admin',
               ip: '192.168.1.104',
+              device: 'كمبيوتر الإدارة الرئيسي (Windows)',
               actionType: 'LOGIN',
               details: 'تسجيل دخول المشرف العام وتفويض أمان الشبكة',
               timestamp: timeStr,
@@ -3705,6 +3930,7 @@
               user: 'admin',
               role: 'staff',
               ip: '192.168.1.118',
+              device: 'Samsung Galaxy A54 (Android)',
               actionType: 'STOCK_TRANSFER',
               details: 'نقل 5 قطع (حليب المراعي كامل الدسم) من المستودع إلى الرف A-01',
               timestamp: timeStr,
@@ -3715,6 +3941,7 @@
               user: 'admin',
               role: 'staff',
               ip: '192.168.1.118',
+              device: 'Samsung Galaxy A54 (Android)',
               actionType: 'PRICE_CHECK',
               details: 'فحص سعر سلعة بالكاميرا: جبنة دومتي فيتا بلس 500 جم',
               timestamp: timeStr,
@@ -3872,6 +4099,7 @@
             user: this.currentUser.username || 'General',
             role: this.currentUser.role || 'admin',
             ip: this.clientIp,
+            device: this.clientDevice || this.detectDeviceDetails(),
             actionType,
             details,
             timestamp: timeStr,
@@ -3901,7 +4129,7 @@
               name: this.currentUser.name,
               role: this.currentUser.role,
               ip: this.clientIp,
-              device: navigator.userAgent.includes('Android') ? 'Android Mobile Floor' : 'Workstation Terminal',
+              device: this.clientDevice || this.detectDeviceDetails(),
               loginTime: timeStr,
               lastSeen: now
             });
@@ -3958,13 +4186,14 @@
 
         // Export Activity Logs to Excel
         exportActivityLogsExcel() {
-          const headers = ['معرف العملية', 'التاريخ', 'الوقت', 'المستخدم', 'الدور (Role)', 'عنوان IP', 'نوع العملية', 'تفاصيل العملية'];
+          const headers = ['معرف العملية', 'التاريخ', 'الوقت', 'المستخدم', 'الدور (Role)', 'طراز وبصمة الجهاز', 'عنوان IP', 'نوع العملية', 'تفاصيل العملية'];
           const rows = this.activityLogs.map(l => [
             l.id,
             l.date,
             l.timestamp,
             l.user,
             l.role === 'admin' ? 'مشرف عام' : 'موظف فرع',
+            l.device || this.clientDevice || 'غير محدد',
             l.ip,
             l.actionType,
             l.details
@@ -3994,8 +4223,9 @@
             this.isAuth = true;
             localStorage.setItem('kazyon_auth_user_v2', JSON.stringify(this.currentUser));
             this.heartbeatSession();
+            this.prewarmCameraPermission();
 
-            this.logActivity('LOGIN', `تسجيل دخول المشرف العام General من عنوان IP: ${this.clientIp}`);
+            this.logActivity('LOGIN', `تسجيل دخول المشرف العام General من جهاز: ${this.clientDevice || this.detectDeviceDetails()} (IP: ${this.clientIp})`);
             this.broadcastUpdate('USER_LOGIN', { user: 'General', role: 'admin' });
 
             this.showToast('مرحباً بك يا مشرف General! تم تسجيل الدخول بنجاح.', 'success');
@@ -4003,13 +4233,13 @@
               window.confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
             }
           }
-          // Role 2: Store Employee / Staff (admin / 123)
-          else if (u === 'admin' && p === '123') {
+          // Role 2: Store Employee / Staff: Ahmed Said (admin / 123 or ahmed / 123)
+          else if ((u === 'admin' || u === 'ahmed') && p === '123') {
             this.currentUser = {
               username: 'admin',
-              name: 'موظف الفرع admin',
+              name: 'أحمد سعيد (Ahmed Said)',
               role: 'staff',
-              roleBadge: 'STORE STAFF'
+              roleBadge: 'STAFF - أحمد سعيد'
             };
             this.isAuth = true;
             localStorage.setItem('kazyon_auth_user_v2', JSON.stringify(this.currentUser));
@@ -4017,16 +4247,17 @@
               this.activeTab = 'inventory';
             }
             this.heartbeatSession();
+            this.prewarmCameraPermission();
 
-            this.logActivity('LOGIN', `تسجيل دخول موظف الفرع admin من عنوان IP: ${this.clientIp}`);
-            this.broadcastUpdate('USER_LOGIN', { user: 'admin', role: 'staff' });
+            this.logActivity('LOGIN', `تسجيل دخول الموظف أحمد سعيد (Ahmed Said) من جهاز: ${this.clientDevice || this.detectDeviceDetails()} (IP: ${this.clientIp})`);
+            this.broadcastUpdate('USER_LOGIN', { user: 'أحمد سعيد (Ahmed Said)', role: 'staff' });
 
-            this.showToast('مرحباً بك يا موظف كازيون admin! تم الدخول للمنظومة.', 'success');
+            this.showToast('مرحباً بك يا أحمد سعيد! مساعد كازيون الشخصي جاهز للعمل 🚀', 'success');
             if (window.confetti) {
-              window.confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+              window.confetti({ particleCount: 35, spread: 55, origin: { y: 0.7 } });
             }
           } else {
-            this.loginError = 'بيانات غير صحيحة! تأكد من الحساب (المشرف: General / 6060 | موظف الفرع: admin / 123).';
+            this.loginError = 'بيانات غير صحيحة! تأكد من الحساب (المشرف: General / 6060 | موظف الفرع أحمد سعيد: admin / 123).';
           }
         },
 
@@ -4185,8 +4416,9 @@
               const q = this.searchQuery.toLowerCase().trim();
               const matchName = item.itemName.toLowerCase().includes(q);
               const matchBarcode = item.barcode.includes(q);
+              const matchSubCode = item.subCode ? item.subCode.toLowerCase().includes(q) : false;
               const matchCategory = item.category.toLowerCase().includes(q);
-              return matchName || matchBarcode || matchCategory;
+              return matchName || matchBarcode || matchSubCode || matchCategory;
             }
 
             return true;
@@ -4200,17 +4432,20 @@
           this.priceNotFound = false;
           this.priceResultItem = null;
 
-          const found = this.items.find(i => i.barcode === cleanCode);
+          const found = this.items.find(i => 
+            i.barcode === cleanCode || 
+            (i.subCode && i.subCode.toLowerCase() === cleanCode.toLowerCase())
+          );
           if (found) {
             this.priceResultItem = found;
             this.showToast(`تم فحص السعر: ${found.itemName}`, 'success');
-            this.logActivity('PRICE_CHECK', `فحص سعر سلعة: ${found.itemName} (${found.barcode})`);
+            this.logActivity('PRICE_CHECK', `فحص سعر سلعة: ${found.itemName} (${found.barcode}${found.subCode ? ' | ' + found.subCode : ''})`);
             if (navigator.vibrate) navigator.vibrate(50);
           } else {
             this.priceNotFound = true;
             this.priceNotFoundCode = cleanCode;
-            this.showToast(`الباركود ${cleanCode} غير مسجل`, 'error');
-            this.logActivity('PRICE_CHECK', `محاولة فحص باركود غير مسجل: ${cleanCode}`);
+            this.showToast(`الباركود / الساب كود ${cleanCode} غير مسجل`, 'error');
+            this.logActivity('PRICE_CHECK', `محاولة فحص كود غير مسجل: ${cleanCode}`);
           }
         },
 
@@ -4460,13 +4695,24 @@
           this.playBeep();
           if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
 
-          if (this.scannerTarget === 'price-checker') {
+          if (this.scannerTarget === 'modalItem') {
+            this.modalItem.barcode = clean;
+            this.showToast(`تم مسح الباركود بنجاح: ${clean}`, 'success');
+            this.logActivity('BARCODE_SCAN', `مسح باركود سلعة للنموذج: ${clean}`);
+            this.fetchOpenFoodFacts(clean, 'itemModal');
+          } else if (this.scannerTarget === 'promoModal') {
+            this.promoModalItem.barcode = clean;
+            this.handlePromoBarcodeChange(clean);
+            this.showToast(`تم مسح باركود العرض: ${clean}`, 'success');
+            this.logActivity('BARCODE_SCAN', `مسح باركود يافطة عرض: ${clean}`);
+            this.fetchOpenFoodFacts(clean, 'promoModal');
+          } else if (this.scannerTarget === 'price-checker') {
             this.priceSearchQuery = clean;
             this.checkPrice(clean);
           } else {
             this.fastBarcodeInput = clean;
             this.searchQuery = clean;
-            const found = this.items.find(i => i.barcode === clean);
+            const found = this.items.find(i => i.barcode === clean || (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase()));
             if (found) {
               this.showToast(`تم مسح الباركود بنجاح: ${found.itemName}`, 'success');
               this.logActivity('BARCODE_SCAN', `مسح باركود سلعة بالكاميرا: ${found.itemName} (${clean})`);
@@ -4476,6 +4722,7 @@
               this.logActivity('BARCODE_SCAN', `مسح باركود جديد غير مسجل: ${clean}`);
               this.openItemModal({ 
                 barcode: clean, 
+                subCode: '',
                 itemName: '', 
                 regularPrice: 0, 
                 promoPrice: 0, 
@@ -4498,18 +4745,22 @@
         // 2. Fast-Type Search & Instant Barcode Query
         quickBarcodeLookup(input) {
           if (!input || !input.trim()) {
-            this.showToast('يرجى كتابة رقم الباركود أو اسم السلعة', 'info');
+            this.showToast('يرجى كتابة رقم الباركود، الساب كود، أو اسم السلعة', 'info');
             return;
           }
           const clean = input.trim();
           const cleanLower = clean.toLowerCase();
 
-          // 1. Exact Barcode Match
-          let found = this.items.find(i => i.barcode === clean);
-          // 2. Partial Barcode or Name Match
+          // 1. Exact Barcode or Sub-Code Match
+          let found = this.items.find(i => 
+            i.barcode === clean || 
+            (i.subCode && i.subCode.toLowerCase() === cleanLower)
+          );
+          // 2. Partial Barcode, Sub-Code or Name Match
           if (!found) {
             found = this.items.find(i => 
               i.barcode.toLowerCase().includes(cleanLower) || 
+              (i.subCode && i.subCode.toLowerCase().includes(cleanLower)) ||
               i.itemName.toLowerCase().includes(cleanLower)
             );
           }
@@ -4785,6 +5036,88 @@
           }
         },
 
+        // Automated Global Open Food Facts API Lookup (AI Auto-Fetch)
+        async fetchOpenFoodFacts(barcode, target = 'itemModal') {
+          if (!barcode || !barcode.trim()) {
+            this.showToast('يرجى إدخال أو مسح رقم الباركود أولاً', 'info');
+            return;
+          }
+          const cleanBarcode = barcode.trim();
+          this.isFetchingAI = true;
+          this.showToast('جاري الاستعلام الذكي عن المنتج من Open Food Facts...', 'info');
+
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6500);
+            const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanBarcode)}.json`, {
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+              throw new Error('لم يتم العثور على المنتج في قاعدة البيانات العالمية');
+            }
+
+            const data = await res.json();
+            if (data && data.status === 1 && data.product) {
+              const prod = data.product;
+              const detectedName = prod.product_name_ar || prod.product_name || prod.generic_name_ar || prod.generic_name || prod.brands || 'منتج كازيون';
+              const detectedBrand = prod.brands ? ` (${prod.brands})` : '';
+              const fullName = (detectedName + (prod.quantity ? ` ${prod.quantity}` : '') + (prod.brands && !detectedName.includes(prod.brands) ? detectedBrand : '')).trim();
+
+              // Category smart classification
+              let detectedCategory = this.categories[0];
+              const catsHierarchy = ((prod.categories_tags || []).join(' ') + ' ' + (prod.categories || '')).toLowerCase();
+              if (catsHierarchy.includes('dairy') || catsHierarchy.includes('cheese') || catsHierarchy.includes('milk') || catsHierarchy.includes('yogurt') || catsHierarchy.includes('جبن') || catsHierarchy.includes('حليب')) {
+                detectedCategory = 'ألبان وأجبان';
+              } else if (catsHierarchy.includes('beverage') || catsHierarchy.includes('drink') || catsHierarchy.includes('water') || catsHierarchy.includes('juice') || catsHierarchy.includes('مشروب') || catsHierarchy.includes('عصير')) {
+                detectedCategory = 'مشروبات ومياه';
+              } else if (catsHierarchy.includes('oil') || catsHierarchy.includes('fat') || catsHierarchy.includes('butter') || catsHierarchy.includes('زيت') || catsHierarchy.includes('سمن')) {
+                detectedCategory = 'زيوت وسمن';
+              } else if (catsHierarchy.includes('bread') || catsHierarchy.includes('biscuit') || catsHierarchy.includes('cake') || catsHierarchy.includes('sweet') || catsHierarchy.includes('حلويات') || catsHierarchy.includes('بسكويت')) {
+                detectedCategory = 'مخبوزات وحلويات';
+              } else if (catsHierarchy.includes('snack') || catsHierarchy.includes('chip') || catsHierarchy.includes('تسالي')) {
+                detectedCategory = 'تسالي ومقرمشات';
+              } else if (catsHierarchy.includes('meat') || catsHierarchy.includes('frozen') || catsHierarchy.includes('fish') || catsHierarchy.includes('تونا') || catsHierarchy.includes('لحم')) {
+                detectedCategory = 'مجمدات ولحوم';
+              } else if (catsHierarchy.includes('clean') || catsHierarchy.includes('detergent') || catsHierarchy.includes('منظف')) {
+                detectedCategory = 'منظفات وعناية';
+              } else {
+                detectedCategory = 'بقالة جافة وبقوليات';
+              }
+
+              if (target === 'itemModal') {
+                if (!this.modalItem.itemName || this.modalItem.itemName.trim() === '') {
+                  this.modalItem.itemName = fullName;
+                }
+                if (detectedCategory) this.modalItem.category = detectedCategory;
+                if (!this.modalItem.subCode) {
+                  this.modalItem.subCode = 'KZ-' + cleanBarcode.slice(-4);
+                }
+              } else if (target === 'promoModal') {
+                if (!this.promoModalItem.itemName || this.promoModalItem.itemName.trim() === '') {
+                  this.promoModalItem.itemName = fullName;
+                }
+                if (detectedCategory) this.promoModalItem.category = detectedCategory;
+                if (!this.promoModalItem.subCode) {
+                  this.promoModalItem.subCode = 'KZ-' + cleanBarcode.slice(-4);
+                }
+              }
+
+              this.showToast(`تم التعرف الذكي على: ${fullName}`, 'success');
+              this.playBeep('success');
+              this.logActivity('AI_LOOKUP', `جلب تلقائي لبيانات الباركود (${cleanBarcode}): ${fullName}`);
+            } else {
+              this.showToast('الباركود غير متوفر بقاعدة البيانات العالمية، يمكنك كتابة اسم السلعة يدوياً', 'info');
+            }
+          } catch (err) {
+            console.warn('Open Food Facts API error', err);
+            this.showToast('تعذر استرجاع الاسم تلقائياً من الإنترنت، يرجى كتابته يدوياً', 'info');
+          } finally {
+            this.isFetchingAI = false;
+          }
+        },
+
         // Add/Edit Modal
         openItemModal(item) {
           const today = new Date().toISOString().split('T')[0];
@@ -4792,6 +5125,7 @@
 
           if (item) {
             this.modalItem = { ...item };
+            this.modalItem.subCode = item.subCode || '';
             if (!this.modalItem.shelfLocation) {
               this.modalItem.shelfLocation = this.modalItem.notes || 'رف A-01';
             }
@@ -4812,6 +5146,7 @@
             this.modalItem = {
               id: '',
               barcode: '',
+              subCode: '',
               itemName: '',
               category: this.categories[0],
               regularPrice: 20,
@@ -4841,6 +5176,7 @@
             this.showToast('يرجى ملء اسم المنتج ورقم الباركود', 'error');
             return;
           }
+          this.modalItem.subCode = (this.modalItem.subCode || '').trim();
 
           // Ensure batches exist and calculate totals
           if (!Array.isArray(this.modalItem.batches) || this.modalItem.batches.length === 0) {
@@ -4980,16 +5316,29 @@
                   const numbers = line.match(/\b\d+(\.\d{1,2})?\b/g) || [];
                   const price = numbers.find(n => n !== barcode && parseFloat(n) > 1) ? parseFloat(numbers.find(n => n !== barcode && parseFloat(n) > 1)) : 25.0;
 
+                  const defExp = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+                  const defProd = new Date().toISOString().split('T')[0];
                   parsed.push({
                     id: 'imp_pdf_' + itemCounter + '_' + Date.now(),
                     barcode,
+                    subCode: '',
                     itemName: nameCandidate.substring(0, 60),
                     category: this.categories[itemCounter % this.categories.length],
                     regularPrice: price,
                     promoPrice: 0,
                     shopQty: 8,
                     warehouseQty: 24,
-                    expiryDate: new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0],
+                    productionDate: defProd,
+                    expiryDate: defExp,
+                    batches: [
+                      {
+                        id: 'b_imp_pdf_' + itemCounter + '_' + Date.now(),
+                        productionDate: defProd,
+                        expiryDate: defExp,
+                        warehouseQty: 24,
+                        hallQty: 8
+                      }
+                    ],
                     status: 'valid',
                     statusText: 'مستورد من ملف PDF'
                   });
@@ -5023,30 +5372,103 @@
               const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
               if (json && json.length > 1) {
+                const headerRow = (json[0] || []).map(h => String(h || '').trim().toLowerCase());
+                
+                // Smart header index detection
+                let barcodeIdx = headerRow.findIndex(h => h.includes('باركود') || h.includes('barcode') || h.includes('كود دولي'));
+                let subCodeIdx = headerRow.findIndex(h => h.includes('ساب') || h.includes('sub') || h.includes('الرقم التعريفي') || h.includes('كود خاص'));
+                let nameIdx = headerRow.findIndex(h => h.includes('اسم') || h.includes('name') || h.includes('سلعة') || h.includes('منتج'));
+                let catIdx = headerRow.findIndex(h => h.includes('صنف') || h.includes('قسم') || h.includes('category'));
+                let regPriceIdx = headerRow.findIndex(h => h.includes('عادي') || (h.includes('سعر') && !h.includes('برومو') && !h.includes('عرض')) || h.includes('regular'));
+                let promoPriceIdx = headerRow.findIndex(h => h.includes('برومو') || h.includes('عرض') || h.includes('promo'));
+                let shopQtyIdx = headerRow.findIndex(h => h.includes('صالة') || h.includes('رف') || h.includes('shop') || h.includes('hall'));
+                let whQtyIdx = headerRow.findIndex(h => h.includes('مخزن') || h.includes('مستودع') || h.includes('warehouse'));
+                let expDateIdx = headerRow.findIndex(h => h.includes('انتهاء') || h.includes('expiry') || h.includes('صلاحية'));
+                let prodDateIdx = headerRow.findIndex(h => h.includes('إنتاج') || h.includes('انتاج') || h.includes('production'));
+                let shelfLocIdx = headerRow.findIndex(h => h.includes('مكان') || h.includes('موقع') || h.includes('رف') || h.includes('shelf') || h.includes('location'));
+
+                const hasExplicitSubCodeHeader = subCodeIdx !== -1;
+                const has9Columns = (json[0] && json[0].length >= 9);
+
                 const parsed = [];
                 for (let i = 1; i < json.length; i++) {
                   const row = json[i];
-                  const barcode = String(row[0] || '').trim();
-                  const itemName = String(row[1] || '').trim();
-                  if (!barcode && !itemName) continue;
+                  if (!row || row.length === 0) continue;
 
-                  const category = String(row[2] || this.categories[0]).trim();
-                  const regularPrice = parseFloat(row[3]) || 25.0;
-                  const promoPrice = parseFloat(row[4]) || 0;
-                  const shopQty = parseInt(row[5], 10) || 5;
-                  const warehouseQty = parseInt(row[6], 10) || 15;
-                  const expiryDate = String(row[7] || '').trim();
+                  let barcode = '';
+                  let subCode = '';
+                  let itemName = '';
+                  let category = '';
+                  let regularPrice = 25.0;
+                  let promoPrice = 0;
+                  let shopQty = 5;
+                  let warehouseQty = 15;
+                  let expiryDate = '';
+                  let prodDate = '';
+                  let shelfLocation = 'رف A-01';
+
+                  if (barcodeIdx !== -1 || nameIdx !== -1) {
+                    barcode = barcodeIdx !== -1 ? String(row[barcodeIdx] || '').trim() : '';
+                    subCode = subCodeIdx !== -1 ? String(row[subCodeIdx] || '').trim() : '';
+                    itemName = nameIdx !== -1 ? String(row[nameIdx] || '').trim() : '';
+                    category = catIdx !== -1 ? String(row[catIdx] || '').trim() : '';
+                    regularPrice = regPriceIdx !== -1 ? (parseFloat(row[regPriceIdx]) || 25.0) : 25.0;
+                    promoPrice = promoPriceIdx !== -1 ? (parseFloat(row[promoPriceIdx]) || 0) : 0;
+                    shopQty = shopQtyIdx !== -1 ? (parseInt(row[shopQtyIdx], 10) || 0) : 5;
+                    warehouseQty = whQtyIdx !== -1 ? (parseInt(row[whQtyIdx], 10) || 0) : 15;
+                    expiryDate = expDateIdx !== -1 ? String(row[expDateIdx] || '').trim() : '';
+                    prodDate = prodDateIdx !== -1 ? String(row[prodDateIdx] || '').trim() : '';
+                    shelfLocation = shelfLocIdx !== -1 ? String(row[shelfLocIdx] || '').trim() : 'رف A-01';
+                  } else if (hasExplicitSubCodeHeader || has9Columns) {
+                    barcode = String(row[0] || '').trim();
+                    subCode = String(row[1] || '').trim();
+                    itemName = String(row[2] || '').trim();
+                    category = String(row[3] || this.categories[0]).trim();
+                    regularPrice = parseFloat(row[4]) || 25.0;
+                    promoPrice = parseFloat(row[5]) || 0;
+                    shopQty = parseInt(row[6], 10) || 5;
+                    warehouseQty = parseInt(row[7], 10) || 15;
+                    expiryDate = String(row[8] || '').trim();
+                    prodDate = String(row[9] || '').trim();
+                  } else {
+                    barcode = String(row[0] || '').trim();
+                    itemName = String(row[1] || '').trim();
+                    category = String(row[2] || this.categories[0]).trim();
+                    regularPrice = parseFloat(row[3]) || 25.0;
+                    promoPrice = parseFloat(row[4]) || 0;
+                    shopQty = parseInt(row[5], 10) || 5;
+                    warehouseQty = parseInt(row[6], 10) || 15;
+                    expiryDate = String(row[7] || '').trim();
+                    prodDate = String(row[8] || '').trim();
+                  }
+
+                  if (!barcode && !itemName && !subCode) continue;
+                  if (!category) category = this.categories[0];
+                  if (!expiryDate) expiryDate = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+                  if (!prodDate) prodDate = new Date().toISOString().split('T')[0];
 
                   parsed.push({
                     id: 'imp_' + i + '_' + Date.now(),
                     barcode: barcode || ('628' + Math.floor(Math.random() * 1000000000)),
+                    subCode: subCode || '',
                     itemName: itemName || 'منتج مستورد',
                     category,
                     regularPrice,
                     promoPrice,
                     shopQty,
                     warehouseQty,
+                    shelfLocation: shelfLocation || 'رف A-01',
+                    productionDate: prodDate,
                     expiryDate,
+                    batches: [
+                      {
+                        id: 'b_imp_' + i + '_' + Date.now(),
+                        productionDate: prodDate,
+                        expiryDate,
+                        warehouseQty,
+                        hallQty: shopQty
+                      }
+                    ],
                     status: 'valid',
                     statusText: 'مستورد من الشيت'
                   });
@@ -5093,39 +5515,67 @@
 
         downloadSampleExcel() {
           const sampleRows = [
-            ['رقم الباركود', 'اسم المنتج', 'الصنف / القسم', 'السعر العادي', 'سعر البرومو', 'الكمية بالصالة', 'الكمية بالمخزن', 'تاريخ الانتهاء'],
-            ['6281007010115', 'حليب كازيون كامل الدسم 1 لتر', 'ألبان وأجبان', 42, 38.5, 10, 50, '2026-10-15'],
-            ['6221008000421', 'جبنة فيتا دومتي 500 جم', 'ألبان وأجبان', 35, 31, 5, 30, '2026-11-20'],
-            ['6281006540026', 'أرز كازيون بسمتي 5 كجم', 'بقالة جافة وبقوليات', 195, 175, 12, 60, '2027-01-01'],
-            ['6221155000103', 'زيت ذرة نقي 1.6 لتر', 'زيوت وسمن', 120, 109, 4, 25, '2026-12-30']
+            ['رقم الباركود', 'الساب كود (Sub-Code)', 'اسم المنتج', 'الصنف / القسم', 'السعر العادي', 'سعر البرومو', 'الكمية بالصالة', 'الكمية بالمخزن', 'تاريخ الانتهاء'],
+            ['6281007010115', 'KZ-1001', 'حليب كازيون كامل الدسم 1 لتر', 'ألبان وأجبان', 42, 38.5, 10, 50, '2026-10-15'],
+            ['6221008000421', 'KZ-1002', 'جبنة فيتا دومتي 500 جم', 'ألبان وأجبان', 35, 31, 5, 30, '2026-11-20'],
+            ['6281006540026', 'KZ-1003', 'أرز كازيون بسمتي 5 كجم', 'بقالة جافة وبقوليات', 195, 175, 12, 60, '2027-01-01'],
+            ['6221155000103', 'KZ-1004', 'زيت ذرة نقي 1.6 لتر', 'زيوت وسمن', 120, 109, 4, 25, '2026-12-30']
           ];
 
           const ws = XLSX.utils.aoa_to_sheet(sampleRows);
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, 'المخزون');
           XLSX.writeFile(wb, 'نموذج_جرد_كازيون_A7med606.xlsx');
-          this.showToast('تم تنزيل ملف الإكسيل التجريبي', 'success');
+          this.showToast('تم تنزيل ملف الإكسيل التجريبي المتضمن الساب كود', 'success');
         },
 
         exportInventoryExcel() {
-          const headers = ['رقم الباركود', 'اسم المنتج', 'الصنف / القسم', 'السعر العادي', 'سعر البرومو', 'الكمية بالصالة', 'الكمية بالمخزن', 'تاريخ الانتهاء', 'الحالة'];
-          const rows = this.items.map(i => [
-            i.barcode,
-            i.itemName,
-            i.category,
-            i.regularPrice,
-            i.promoPrice || '',
-            i.shopQty,
-            i.warehouseQty,
-            i.expiryDate || '',
-            i.statusText || ''
-          ]);
+          const headers = ['رقم الباركود', 'الساب كود (Sub-Code)', 'اسم المنتج', 'الصنف / القسم', 'السعر العادي (ج.م)', 'سعر البرومو (ج.م)', 'تاريخ الإنتاج', 'تاريخ الانتهاء', 'الكمية بالصالة', 'الكمية بالمخزن', 'رقم الدفعة / التشغيلة', 'مكان الرف', 'الحالة'];
+          const rows = [];
+
+          this.items.forEach(i => {
+            if (Array.isArray(i.batches) && i.batches.length > 0) {
+              i.batches.forEach((b, idx) => {
+                rows.push([
+                  i.barcode,
+                  i.subCode || '',
+                  i.itemName,
+                  i.category,
+                  i.regularPrice,
+                  i.promoPrice || '',
+                  b.productionDate || i.productionDate || '',
+                  b.expiryDate || i.expiryDate || '',
+                  b.hallQty !== undefined ? b.hallQty : (b.shopQty || 0),
+                  b.warehouseQty || 0,
+                  `دفعة #${idx + 1}`,
+                  i.shelfLocation || '',
+                  i.statusText || ''
+                ]);
+              });
+            } else {
+              rows.push([
+                i.barcode,
+                i.subCode || '',
+                i.itemName,
+                i.category,
+                i.regularPrice,
+                i.promoPrice || '',
+                i.productionDate || '',
+                i.expiryDate || '',
+                i.shopQty,
+                i.warehouseQty,
+                'الدفعة الرئيسية',
+                i.shelfLocation || '',
+                i.statusText || ''
+              ]);
+            }
+          });
 
           const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
           const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'مخزون كازيون');
-          XLSX.writeFile(wb, `مخزون_كازيون_${new Date().toISOString().split('T')[0]}.xlsx`);
-          this.showToast('تم تصدير المخزون الحالي إلى ملف Excel بنجاح', 'success');
+          XLSX.utils.book_append_sheet(wb, ws, 'مخزون كازيون والدفعات');
+          XLSX.writeFile(wb, `مخزون_ودفعات_كازيون_${new Date().toISOString().split('T')[0]}.xlsx`);
+          this.showToast('تم تصدير المخزون وكافة تفاصيل الدفعات والساب كود إلى Excel بنجاح', 'success');
         },
 
         // =============================================================
@@ -5143,6 +5593,7 @@
             {
               id: 'promo_1',
               barcode: '6221155000103',
+              subCode: 'KZ-1006',
               itemName: 'زيت ذرة كازيون نقي 1.6 لتر',
               category: 'زيوت وسمن',
               regularPrice: 120.0,
@@ -5155,6 +5606,7 @@
             {
               id: 'promo_2',
               barcode: '6281007010115',
+              subCode: 'KZ-1001',
               itemName: 'حليب المراعي كامل الدسم 1 لتر',
               category: 'ألبان وأجبان',
               regularPrice: 42.0,
@@ -5167,6 +5619,7 @@
             {
               id: 'promo_3',
               barcode: '6221155021894',
+              subCode: 'KZ-1003',
               itemName: 'تونة صن شاين قطع سهلة الفتح 185 جم',
               category: 'بقالة جافة وبقوليات',
               regularPrice: 65.0,
@@ -5179,6 +5632,7 @@
             {
               id: 'promo_4',
               barcode: '6281006540026',
+              subCode: 'KZ-1005',
               itemName: 'أرز كازيون بسمتي ممتاز 5 كجم',
               category: 'بقالة جافة وبقوليات',
               regularPrice: 195.0,
@@ -5206,12 +5660,14 @@
         openPromoModal(tag = null) {
           if (tag) {
             this.promoModalItem = JSON.parse(JSON.stringify(tag));
+            if (!this.promoModalItem.subCode) this.promoModalItem.subCode = '';
           } else {
             const nextWeek = new Date();
             nextWeek.setDate(nextWeek.getDate() + 7);
             this.promoModalItem = {
               id: null,
               barcode: '',
+              subCode: '',
               itemName: '',
               category: 'بقالة جافة وبقوليات',
               regularPrice: 0,
@@ -5227,7 +5683,11 @@
         handlePromoBarcodeChange(code) {
           if (!code) return;
           const clean = code.trim();
-          const found = this.items.find(i => i.barcode === clean);
+          const cleanLower = clean.toLowerCase();
+          const found = this.items.find(i => 
+            i.barcode === clean || 
+            (i.subCode && i.subCode.toLowerCase() === cleanLower)
+          );
           if (found) {
             this.selectItemForPromo(found);
           }
@@ -5235,6 +5695,7 @@
 
         selectItemForPromo(item) {
           this.promoModalItem.barcode = item.barcode;
+          this.promoModalItem.subCode = item.subCode || '';
           this.promoModalItem.itemName = item.itemName;
           this.promoModalItem.category = item.category || 'بقالة جافة وبقوليات';
           this.promoModalItem.regularPrice = item.regularPrice || 0;
@@ -5384,6 +5845,7 @@
             list = list.filter(t => 
               (t.itemName && t.itemName.toLowerCase().includes(q)) ||
               (t.barcode && t.barcode.includes(q)) ||
+              (t.subCode && t.subCode.toLowerCase().includes(q)) ||
               (t.shelfLocation && t.shelfLocation.toLowerCase().includes(q))
             );
           }
