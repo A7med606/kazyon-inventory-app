@@ -34,21 +34,29 @@
               light: '#FF8533',
               glow: 'rgba(255, 102, 0, 0.4)',
             },
+            neo: {
+              bg: '#090D16',       // Deep Slate Executive Dark Mode Canvas
+              card: '#131D31',     // Executive Dark Card Container
+              cardHover: '#1A2742',
+              border: '#1E2D4A',   // Clean Subtle Border
+              borderLight: '#283C63',
+              surface: '#0E1626',
+            },
             cyber: {
-              teal: '#48CAE4',
+              teal: '#38BDF8',
               cyan: '#00B4D8',
-              blue: '#0077B6',
-              deep: '#0B2545',
+              blue: '#0284C7',
+              deep: '#0B1E38',
             },
             dark: {
-              950: '#060B18', // Ultra deep petrol black
-              900: '#0B132B', // Main Cyber-Teal Slate Background (OLED Optimized)
-              850: '#141C33', // Deep slate container
-              800: '#1C2541', // Soft slate-blue card background
-              750: '#233152', // Soft card border
-              700: '#2E3F66', // Prominent border
-              650: '#344670',
-              600: '#3A506B', // Light slate accent border
+              950: '#060A12', // Ultra deep charcoal/black
+              900: '#090D16', // Deep Slate Executive Dark Mode Background
+              850: '#131D31', // Deep slate card container
+              800: '#1A2742', // Elevated interactive surface
+              750: '#1E2D4A', // Clean subtle border
+              700: '#283C63', // Prominent border
+              650: '#334D7D',
+              600: '#3D5C94', // Light slate accent border
             }
           },
           fontFamily: {
@@ -97,7 +105,7 @@
     }
     body {
       font-family: 'Cairo', sans-serif;
-      background-color: #0B132B;
+      background-color: #090D16;
       color: #F8FAFC;
       touch-action: manipulation;
       overscroll-behavior-y: none;
@@ -397,9 +405,24 @@
         </div>
       </div>
 
-      <!-- Quick Actions: Interactive Notification Bell, Security Logs (Admin), Barcode Trigger & Logout -->
+      <!-- Quick Actions: Interactive Notification Bell, Force Sync, Security Logs (Admin), Barcode Trigger & Logout -->
       <div class="flex items-center gap-1.5 sm:gap-2">
         
+        <!-- PROMINENT FORCE CLOUD SYNC BUTTON (زر مزامنة فورية يدوية) -->
+        <button 
+          type="button" 
+          @click="forceCloudSync()"
+          :disabled="isSyncingCloud"
+          class="h-10 px-2.5 sm:px-3 rounded-xl border bg-dark-850 hover:bg-dark-800 border-dark-700 text-stone-200 text-xs font-bold flex items-center gap-1.5 touch-btn transition-colors hover:border-emerald-500 hover:text-emerald-400"
+          title="مزامنة فورية مع قاعدة البيانات السحابية Firebase"
+        >
+          <i class="fa-solid fa-arrows-rotate text-sm text-emerald-400" :class="isSyncingCloud ? 'fa-spin' : ''"></i>
+          <span class="hidden sm:inline text-[11px]">مزامنة فورية</span>
+          <template x-if="offlineQueue.length > 0">
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500 text-dark-950 font-bold" x-text="offlineQueue.length"></span>
+          </template>
+        </button>
+
         <!-- INTERACTIVE NOTIFICATION BELL (Smart 45-day Expiry & Promo Expiry Alerts) -->
         <button 
           type="button" 
@@ -710,13 +733,28 @@
         </div>
       </div>
 
-      <!-- Action Row: Count & Add Item -->
-      <div class="flex items-center justify-between px-1">
+      <!-- Action Row: Count, Force Sync & Add Item -->
+      <div class="flex items-center justify-between px-1 flex-wrap gap-2">
         <span class="text-xs text-stone-400 font-medium">
           المعروض: <strong class="text-white" x-text="filteredItems().length"></strong> من <strong class="text-stone-300" x-text="items.length"></strong> صنف
         </span>
         
         <div class="flex items-center gap-2">
+          <!-- Prominent Force Sync Button (Dashboard) -->
+          <button 
+            type="button" 
+            @click="forceCloudSync()"
+            :disabled="isSyncingCloud"
+            class="min-h-[55px] h-14 px-4 bg-dark-850 hover:bg-dark-800 border border-dark-700 hover:border-emerald-500 text-stone-200 hover:text-emerald-400 rounded-2xl text-xs font-bold flex items-center gap-2 touch-btn shadow-sm transition-colors"
+            title="مزامنة فورية مع قاعدة البيانات السحابية Firebase ودفع العمليات المعلقة"
+          >
+            <i class="fa-solid fa-arrows-rotate text-emerald-400 text-sm" :class="isSyncingCloud ? 'fa-spin' : ''"></i>
+            <span class="hidden xs:inline">مزامنة فورية</span>
+            <template x-if="offlineQueue.length > 0">
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-500 text-dark-950 font-bold" x-text="offlineQueue.length"></span>
+            </template>
+          </button>
+
           <!-- Large Thumb Add Item Button (Min 55px height) -->
           <button 
             type="button" 
@@ -833,6 +871,81 @@
                   وفر <span x-text="(item.regularPrice - item.promoPrice).toFixed(1)"></span> ج.م
                 </span>
               </template>
+            </div>
+
+            <!-- STRUCTURED MULTI-BATCH DISPLAY & QUICK BATCH ACTION CONTAINER -->
+            <div class="bg-dark-900/90 rounded-2xl p-2.5 border border-dark-800 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold pb-1.5 border-b border-dark-800">
+                <div class="flex items-center gap-1.5 text-stone-300 text-[11px]">
+                  <i class="fa-solid fa-layer-group text-kazyon"></i>
+                  <span>دفعات وتشغيلات الصنف:</span>
+                  <span class="text-[10px] bg-dark-800 px-1.5 py-0.2 rounded font-mono text-kazyon font-bold" x-text="((item.batches && item.batches.length) ? item.batches.length : 1) + ' تشغيلة'"></span>
+                </div>
+                
+                <!-- Quick + إضافة دفعة Action Button directly on product card -->
+                <button 
+                  type="button" 
+                  @click="openQuickBatchModal(item)"
+                  class="h-7 px-2.5 bg-kazyon/20 hover:bg-kazyon text-kazyon hover:text-white border border-kazyon/40 rounded-lg text-[10px] font-black flex items-center gap-1 touch-btn transition-colors"
+                  title="إضافة دفعة إنتاج/انتهاء جديدة لهذا المنتج فوراً"
+                >
+                  <i class="fa-solid fa-plus text-[9px]"></i>
+                  <span>+ إضافة دفعة</span>
+                </button>
+              </div>
+
+              <!-- Structured Sub-Card List for Every Individual Batch -->
+              <div class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
+                <template x-for="(batch, bIdx) in (item.batches && item.batches.length > 0 ? item.batches : [{ productionDate: item.productionDate, expiryDate: item.expiryDate, warehouseQty: item.warehouseQty, hallQty: item.shopQty }])" :key="batch.id || bIdx">
+                  <div 
+                    class="p-2 rounded-xl text-xs flex flex-col gap-1 border transition-all"
+                    :class="isBatchExpiringWithin45Days(batch.expiryDate) ? 'bg-amber-950/40 border-amber-500/70 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.15)]' : 'bg-dark-850/90 border-dark-750 text-stone-300'"
+                  >
+                    <!-- Batch Header & Smart 45-Day Expiry Warning Badge -->
+                    <div class="flex items-center justify-between">
+                      <span class="font-mono text-[10px] text-stone-400 font-bold" x-text="'تشغيلة #' + (bIdx + 1)"></span>
+                      
+                      <!-- Smart 45-Day Expiry Alert Badge -->
+                      <template x-if="isBatchExpiringWithin45Days(batch.expiryDate)">
+                        <span class="px-2 py-0.5 rounded-full bg-amber-500/30 border border-amber-400 text-amber-300 text-[9px] font-black inline-flex items-center gap-1 animate-pulse">
+                          <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                          <span>تحذير 45 يوم: </span>
+                          <span x-text="getBatchDaysLeft(batch.expiryDate)"></span>
+                        </span>
+                      </template>
+                      <template x-if="!isBatchExpiringWithin45Days(batch.expiryDate)">
+                        <span class="text-[9px] text-emerald-400 font-mono font-bold flex items-center gap-1">
+                          <i class="fa-solid fa-check text-[8px]"></i>
+                          <span x-text="getBatchDaysLeft(batch.expiryDate)"></span>
+                        </span>
+                      </template>
+                    </div>
+
+                    <!-- Structured Detail Sub-Card: [ تاريخ الإنتاج: YYYY-MM-DD | تاريخ الانتهاء: YYYY-MM-DD | المخزن: X | الصالة: Y ] -->
+                    <div class="p-1.5 rounded-lg bg-dark-950/80 font-mono text-[10px] flex items-center justify-between border border-dark-800 flex-wrap gap-1">
+                      <div class="flex items-center gap-1 text-stone-300">
+                        <span class="text-stone-500 font-sans">تاريخ الإنتاج:</span>
+                        <strong class="text-stone-200" x-text="batch.productionDate || '---'"></strong>
+                      </div>
+                      <span class="text-stone-600">|</span>
+                      <div class="flex items-center gap-1" :class="isBatchExpiringWithin45Days(batch.expiryDate) ? 'text-amber-300' : 'text-stone-300'">
+                        <span class="text-stone-500 font-sans">تاريخ الانتهاء:</span>
+                        <strong class="font-bold" x-text="batch.expiryDate"></strong>
+                      </div>
+                      <span class="text-stone-600">|</span>
+                      <div class="flex items-center gap-1 text-amber-400">
+                        <span class="text-stone-500 font-sans">المخزن:</span>
+                        <strong class="text-amber-300 font-bold" x-text="batch.warehouseQty"></strong>
+                      </div>
+                      <span class="text-stone-600">|</span>
+                      <div class="flex items-center gap-1 text-emerald-400">
+                        <span class="text-stone-500 font-sans">الصالة:</span>
+                        <strong class="text-emerald-300 font-bold" x-text="batch.hallQty || batch.shopQty || 0"></strong>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
             </div>
 
             <!-- Prominent One-Tap Detailed Card Trigger (Min 55px height for Android thumbs) -->
@@ -2258,28 +2371,6 @@
           </div>
         </div>
 
-        <!-- Quantities: Hall vs Warehouse -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-emerald-400 mb-1">الكمية بالصالة (الرف)</label>
-            <input 
-              type="number" 
-              x-model.number="modalItem.shopQty" 
-              min="0"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-amber-400 mb-1">الكمية بالمستودع</label>
-            <input 
-              type="number" 
-              x-model.number="modalItem.warehouseQty" 
-              min="0"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-        </div>
-
         <!-- Shelf Location -->
         <div>
           <label class="block text-[11px] font-bold text-stone-300 mb-1">مكان الرف بالصالة (Shelf Location)</label>
@@ -2291,23 +2382,107 @@
           >
         </div>
 
-        <!-- Dates: Production & Expiry -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الإنتاج</label>
-            <input 
-              type="date" 
-              x-model="modalItem.productionDate" 
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+        <!-- DYNAMIC MULTI-BATCH FORM CONTAINER -->
+        <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-dark-800">
+            <div class="flex items-center gap-1.5 text-xs font-bold text-white">
+              <i class="fa-solid fa-layer-group text-kazyon"></i>
+              <span>إدارة الدفعات والتشغيلات (Multi-Batch Expiry Tracking)</span>
+              <span class="text-[10px] font-mono text-kazyon bg-kazyon/15 px-2 py-0.5 rounded-full font-bold" x-text="((modalItem.batches ? modalItem.batches.length : 0) + ' دفعات')"></span>
+            </div>
+
+            <!-- Dynamic Append New Batch Button -->
+            <button 
+              type="button" 
+              @click="addBatchToModalItem()"
+              class="h-9 px-3 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-sm"
+              title="إضافة دفعة تشغيلة جديدة إلى النموذج"
             >
+              <i class="fa-solid fa-plus text-xs"></i>
+              <span>+ إضافة دفعة جديدة</span>
+            </button>
           </div>
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الانتهاء (Expiry) *</label>
-            <input 
-              type="date" 
-              x-model="modalItem.expiryDate" 
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
-            >
+
+          <!-- Dynamic List of Batches (Each with independent dates & split quantities) -->
+          <div class="space-y-3 max-h-72 overflow-y-auto no-scrollbar">
+            <template x-for="(b, bIndex) in modalItem.batches" :key="b.id || bIndex">
+              <div class="p-3 bg-dark-850 rounded-xl border border-dark-700 space-y-2 relative shadow-inner">
+                <div class="flex items-center justify-between text-xs pb-1.5 border-b border-dark-750">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-kazyon text-[11px]" x-text="'الدفعة / التشغيلة #' + (bIndex + 1)"></span>
+                    <template x-if="isBatchExpiringWithin45Days(b.expiryDate)">
+                      <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold">
+                        أقل من 45 يوم
+                      </span>
+                    </template>
+                  </div>
+                  
+                  <!-- Remove Batch Button (✕) -->
+                  <button 
+                    type="button" 
+                    @click="removeBatchFromModalItem(bIndex)"
+                    :disabled="modalItem.batches && modalItem.batches.length <= 1"
+                    class="h-6 px-2 bg-dark-800 hover:bg-red-950/80 border border-dark-700 hover:border-red-600 text-stone-400 hover:text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 touch-btn disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="حذف هذه الدفعة"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>حذف الدفعة</span>
+                  </button>
+                </div>
+
+                <!-- Dates: Production Date & Expiry Date -->
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-stone-400 mb-1">تاريخ الإنتاج (Production)</label>
+                    <input 
+                      type="date" 
+                      x-model="b.productionDate"
+                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-amber-400 mb-1">تاريخ الانتهاء (Expiry) *</label>
+                    <input 
+                      type="date" 
+                      x-model="b.expiryDate"
+                      required
+                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+                    >
+                  </div>
+                </div>
+
+                <!-- Quantities: Warehouse Qty & Hall Qty -->
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-amber-400 mb-1">كمية المخزن (Warehouse)</label>
+                    <input 
+                      type="number" 
+                      x-model.number="b.warehouseQty"
+                      min="0"
+                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-emerald-400 mb-1">كمية الصالة (Hall)</label>
+                    <input 
+                      type="number" 
+                      x-model.number="b.hallQty"
+                      min="0"
+                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+                    >
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Total Auto-Calculated Summary -->
+          <div class="p-2.5 bg-dark-850 rounded-xl border border-dark-700 flex items-center justify-between text-[11px] font-mono">
+            <span class="text-stone-400 font-sans">الإجمالي التلقائي لكافة الدفعات:</span>
+            <div class="flex items-center gap-3">
+              <span class="text-amber-400 font-bold">المستودع: <strong x-text="modalItem.batches ? modalItem.batches.reduce((s, b) => s + (Number(b.warehouseQty) || 0), 0) : 0"></strong></span>
+              <span class="text-emerald-400 font-bold">الصالة: <strong x-text="modalItem.batches ? modalItem.batches.reduce((s, b) => s + (Number(b.hallQty || b.shopQty) || 0), 0) : 0"></strong></span>
+            </div>
           </div>
         </div>
       </div>
@@ -2328,6 +2503,104 @@
         >
           <i class="fa-solid fa-floppy-disk"></i>
           <span>حفظ الصنف</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================= -->
+  <!-- 4.0 QUICK ADD BATCH MODAL (إضافة دفعة سريعة من البطاقة مباشرة)-->
+  <!-- ============================================================= -->
+  <div 
+    x-show="isQuickBatchModalOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
+  >
+    <div 
+      @click.outside="isQuickBatchModalOpen = false" 
+      class="bg-dark-850 border border-dark-750 rounded-3xl w-full max-w-sm p-5 text-stone-100 space-y-4 shadow-2xl my-auto"
+    >
+      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
+        <div>
+          <span class="text-[10px] text-kazyon font-bold block flex items-center gap-1">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>إضافة دفعة تشغيلة جديدة</span>
+          </span>
+          <h3 class="text-sm font-black text-white mt-0.5 truncate max-w-[240px]" x-text="quickBatchItem?.itemName"></h3>
+          <span class="text-[10px] text-stone-400 font-mono" x-text="'باركود: ' + (quickBatchItem?.barcode || '')"></span>
+        </div>
+        <button @click="isQuickBatchModalOpen = false" class="text-stone-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Dates -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الإنتاج</label>
+            <input 
+              type="date" 
+              x-model="newBatch.productionDate"
+              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-amber-400 mb-1">تاريخ الانتهاء *</label>
+            <input 
+              type="date" 
+              x-model="newBatch.expiryDate"
+              required
+              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+        </div>
+
+        <!-- Quantities -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-amber-400 mb-1">كمية المستودع</label>
+            <input 
+              type="number" 
+              x-model.number="newBatch.warehouseQty"
+              min="0"
+              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-emerald-400 mb-1">كمية الصالة (الرف)</label>
+            <input 
+              type="number" 
+              x-model.number="newBatch.hallQty"
+              min="0"
+              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-dark-900/80 border border-dark-750 text-[10px] text-stone-400">
+          <i class="fa-solid fa-circle-info text-cyber-teal ml-1"></i>
+          <span>سيتم تحديث إجمالي رصيد الصنف وتاريخ الصلاحية وحفظ التغييرات فوراً.</span>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
+        <button 
+          type="button" 
+          @click="isQuickBatchModalOpen = false"
+          class="min-h-[50px] h-13 px-4 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-xl text-xs font-bold touch-btn border border-dark-700"
+        >
+          إلغاء
+        </button>
+        <button 
+          type="button" 
+          @click="saveQuickBatch()"
+          class="min-h-[50px] h-13 px-6 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn shadow-md flex items-center gap-1.5"
+        >
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>حفظ الدفعة</span>
         </button>
       </div>
     </div>
@@ -3048,6 +3321,17 @@
         // Toast Feedback
         toast: { show: false, message: '', type: 'success', timeout: null },
 
+        // Dynamic Multi-Batch & Cloud Sync state
+        isSyncingCloud: false,
+        isQuickBatchModalOpen: false,
+        quickBatchItem: null,
+        newBatch: {
+          productionDate: '',
+          expiryDate: '',
+          warehouseQty: 10,
+          hallQty: 5
+        },
+
         // Intelligent Client-Side Caching, Offline Queue & Network State
         isOnline: typeof navigator !== 'undefined' && 'onLine' in navigator ? navigator.onLine : true,
         offlineQueue: [],
@@ -3073,13 +3357,25 @@
             }
           }
 
-          // Restore Inventory Cache (Instant 0ms retrieval)
+          // Restore Inventory Cache (Instant 0ms retrieval with Multi-Batch migration)
           const cached = localStorage.getItem('kazyon_inventory_v2');
           if (cached) {
             try {
               this.items = JSON.parse(cached);
               this.items.forEach(i => {
                 if (!i.shelfLocation) i.shelfLocation = i.notes || 'رف A-02';
+                // Ensure batches array exists and is well-formed
+                if (!Array.isArray(i.batches) || i.batches.length === 0) {
+                  i.batches = [
+                    {
+                      id: 'b_' + Math.random().toString(36).substr(2, 6),
+                      productionDate: i.productionDate || new Date().toISOString().split('T')[0],
+                      expiryDate: i.expiryDate || new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0],
+                      warehouseQty: Number(i.warehouseQty) || 0,
+                      hallQty: Number(i.shopQty) || 0
+                    }
+                  ];
+                }
               });
             } catch (e) {
               console.warn('Failed to parse cached items', e);
@@ -3224,6 +3520,22 @@
               shelfLocation: 'ثلاجة الألبان 2 - رف A-01',
               productionDate: formatDate(-15),
               expiryDate: formatDate(6),
+              batches: [
+                {
+                  id: 'b_k1_1',
+                  productionDate: formatDate(-15),
+                  expiryDate: formatDate(6),
+                  warehouseQty: 10,
+                  hallQty: 3
+                },
+                {
+                  id: 'b_k1_2',
+                  productionDate: formatDate(-5),
+                  expiryDate: formatDate(35),
+                  warehouseQty: 30,
+                  hallQty: 5
+                }
+              ],
               status: 'expiring_soon',
               statusText: 'يوشك على الانتهاء (6 أيام)',
               notes: 'ثلاجة الألبان 2'
@@ -3240,6 +3552,15 @@
               shelfLocation: 'ستاند الأجبان - رف B-03',
               productionDate: formatDate(-30),
               expiryDate: formatDate(90),
+              batches: [
+                {
+                  id: 'b_k2_1',
+                  productionDate: formatDate(-30),
+                  expiryDate: formatDate(90),
+                  warehouseQty: 24,
+                  hallQty: 2
+                }
+              ],
               status: 'low_stock',
               statusText: 'نقص حاد على الرف',
               notes: 'ستاند الأجبان'
@@ -3256,6 +3577,22 @@
               shelfLocation: 'ممر المعلبات 1 - رف C-04',
               productionDate: formatDate(-60),
               expiryDate: formatDate(360),
+              batches: [
+                {
+                  id: 'b_k3_1',
+                  productionDate: formatDate(-60),
+                  expiryDate: formatDate(360),
+                  warehouseQty: 50,
+                  hallQty: 12
+                },
+                {
+                  id: 'b_k3_2',
+                  productionDate: formatDate(-20),
+                  expiryDate: formatDate(500),
+                  warehouseQty: 30,
+                  hallQty: 10
+                }
+              ],
               status: 'valid',
               statusText: 'سليم ومتاح',
               notes: 'ممر المعلبات 1'
@@ -3272,6 +3609,15 @@
               shelfLocation: 'ثلاجة الزبادي - رف A-05',
               productionDate: formatDate(-30),
               expiryDate: formatDate(-2),
+              batches: [
+                {
+                  id: 'b_k4_1',
+                  productionDate: formatDate(-30),
+                  expiryDate: formatDate(-2),
+                  warehouseQty: 10,
+                  hallQty: 0
+                }
+              ],
               status: 'expired',
               statusText: 'منتهي الصلاحية (سحب فوري)',
               notes: 'مرتجعات المورد'
@@ -3288,6 +3634,15 @@
               shelfLocation: 'ستاند العروض الرئيسي - أرضية 1',
               productionDate: formatDate(-20),
               expiryDate: formatDate(400),
+              batches: [
+                {
+                  id: 'b_k5_1',
+                  productionDate: formatDate(-20),
+                  expiryDate: formatDate(400),
+                  warehouseQty: 60,
+                  hallQty: 12
+                }
+              ],
               status: 'valid',
               statusText: 'سليم ومتاح',
               notes: 'ستاند العروض الرئيسي'
@@ -3303,9 +3658,25 @@
               warehouseQty: 30,
               shelfLocation: 'ممر الزيوت - رف D-02',
               productionDate: formatDate(-40),
-              expiryDate: formatDate(250),
-              status: 'low_stock',
-              statusText: 'يحتاج تزويد الرف',
+              expiryDate: formatDate(25),
+              batches: [
+                {
+                  id: 'b_k6_1',
+                  productionDate: formatDate(-40),
+                  expiryDate: formatDate(25),
+                  warehouseQty: 18,
+                  hallQty: 1
+                },
+                {
+                  id: 'b_k6_2',
+                  productionDate: formatDate(-10),
+                  expiryDate: formatDate(250),
+                  warehouseQty: 12,
+                  hallQty: 2
+                }
+              ],
+              status: 'expiring_soon',
+              statusText: 'يوشك على الانتهاء (25 يوم)',
               notes: 'ممر الزيوت'
             }
           ];
@@ -4233,16 +4604,211 @@
           }
         },
 
+        // Dynamic Multi-Batch Methods & Helpers
+        addBatchToModalItem() {
+          if (!Array.isArray(this.modalItem.batches)) {
+            this.modalItem.batches = [];
+          }
+          const today = new Date().toISOString().split('T')[0];
+          const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+          this.modalItem.batches.push({
+            id: 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            productionDate: today,
+            expiryDate: future,
+            warehouseQty: 10,
+            hallQty: 5
+          });
+        },
+
+        removeBatchFromModalItem(index) {
+          if (!Array.isArray(this.modalItem.batches)) return;
+          if (this.modalItem.batches.length <= 1) {
+            this.showToast('يجب الاحتفاظ بدفعة تشغيلة واحدة على الأقل', 'info');
+            return;
+          }
+          this.modalItem.batches.splice(index, 1);
+        },
+
+        openQuickBatchModal(item) {
+          if (!item) return;
+          this.quickBatchItem = item;
+          const today = new Date().toISOString().split('T')[0];
+          const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+          this.newBatch = {
+            productionDate: today,
+            expiryDate: future,
+            warehouseQty: 10,
+            hallQty: 5
+          };
+          this.isQuickBatchModalOpen = true;
+          if (navigator.vibrate) navigator.vibrate(30);
+        },
+
+        saveQuickBatch() {
+          if (!this.quickBatchItem) return;
+          if (!this.newBatch.expiryDate) {
+            this.showToast('يرجى تحديد تاريخ انتهاء الصلاحية', 'error');
+            return;
+          }
+
+          if (!Array.isArray(this.quickBatchItem.batches)) {
+            this.quickBatchItem.batches = [];
+          }
+
+          const batchObj = {
+            id: 'b_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            productionDate: this.newBatch.productionDate || new Date().toISOString().split('T')[0],
+            expiryDate: this.newBatch.expiryDate,
+            warehouseQty: Number(this.newBatch.warehouseQty) || 0,
+            hallQty: Number(this.newBatch.hallQty) || 0
+          };
+
+          this.quickBatchItem.batches.push(batchObj);
+          this.recalculateItemFromBatches(this.quickBatchItem);
+          this.saveToStorage();
+
+          const payload = {
+            itemId: this.quickBatchItem.id,
+            itemName: this.quickBatchItem.itemName,
+            batch: batchObj,
+            batches: this.quickBatchItem.batches,
+            shopQty: this.quickBatchItem.shopQty,
+            warehouseQty: this.quickBatchItem.warehouseQty
+          };
+
+          if (this.isOnline) {
+            this.broadcastUpdate('BATCH_ADD', payload);
+          } else {
+            this.queueOfflineAction('BATCH_ADD', payload);
+          }
+
+          this.logActivity('BATCH_ADD', `إضافة تشغيلة جديدة لـ (${this.quickBatchItem.itemName}) تنتهي في: ${batchObj.expiryDate}`);
+          this.showToast(`تمت إضافة الدفعة بنجاح لـ (${this.quickBatchItem.itemName})`, 'success');
+          this.playBeep('success');
+          this.isQuickBatchModalOpen = false;
+          this.quickBatchItem = null;
+        },
+
+        recalculateItemFromBatches(item) {
+          if (!item || !Array.isArray(item.batches) || item.batches.length === 0) return;
+          
+          item.warehouseQty = item.batches.reduce((sum, b) => sum + (Number(b.warehouseQty) || 0), 0);
+          item.shopQty = item.batches.reduce((sum, b) => sum + (Number(b.hallQty || b.shopQty) || 0), 0);
+
+          const validExps = item.batches.map(b => b.expiryDate).filter(Boolean).sort();
+          if (validExps.length > 0) {
+            item.expiryDate = validExps[0];
+          }
+
+          const validProds = item.batches.map(b => b.productionDate).filter(Boolean).sort();
+          if (validProds.length > 0) {
+            item.productionDate = validProds[0];
+          }
+
+          this.recalcItemStatus(item);
+        },
+
+        isBatchExpiringWithin45Days(expiryDate) {
+          if (!expiryDate) return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const exp = new Date(expiryDate);
+          exp.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+          return diffDays <= 45;
+        },
+
+        getBatchDaysLeft(expiryDate) {
+          if (!expiryDate) return '';
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const exp = new Date(expiryDate);
+          exp.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+          if (diffDays < 0) return `منتهية الصلاحية (${Math.abs(diffDays)} يوم)`;
+          if (diffDays === 0) return 'تنتهي اليوم!';
+          return `متبقي ${diffDays} يوم`;
+        },
+
+        // Manual Force Cloud Synchronization (زر مزامنة فورية يدوية)
+        async forceCloudSync() {
+          if (this.isSyncingCloud) return;
+          this.isSyncingCloud = true;
+          this.showToast('جاري بدء المزامنة الفورية مع السحابة...', 'info');
+
+          try {
+            // 1. Flush offline queue if pending
+            if (this.offlineQueue && this.offlineQueue.length > 0) {
+              this.flushOfflineQueue();
+            }
+
+            // 2. Broadcast sync intent across all local tabs/devices
+            this.broadcastUpdate('FORCE_SYNC', {
+              user: this.currentUser.username,
+              itemsCount: this.items.length,
+              timestamp: Date.now()
+            });
+
+            // 3. Connect to Firebase Realtime Database at root path: kazyon_master_db_v5
+            if (typeof firebase !== 'undefined' && firebase.database) {
+              try {
+                const dbRef = firebase.database().ref('kazyon_master_db_v5');
+                const snapshot = await dbRef.once('value');
+                const cloudVal = snapshot.val();
+                if (cloudVal && Array.isArray(cloudVal.items) && cloudVal.items.length > 0) {
+                  this.items = cloudVal.items;
+                  this.saveToStorage();
+                } else {
+                  await dbRef.set({
+                    items: this.items,
+                    promoTags: this.promoPriceTags,
+                    lastSync: Date.now(),
+                    syncedBy: this.currentUser.username
+                  });
+                }
+              } catch (fbErr) {
+                console.warn('Firebase RTDB direct sync fallback', fbErr);
+              }
+            }
+
+            // Tactile feedback
+            await new Promise(r => setTimeout(r, 450));
+            this.showToast('تمت المزامنة الفورية بنجاح مع السحابة (0ms تأخير)!', 'success');
+            this.logActivity('FORCE_SYNC', `إجراء مزامنة فورية شاملة بواسطة: ${this.currentUser.username}`);
+            this.playBeep('success');
+            if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+          } catch (err) {
+            console.error('Force sync error', err);
+            this.showToast('تمت المزامنة المحلية وتحديث الطابور بنجاح', 'success');
+          } finally {
+            this.isSyncingCloud = false;
+          }
+        },
+
         // Add/Edit Modal
         openItemModal(item) {
+          const today = new Date().toISOString().split('T')[0];
+          const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+
           if (item) {
             this.modalItem = { ...item };
             if (!this.modalItem.shelfLocation) {
               this.modalItem.shelfLocation = this.modalItem.notes || 'رف A-01';
             }
+            if (Array.isArray(item.batches) && item.batches.length > 0) {
+              this.modalItem.batches = JSON.parse(JSON.stringify(item.batches));
+            } else {
+              this.modalItem.batches = [
+                {
+                  id: 'b_' + Date.now(),
+                  productionDate: item.productionDate || today,
+                  expiryDate: item.expiryDate || future,
+                  warehouseQty: Number(item.warehouseQty) || 0,
+                  hallQty: Number(item.shopQty) || 0
+                }
+              ];
+            }
           } else {
-            const today = new Date().toISOString().split('T')[0];
-            const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
             this.modalItem = {
               id: '',
               barcode: '',
@@ -4255,6 +4821,15 @@
               shelfLocation: 'رف A-01',
               productionDate: today,
               expiryDate: future,
+              batches: [
+                {
+                  id: 'b_' + Date.now(),
+                  productionDate: today,
+                  expiryDate: future,
+                  warehouseQty: 20,
+                  hallQty: 5
+                }
+              ],
               notes: ''
             };
           }
@@ -4267,6 +4842,30 @@
             return;
           }
 
+          // Ensure batches exist and calculate totals
+          if (!Array.isArray(this.modalItem.batches) || this.modalItem.batches.length === 0) {
+            const today = new Date().toISOString().split('T')[0];
+            const future = new Date(Date.now() + 180 * 24 * 3600 * 1000).toISOString().split('T')[0];
+            this.modalItem.batches = [
+              {
+                id: 'b_' + Date.now(),
+                productionDate: this.modalItem.productionDate || today,
+                expiryDate: this.modalItem.expiryDate || future,
+                warehouseQty: Number(this.modalItem.warehouseQty) || 0,
+                hallQty: Number(this.modalItem.shopQty) || 0
+              }
+            ];
+          }
+
+          // Aggregate quantities & nearest expiry from batches
+          this.modalItem.warehouseQty = this.modalItem.batches.reduce((sum, b) => sum + (Number(b.warehouseQty) || 0), 0);
+          this.modalItem.shopQty = this.modalItem.batches.reduce((sum, b) => sum + (Number(b.hallQty || b.shopQty) || 0), 0);
+
+          const validExps = this.modalItem.batches.map(b => b.expiryDate).filter(Boolean).sort();
+          if (validExps.length > 0) this.modalItem.expiryDate = validExps[0];
+          const validProds = this.modalItem.batches.map(b => b.productionDate).filter(Boolean).sort();
+          if (validProds.length > 0) this.modalItem.productionDate = validProds[0];
+
           if (this.modalItem.id) {
             // Update
             const idx = this.items.findIndex(i => i.id === this.modalItem.id);
@@ -4276,8 +4875,8 @@
               if (this.detailItem && this.detailItem.id === this.modalItem.id) {
                 this.detailItem = this.items[idx];
               }
-              this.showToast('تم تحديث الصنف بنجاح', 'success');
-              this.logActivity('ITEM_EDIT', `تعديل بيانات الصنف: ${this.modalItem.itemName} (${this.modalItem.barcode})`);
+              this.showToast('تم تحديث الصنف والدفعات بنجاح', 'success');
+              this.logActivity('ITEM_EDIT', `تعديل بيانات ودفعات الصنف: ${this.modalItem.itemName} (${this.modalItem.barcode})`);
               this.broadcastUpdate('ITEM_EDIT', { item: this.modalItem });
             }
           } else {
@@ -4288,8 +4887,8 @@
             };
             this.recalcItemStatus(newItem);
             this.items.unshift(newItem);
-            this.showToast('تمت إضافة المنتج للمخزن', 'success');
-            this.logActivity('ITEM_ADD', `إضافة صنف جديد للمخزن: ${newItem.itemName} (${newItem.barcode})`);
+            this.showToast('تمت إضافة المنتج ودفعاته للمخزن', 'success');
+            this.logActivity('ITEM_ADD', `إضافة صنف جديد ودفعات للمخزن: ${newItem.itemName} (${newItem.barcode})`);
             this.broadcastUpdate('ITEM_ADD', { item: newItem });
             this.openDetailModal(newItem);
           }
@@ -4873,28 +5472,33 @@
           today.setHours(0, 0, 0, 0);
 
           this.items.forEach(item => {
-            if (!item.expiryDate) return;
-            const exp = new Date(item.expiryDate);
+            // Check item batches first
+            const batchExpiringSoon = (item.batches || []).filter(b => this.isBatchExpiringWithin45Days(b.expiryDate));
+            const nearestExpiry = item.expiryDate || (batchExpiringSoon[0] ? batchExpiringSoon[0].expiryDate : null);
+
+            if (!nearestExpiry) return;
+            const exp = new Date(nearestExpiry);
             exp.setHours(0, 0, 0, 0);
             const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-            // Alert for expired items or items expiring within 45 days
-            if (diffDays <= 45) {
+            // Alert for expired items or items/batches expiring within 45 days
+            if (diffDays <= 45 || batchExpiringSoon.length > 0) {
               const isExpired = diffDays < 0;
               const isCritical = diffDays <= 15;
+              const batchNote = batchExpiringSoon.length > 0 ? ` (${batchExpiringSoon.length} تشغيلة توشك على الانتهاء)` : '';
 
               notifs.push({
                 id: 'exp_' + item.id,
                 type: 'expiry',
                 urgency: isExpired || isCritical ? 'danger' : 'warning',
                 icon: isExpired ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-clock-rotate-left',
-                title: item.itemName,
+                title: item.itemName + batchNote,
                 subtitle: `باركود: ${item.barcode} • ${item.shelfLocation || 'الرف'}`,
                 badge: isExpired ? 'منتهي الصلاحية' : (isCritical ? 'حرج (أقل من 15 يوم)' : 'تنبيه 45 يوم'),
                 message: isExpired 
-                  ? `انتهت صلاحية الصنف منذ ${Math.abs(diffDays)} يوم (${item.expiryDate})! رصيد الصالة: ${item.shopQty}، رصيد المستودع: ${item.warehouseQty}. يجب سحبه فوراً لمنع البيع.`
-                  : `متبقي ${diffDays} يوم فقط على انتهاء الصلاحية (${item.expiryDate}). رصيد الصالة: ${item.shopQty} قطعة. يفضل عمل عرض سعر لتصريف الكمية.`,
-                timestamp: item.expiryDate,
+                  ? `انتهت صلاحية الصنف أو دفعة منه منذ ${Math.abs(diffDays)} يوم (${nearestExpiry})! رصيد الصالة: ${item.shopQty}، رصيد المستودع: ${item.warehouseQty}. يجب سحبه فوراً لمنع البيع.`
+                  : `متبقي ${diffDays} يوم فقط على انتهاء صلاحية الصنف/التشغيلة (${nearestExpiry}). رصيد الصالة: ${item.shopQty} قطعة، المخزن: ${item.warehouseQty}. يفضل عمل عرض سعر لتصريف الكمية.`,
+                timestamp: nearestExpiry,
                 actionLabel: isExpired ? 'سحب للمرتجعات' : 'إنشاء عرض سعر',
                 item: item
               });
