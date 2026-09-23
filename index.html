@@ -457,14 +457,14 @@
             </template>
           </div>
           <div class="flex items-center gap-2 text-[10px] text-stone-400 mt-0.5">
-            <span>المستخدم: <strong class="text-white" x-text="currentUser.name || currentUser.username || 'أحمد سعيد (Ahmed Said)'"></strong></span>
+            <span>المستخدم: <strong class="text-white" x-text="currentUser.name || currentUser.username || (currentUser.role === 'admin' ? 'مدير النظام (Admin)' : 'موظف كازيون (Staff)')"></strong></span>
             <span>•</span>
             <span class="font-mono text-emerald-400 font-bold" x-text="'IP: ' + clientIp"></span>
           </div>
         </div>
       </div>
 
-      <!-- Quick Actions: Interactive Notification Bell, Force Sync, Security Logs (Admin), Barcode Trigger & Logout -->
+      <!-- Quick Actions: Interactive Notification Bell, Force Sync, Security Logs (Admin), & Logout -->
       <div class="flex items-center gap-1.5 sm:gap-2">
         
         <!-- PROMINENT FORCE CLOUD SYNC BUTTON (زر مزامنة فورية يدوية) -->
@@ -485,7 +485,7 @@
         <!-- INTERACTIVE NOTIFICATION BELL (Smart 45-day Expiry & Promo Expiry Alerts) -->
         <button 
           type="button" 
-          @click="isNotificationPanelOpen = true"
+          @click="activeTab = 'inventory'; isNotificationPanelOpen = !isNotificationPanelOpen; if(isNotificationPanelOpen) $nextTick(() => { const el = document.getElementById('inline-notifications-section'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
           class="relative h-10 px-2.5 rounded-xl border bg-dark-850 hover:bg-dark-800 border-dark-700 text-stone-200 text-xs font-bold flex items-center gap-1.5 touch-btn transition-colors"
           :class="calcTotalNotifications() > 0 ? 'border-amber-500/60 text-amber-300' : ''"
           title="مركز الإشعارات والتنبيهات الذكية (45 يوم وعروض الأسعار)"
@@ -516,16 +516,6 @@
             <span class="text-[10px] font-mono px-1 rounded bg-dark-900/60" x-text="activeSessions.length || 1"></span>
           </button>
         </template>
-
-        <button 
-          type="button" 
-          @click="startCameraScanner('inventory')"
-          class="h-10 px-3 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-[0_2px_10px_rgba(255,102,0,0.3)]"
-          title="مسح باركود بالكاميرا"
-        >
-          <i class="fa-solid fa-barcode text-sm"></i>
-          <span class="hidden xs:inline">مسح</span>
-        </button>
 
         <button 
           type="button" 
@@ -614,7 +604,11 @@
           <div>
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-xs font-black text-white">المساعد الشخصي لموظف كازيون:</span>
-              <span class="text-xs font-extrabold text-kazyon">أحمد سعيد (Ahmed Said)</span>
+              <span class="text-xs font-extrabold text-kazyon" x-text="currentUser.name || currentUser.username || (currentUser.role === 'admin' ? 'مشرف عام النظام (General Admin)' : 'موظف كازيون (Staff)')"></span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyber-deep border border-cyber-teal/40 text-cyber-teal text-[10px] font-mono font-bold shadow-sm">
+                <i class="fa-solid fa-mobile-screen-button text-xs"></i>
+                <span x-text="deviceInfo || 'جهاز محمول'"></span>
+              </span>
               <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold">0ms POCKET ASSISTANT</span>
             </div>
             <p class="text-[10px] text-stone-400 mt-0.5">
@@ -694,6 +688,801 @@
             <span class="text-[10px] bg-red-500/20 text-red-300 font-bold px-1.5 py-0.5 rounded">فحص</span>
           </div>
         </button>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- INLINE COLLAPSIBLE SECTIONS (ABOLISHED ALL POPUP MODALS)      -->
+      <!-- ============================================================= -->
+
+      <!-- 1. INLINE NOTIFICATION CENTER -->
+      <div 
+        x-show="isNotificationPanelOpen" 
+        x-cloak 
+        x-collapse
+        id="inline-notifications-section"
+        class="bg-dark-900 border-2 border-amber-500/60 rounded-3xl p-4 sm:p-5 text-stone-100 space-y-4 shadow-2xl transition-all"
+      >
+        <!-- Panel Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-dark-750">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-white">مركز التنبيهات الفورية الميدانية</h3>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold" x-text="calcTotalNotifications() + ' تنبيه'"></span>
+              </div>
+              <p class="text-[11px] text-stone-400">تنبيهات الصلاحية (45 يوم)، انتهاء عروض الأسعار، ونواقص أرفف الصالة</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            @click="isNotificationPanelOpen = false" 
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1.5 text-xs font-bold border border-dark-700 touch-btn"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إغلاق التنبيهات</span>
+          </button>
+        </div>
+
+        <!-- Notification Category Tabs -->
+        <div class="p-2 bg-dark-950 rounded-2xl border border-dark-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button 
+            type="button" 
+            @click="notificationTab = 'all'"
+            :class="notificationTab === 'all' ? 'bg-kazyon text-white font-bold' : 'bg-dark-850 text-stone-400 hover:text-stone-200'"
+            class="min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5"
+          >
+            <span>كافة التنبيهات</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-black/40" x-text="calcTotalNotifications()"></span>
+          </button>
+
+          <button 
+            type="button" 
+            @click="notificationTab = 'expiry'"
+            :class="notificationTab === 'expiry' ? 'bg-amber-600 text-white font-bold' : 'bg-dark-850 text-stone-400 hover:text-stone-200'"
+            class="min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-calendar-xmark text-xs"></i>
+            <span>صلاحية 45 يوم</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-black/40" x-text="getExpiryNotifications().length"></span>
+          </button>
+
+          <button 
+            type="button" 
+            @click="notificationTab = 'promo'"
+            :class="notificationTab === 'promo' ? 'bg-cyber-blue text-white font-bold' : 'bg-dark-850 text-stone-400 hover:text-stone-200'"
+            class="min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-tags text-xs"></i>
+            <span>عروض الأسعار</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-black/40" x-text="getPromoNotifications().length"></span>
+          </button>
+
+          <button 
+            type="button" 
+            @click="notificationTab = 'stock'"
+            :class="notificationTab === 'stock' ? 'bg-red-600 text-white font-bold' : 'bg-dark-850 text-stone-400 hover:text-stone-200'"
+            class="min-h-[44px] px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-box text-xs"></i>
+            <span>نواقص الصالة</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-black/40" x-text="getLowStockNotifications().length"></span>
+          </button>
+        </div>
+
+        <!-- Notifications Scrollable Feed -->
+        <div class="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+          <!-- Empty State -->
+          <template x-if="filteredNotifications().length === 0">
+            <div class="p-8 text-center bg-dark-850 rounded-2xl border border-dark-750 space-y-2">
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-lg">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <h4 class="text-xs font-bold text-white">كافة المنتجات والعروض تحت السيطرة</h4>
+              <p class="text-[11px] text-stone-400">لا توجد تنبيهات عاجلة للصلاحيات أو عروض الأسعار حالياً.</p>
+            </div>
+          </template>
+
+          <!-- Notification Cards -->
+          <template x-for="notif in filteredNotifications()" :key="notif.id">
+            <div 
+              class="p-3.5 rounded-2xl border bg-dark-850 space-y-2 relative transition-all"
+              :class="notif.urgency === 'danger' ? 'border-red-600/70 bg-red-950/20' : (notif.urgency === 'warning' ? 'border-amber-500/70 bg-amber-950/20' : 'border-dark-750')"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <div 
+                    class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0"
+                    :class="notif.urgency === 'danger' ? 'bg-red-500 text-white' : (notif.urgency === 'warning' ? 'bg-amber-500 text-dark-950' : 'bg-dark-800 text-stone-300')"
+                  >
+                    <i :class="notif.icon"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-bold text-white" x-text="notif.title"></h4>
+                    <span class="text-[10px] text-stone-400 font-mono" x-text="notif.subtitle"></span>
+                  </div>
+                </div>
+                <span 
+                  class="text-[9px] font-bold px-2 py-0.5 rounded"
+                  :class="notif.urgency === 'danger' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'"
+                  x-text="notif.badge"
+                ></span>
+              </div>
+
+              <p class="text-[11px] text-stone-300 leading-relaxed" x-text="notif.message"></p>
+
+              <!-- Quick Direct Action for this alert -->
+              <div class="pt-2 border-t border-dark-800 flex items-center justify-between">
+                <span class="text-[10px] text-stone-500 font-mono" x-text="notif.timestamp"></span>
+                <button 
+                  type="button" 
+                  @click="handleNotificationAction(notif)"
+                  class="min-h-[44px] px-3.5 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-kazyon hover:text-white border border-dark-700 text-xs font-bold flex items-center gap-1.5 touch-btn"
+                >
+                  <span x-text="notif.actionLabel"></span>
+                  <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 2. INLINE DETAILED PRODUCT INSPECTION CARD -->
+      <div 
+        x-show="isDetailModalOpen && detailItem" 
+        x-cloak 
+        x-collapse
+        id="inline-item-detail-section"
+        class="bg-dark-900 border-2 border-kazyon rounded-3xl p-4 sm:p-5 text-stone-100 space-y-4 shadow-[0_0_50px_rgba(255,102,0,0.25)] transition-all"
+      >
+        <!-- Top Header & Category & Close -->
+        <div class="flex items-start justify-between gap-3 pb-3 border-b border-dark-750">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 text-xs font-bold" x-text="detailItem?.category"></span>
+              <span class="px-2.5 py-1 rounded-xl bg-kazyon/20 border border-kazyon/40 text-kazyon text-[11px] font-mono font-bold">بطاقة فحص الصنف الميدانية</span>
+            </div>
+            <h2 class="text-xl font-black text-white leading-tight mt-1" x-text="detailItem?.itemName"></h2>
+          </div>
+          <button 
+            type="button"
+            @click="isDetailModalOpen = false" 
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1.5 text-xs font-bold touch-btn shrink-0 border border-dark-700"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إغلاق البطاقة</span>
+          </button>
+        </div>
+
+        <!-- Barcode Bar with Quick Copy -->
+        <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2.5">
+            <i class="fa-solid fa-barcode text-kazyon text-2xl"></i>
+            <div>
+              <span class="text-[10px] text-stone-400 block font-medium">رقم الباركود الدولي</span>
+              <span class="text-sm font-mono font-black text-stone-100 tracking-wider" x-text="detailItem?.barcode"></span>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            @click="copyBarcode(detailItem?.barcode)"
+            class="min-h-[44px] px-4 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn"
+          >
+            <i class="fa-solid fa-copy text-kazyon"></i>
+            <span>نسخ الباركود</span>
+          </button>
+        </div>
+
+        <!-- Sub-Code Bar if available -->
+        <template x-if="detailItem?.subCode">
+          <div class="p-2.5 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-hashtag text-cyan-400 text-lg"></i>
+              <div>
+                <span class="text-[10px] text-cyan-300 block font-medium">الساب كود (Sub-Code - الرقم التعريفي الخاص)</span>
+                <span class="text-sm font-mono font-black text-cyan-200" x-text="detailItem?.subCode"></span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              @click="copyBarcode(detailItem?.subCode)"
+              class="min-h-[44px] px-3.5 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-500/40 text-cyan-200 rounded-xl text-xs font-bold flex items-center gap-1 touch-btn"
+            >
+              <i class="fa-solid fa-copy text-cyan-400"></i>
+              <span>نسخ الكود</span>
+            </button>
+          </div>
+        </template>
+
+        <!-- Clear Color-Coded Status Alert Banner (Expired, Promo, Low Stock, Good) -->
+        <div>
+          <!-- 1. Expired Status Alert -->
+          <template x-if="detailItem?.status === 'expired'">
+            <div class="p-3.5 bg-red-950/90 border-2 border-red-600 rounded-2xl flex items-center gap-3 text-red-200 shadow-md">
+              <div class="w-10 h-10 rounded-xl bg-red-600/30 flex items-center justify-center text-red-400 text-xl shrink-0">
+                <i class="fa-solid fa-ban"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-black text-red-300">تنبيه حرج: منتهي الصلاحية (سحب فوري)</h4>
+                <p class="text-[11px] text-red-400/90 mt-0.5">يجب إزالة السلعة من رف العرض فوراً وإعادتها لمكتب المرتجعات.</p>
+              </div>
+            </div>
+          </template>
+
+          <!-- 2. Promo / Discount Status Alert -->
+          <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
+            <div class="p-3.5 bg-kazyon/20 border-2 border-kazyon rounded-2xl flex items-center gap-3 text-kazyon shadow-md">
+              <div class="w-10 h-10 rounded-xl bg-kazyon/30 flex items-center justify-center text-kazyon text-xl shrink-0">
+                <i class="fa-solid fa-fire animate-pulse"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-black text-white">عرض خاص (برومو كازيون)</h4>
+                <p class="text-[11px] text-stone-300 mt-0.5">
+                  سعر العرض: <strong class="text-kazyon font-mono font-bold" x-text="detailItem?.promoPrice"></strong> ج.م بدلاً من <span class="line-through font-mono" x-text="detailItem?.regularPrice"></span> ج.م (توفير <strong class="text-kazyon font-mono font-bold" x-text="(detailItem?.regularPrice - detailItem?.promoPrice).toFixed(1)"></strong> ج.م)
+                </p>
+              </div>
+            </div>
+          </template>
+
+          <!-- 3. Low Shelf Stock Alert -->
+          <template x-if="detailItem?.status === 'low_stock' && (!detailItem?.promoPrice || detailItem?.promoPrice >= detailItem?.regularPrice)">
+            <div class="p-3.5 bg-amber-950/90 border-2 border-amber-600 rounded-2xl flex items-center gap-3 text-amber-200 shadow-md">
+              <div class="w-10 h-10 rounded-xl bg-amber-600/30 flex items-center justify-center text-amber-400 text-xl shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-black text-amber-300">تنبيه نقص الرف: الكمية منخفضة في الصالة</h4>
+                <p class="text-[11px] text-amber-400/90 mt-0.5">يوجد مخزون بالمستودع يلزم تغذية الرف فوراً لعدم ضياع مبيعات العميل.</p>
+              </div>
+            </div>
+          </template>
+
+          <!-- 4. Good / Valid Stock Alert -->
+          <template x-if="detailItem?.status === 'valid' && (!detailItem?.promoPrice || detailItem?.promoPrice >= detailItem?.regularPrice)">
+            <div class="p-3.5 bg-emerald-950/70 border border-emerald-600/60 rounded-2xl flex items-center gap-3 text-emerald-200">
+              <div class="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-lg shrink-0">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-emerald-300">حالة ممتازة: سليم ومتاح</h4>
+                <p class="text-[10px] text-emerald-400/80">المخزون متوفر بالصالة والمستودع والصلاحية سارية بشكل طبيعي.</p>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Warehouse Quantity vs. Hall Quantity (with Shelf Location) -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Hall / Shelf Quantity -->
+          <div class="p-3.5 rounded-2xl bg-dark-850 border-2 border-emerald-500/40 flex flex-col justify-between space-y-2.5">
+            <div class="flex items-center justify-between text-emerald-400 text-xs font-bold">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-store"></i> المعروض بالصالة
+              </span>
+              <span class="text-[10px] bg-emerald-500/15 px-2 py-0.5 rounded text-emerald-300">الرف</span>
+            </div>
+
+            <div class="text-center py-1">
+              <span class="text-3xl font-black font-mono text-emerald-400" x-text="detailItem?.shopQty"></span>
+              <span class="text-xs text-stone-400 mr-1">قطعة</span>
+            </div>
+
+            <!-- Shelf Location Tag -->
+            <div class="p-2 bg-dark-900 rounded-xl text-center text-xs font-bold text-stone-200 border border-dark-750">
+              <i class="fa-solid fa-location-dot text-kazyon ml-1"></i>
+              <span x-text="detailItem?.shelfLocation || detailItem?.notes || 'رف A-02'"></span>
+            </div>
+
+            <!-- High-Target Touch Buttons (Min 55px height for thumbs) -->
+            <div class="flex items-center gap-2 pt-1">
+              <button 
+                type="button" 
+                @click="updateStock(detailItem, 'shop', -1)"
+                :disabled="detailItem?.shopQty <= 0"
+                class="flex-1 min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-black text-xl flex items-center justify-center touch-btn disabled:opacity-25"
+                title="سحب قطعة من الصالة"
+              >
+                -
+              </button>
+              <button 
+                type="button" 
+                @click="updateStock(detailItem, 'shop', 1)"
+                class="flex-1 min-h-[55px] h-14 rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xl flex items-center justify-center touch-btn shadow-md"
+                title="إضافة قطعة إلى الصالة"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <!-- Warehouse Reserve Quantity -->
+          <div class="p-3.5 rounded-2xl bg-dark-850 border-2 border-amber-500/40 flex flex-col justify-between space-y-2.5">
+            <div class="flex items-center justify-between text-amber-400 text-xs font-bold">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-warehouse"></i> كمية المستودع
+              </span>
+              <span class="text-[10px] bg-amber-500/15 px-2 py-0.5 rounded text-amber-300">مخزن</span>
+            </div>
+
+            <div class="text-center py-1">
+              <span class="text-3xl font-black font-mono text-amber-400" x-text="detailItem?.warehouseQty"></span>
+              <span class="text-xs text-stone-400 mr-1">قطعة</span>
+            </div>
+
+            <!-- Warehouse Location Tag -->
+            <div class="p-2 bg-dark-900 rounded-xl text-center text-xs font-bold text-stone-200 border border-dark-750">
+              <i class="fa-solid fa-boxes-packing text-amber-400 ml-1"></i>
+              <span>المستودع الرئيسي</span>
+            </div>
+
+            <!-- High-Target Touch Buttons (Min 55px height for thumbs) -->
+            <div class="flex items-center gap-2 pt-1">
+              <button 
+                type="button" 
+                @click="updateStock(detailItem, 'warehouse', -1)"
+                :disabled="detailItem?.warehouseQty <= 0"
+                class="flex-1 min-h-[55px] h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-black text-xl flex items-center justify-center touch-btn disabled:opacity-25"
+                title="سحب قطعة من المستودع"
+              >
+                -
+              </button>
+              <button 
+                type="button" 
+                @click="updateStock(detailItem, 'warehouse', 1)"
+                class="flex-1 min-h-[55px] h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-black text-xl flex items-center justify-center touch-btn shadow-md"
+                title="إضافة قطعة للمستودع"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick 1-Tap Transfer 5 Items (Min 55px height) -->
+        <button 
+          type="button" 
+          @click="transferWarehouseToHall(detailItem, 5)"
+          :disabled="detailItem?.warehouseQty <= 0"
+          class="w-full min-h-[55px] h-14 rounded-2xl bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white font-black text-sm flex items-center justify-center gap-2 touch-btn shadow-lg disabled:opacity-30"
+        >
+          <i class="fa-solid fa-arrow-left-long text-base"></i>
+          <span>تزويد فوري: نقل 5 قطع من المستودع للرف</span>
+        </button>
+
+        <!-- Production & Expiry Dates Section -->
+        <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <span class="text-[10px] text-stone-400 block mb-1">تاريخ الإنتاج (Production Date)</span>
+            <div class="flex items-center gap-1.5 font-mono font-bold text-stone-200">
+              <i class="fa-regular fa-calendar text-stone-400"></i>
+              <span x-text="detailItem?.productionDate || 'غير محدد'"></span>
+            </div>
+          </div>
+          <div>
+            <span class="text-[10px] text-stone-400 block mb-1">تاريخ الانتهاء (Expiry Date)</span>
+            <div class="flex items-center gap-1.5 font-mono font-bold" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-stone-200'">
+              <i class="fa-regular fa-calendar-xmark" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-kazyon'"></i>
+              <span x-text="detailItem?.expiryDate || 'ساري'"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price details & Bottom Actions (Min 55px height) -->
+        <div class="flex items-center justify-between pt-2 border-t border-dark-750 flex-wrap gap-2">
+          <div>
+            <span class="text-[10px] text-stone-400 block">سعر الكاشير المعتمد</span>
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl font-black text-kazyon font-mono" x-text="(detailItem?.promoPrice || detailItem?.regularPrice) + ' ج.م'"></span>
+              <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
+                <span class="text-xs text-stone-500 line-through font-mono" x-text="detailItem?.regularPrice + ' ج.م'"></span>
+              </template>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button 
+              type="button" 
+              @click="openQuickBatchModal(detailItem)"
+              class="min-h-[55px] h-14 px-4 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 touch-btn"
+            >
+              <i class="fa-solid fa-layer-group text-amber-400"></i>
+              <span>+ دفعة جديدة</span>
+            </button>
+            <button 
+              type="button" 
+              @click="isDetailModalOpen = false; openItemModal(detailItem)"
+              class="min-h-[55px] h-14 px-4 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 text-xs font-bold flex items-center gap-1.5 touch-btn"
+            >
+              <i class="fa-solid fa-pen text-kazyon"></i>
+              <span>تعديل الصنف</span>
+            </button>
+            <button 
+              type="button" 
+              @click="isDetailModalOpen = false"
+              class="min-h-[55px] h-14 px-6 rounded-2xl bg-kazyon hover:bg-kazyon-hover text-white text-xs font-bold touch-btn shadow-md"
+            >
+              تم الفحص
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. INLINE ADD / EDIT PRODUCT CARD -->
+      <div 
+        x-show="isItemModalOpen" 
+        x-cloak 
+        x-collapse
+        id="inline-item-editor-section"
+        class="bg-dark-900 border-2 border-cyber-teal/60 rounded-3xl p-4 sm:p-5 text-stone-100 space-y-4 shadow-2xl transition-all"
+      >
+        <div class="flex items-center justify-between pb-3 border-b border-dark-750">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-cyber-deep border border-cyber-teal/40 text-cyber-teal flex items-center justify-center text-sm shadow-sm">
+              <i :class="modalItem.id ? 'fa-solid fa-pen' : 'fa-solid fa-plus'"></i>
+            </div>
+            <h3 class="text-sm font-bold text-white" x-text="modalItem.id ? 'تعديل بيانات الصنف ودفعاته' : 'إضافة صنف ودفعات جديدة للمخزون'"></h3>
+          </div>
+          <button 
+            type="button"
+            @click="isItemModalOpen = false" 
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1.5 text-xs font-bold border border-dark-700 touch-btn"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إلغاء وإغلاق</span>
+          </button>
+        </div>
+
+        <!-- Form Inputs -->
+        <div class="space-y-3">
+          <!-- Barcode with Unified Barcode Camera Button -->
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">رقم الباركود (Barcode) *</label>
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                x-model="modalItem.barcode" 
+                placeholder="مثال: 6281007010115"
+                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+              >
+              <button 
+                type="button" 
+                @click="scannerMode = 'barcode'; startCameraScanner('modalItem')"
+                class="min-h-[50px] h-12 px-4 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all"
+                title="مسح الباركود بالكاميرا فوراً"
+              >
+                <i class="fa-solid fa-camera text-sm"></i>
+                <span>مسح بالكاميرا</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-Code (الساب كود - الرقم التعريفي الخاص - اختياري) -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-cyan-300 flex items-center gap-1">
+                <i class="fa-solid fa-hashtag text-[10px] text-cyan-400"></i>
+                <span>الساب كود (Sub-Code) - اختياري</span>
+              </label>
+              <span class="text-[10px] text-stone-400 font-sans">رقم تعريفي فريد خاص بالصنف</span>
+            </div>
+            <input 
+              type="text" 
+              x-model="modalItem.subCode" 
+              placeholder="مثال: KZ-1001 أو كود الصنف الداخلي"
+              class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-cyan-300 placeholder:text-stone-500 placeholder:font-sans focus:outline-none focus:border-cyan-400"
+            >
+          </div>
+
+          <!-- Product Name with AI-Powered Recognition Camera Button -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-stone-300">اسم المنتج (Item Name) *</label>
+              <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
+                <span>التعرف الذكي الدقيق بالصورة</span>
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                x-model="modalItem.itemName" 
+                placeholder="مثال: حليب كازيون كامل الدسم 1 لتر"
+                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+              >
+              <!-- AI Product Name Camera Button -->
+              <button 
+                type="button" 
+                @click="startAiProductRecognition('modalItem')"
+                :disabled="isRecognizingAiImage"
+                class="min-h-[50px] h-12 px-3.5 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all disabled:opacity-50"
+                title="تصوير المنتج بالكاميرا وتسميته آلياً بالذكاء الاصطناعي"
+              >
+                <template x-if="!isRecognizingAiImage">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-camera-retro text-amber-300 text-xs"></i>
+                    <span>✨ التعرف بالصورة</span>
+                  </span>
+                </template>
+                <template x-if="isRecognizingAiImage">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i>
+                    <span>جاري التعرف...</span>
+                  </span>
+                </template>
+              </button>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">القسم / الصنف</label>
+            <select 
+              x-model="modalItem.category"
+              class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+            >
+              <template x-for="cat in categories" :key="cat">
+                <option :value="cat" x-text="cat"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Prices: Regular vs Promo -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">السعر العادي (ج.م)</label>
+              <input 
+                type="number" 
+                step="0.5" 
+                x-model.number="modalItem.regularPrice" 
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-kazyon mb-1">سعر العرض (البرومو)</label>
+              <input 
+                type="number" 
+                step="0.5" 
+                x-model.number="modalItem.promoPrice" 
+                placeholder="اختياري"
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-kazyon focus:outline-none focus:border-kazyon"
+              >
+            </div>
+          </div>
+
+          <!-- Shelf Location -->
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">مكان الرف بالصالة (Shelf Location)</label>
+            <input 
+              type="text" 
+              x-model="modalItem.shelfLocation" 
+              placeholder="مثال: رف ألبان 2 - A01 أو ستاند العروض"
+              class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
+            >
+          </div>
+
+          <!-- DYNAMIC MULTI-BATCH FORM CONTAINER -->
+          <div class="p-3.5 bg-dark-950 rounded-2xl border border-dark-750 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-dark-800">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-white">
+                <i class="fa-solid fa-layer-group text-kazyon"></i>
+                <span>إدارة الدفعات والتشغيلات (Multi-Batch Expiry Tracking)</span>
+                <span class="text-[10px] font-mono text-kazyon bg-kazyon/15 px-2 py-0.5 rounded-full font-bold" x-text="((modalItem.batches ? modalItem.batches.length : 0) + ' دفعات')"></span>
+              </div>
+
+              <!-- Dynamic Append New Batch Button -->
+              <button 
+                type="button" 
+                @click="addBatchToModalItem()"
+                class="min-h-[44px] px-3.5 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-sm"
+                title="إضافة دفعة تشغيلة جديدة إلى النموذج"
+              >
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>+ إضافة دفعة جديدة</span>
+              </button>
+            </div>
+
+            <!-- Dynamic List of Batches (Each with independent dates & split quantities) -->
+            <div class="space-y-3 max-h-72 overflow-y-auto no-scrollbar">
+              <template x-for="(b, bIndex) in modalItem.batches" :key="b.id || bIndex">
+                <div class="p-3 bg-dark-850 rounded-xl border border-dark-700 space-y-2 relative shadow-inner">
+                  <div class="flex items-center justify-between text-xs pb-1.5 border-b border-dark-750">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-kazyon text-[11px]" x-text="'الدفعة / التشغيلة #' + (bIndex + 1)"></span>
+                      <template x-if="isBatchExpiringWithin45Days(b.expiryDate)">
+                        <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold">
+                          أقل من 45 يوم
+                        </span>
+                      </template>
+                    </div>
+                    
+                    <!-- Remove Batch Button (✕) -->
+                    <button 
+                      type="button" 
+                      @click="removeBatchFromModalItem(bIndex)"
+                      :disabled="modalItem.batches && modalItem.batches.length <= 1"
+                      class="min-h-[32px] px-2.5 bg-dark-800 hover:bg-red-950/80 border border-dark-700 hover:border-red-600 text-stone-400 hover:text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 touch-btn disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                      title="حذف هذه الدفعة"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                      <span>حذف الدفعة</span>
+                    </button>
+                  </div>
+
+                  <!-- Dates: Production Date & Expiry Date -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] font-bold text-stone-400 mb-1">تاريخ الإنتاج (Production)</label>
+                      <input 
+                        type="date" 
+                        x-model="b.productionDate"
+                        class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+                      >
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-amber-400 mb-1">تاريخ الانتهاء (Expiry) *</label>
+                      <input 
+                        type="date" 
+                        x-model="b.expiryDate"
+                        required
+                        class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Quantities: Warehouse Qty & Hall Qty -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[10px] font-bold text-amber-400 mb-1">كمية المخزن (Warehouse)</label>
+                      <input 
+                        type="number" 
+                        x-model.number="b.warehouseQty"
+                        min="0"
+                        class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+                      >
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-emerald-400 mb-1">كمية الصالة (Hall)</label>
+                      <input 
+                        type="number" 
+                        x-model.number="b.hallQty"
+                        min="0"
+                        class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+                      >
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Total Auto-Calculated Summary -->
+            <div class="p-2.5 bg-dark-850 rounded-xl border border-dark-700 flex items-center justify-between text-[11px] font-mono">
+              <span class="text-stone-400 font-sans">الإجمالي التلقائي لكافة الدفعات:</span>
+              <div class="flex items-center gap-3">
+                <span class="text-amber-400 font-bold">المستودع: <strong x-text="modalItem.batches ? modalItem.batches.reduce((s, b) => s + (Number(b.warehouseQty) || 0), 0) : 0"></strong></span>
+                <span class="text-emerald-400 font-bold">الصالة: <strong x-text="modalItem.batches ? modalItem.batches.reduce((s, b) => s + (Number(b.hallQty || b.shopQty) || 0), 0) : 0"></strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons (Min 55px height for thumbs) -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
+          <button 
+            type="button" 
+            @click="isItemModalOpen = false"
+            class="min-h-[55px] h-14 px-6 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-2xl text-xs font-bold touch-btn border border-dark-700"
+          >
+            إلغاء
+          </button>
+          <button 
+            type="button" 
+            @click="saveModalItem()"
+            class="min-h-[55px] h-14 px-8 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md flex items-center gap-2"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>حفظ الصنف</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. INLINE QUICK ADD BATCH CARD -->
+      <div 
+        x-show="isQuickBatchModalOpen" 
+        x-cloak 
+        x-collapse
+        id="inline-quick-batch-section"
+        class="bg-dark-900 border-2 border-amber-500/70 rounded-3xl p-4 sm:p-5 text-stone-100 space-y-4 shadow-2xl transition-all"
+      >
+        <div class="flex items-center justify-between pb-2 border-b border-dark-750">
+          <div>
+            <span class="text-[10px] text-kazyon font-bold block flex items-center gap-1">
+              <i class="fa-solid fa-layer-group"></i>
+              <span>إضافة دفعة تشغيلة جديدة</span>
+            </span>
+            <h3 class="text-sm font-black text-white mt-0.5 truncate max-w-[240px]" x-text="quickBatchItem?.itemName"></h3>
+            <span class="text-[10px] text-stone-400 font-mono" x-text="'باركود: ' + (quickBatchItem?.barcode || '')"></span>
+          </div>
+          <button 
+            type="button" 
+            @click="isQuickBatchModalOpen = false" 
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1 text-xs font-bold border border-dark-700 touch-btn"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إلغاء</span>
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Dates -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الإنتاج</label>
+              <input 
+                type="date" 
+                x-model="newBatch.productionDate"
+                class="w-full min-h-[48px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-amber-400 mb-1">تاريخ الانتهاء *</label>
+              <input 
+                type="date" 
+                x-model="newBatch.expiryDate" 
+                required
+                class="w-full min-h-[48px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+          </div>
+
+          <!-- Quantities -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-amber-400 mb-1">كمية المستودع</label>
+              <input 
+                type="number" 
+                x-model.number="newBatch.warehouseQty"
+                min="0"
+                class="w-full min-h-[48px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-emerald-400 mb-1">كمية الصالة (الرف)</label>
+              <input 
+                type="number" 
+                x-model.number="newBatch.hallQty"
+                min="0"
+                class="w-full min-h-[48px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-dark-950/80 border border-dark-750 text-[10px] text-stone-400">
+            <i class="fa-solid fa-circle-info text-cyber-teal ml-1"></i>
+            <span>سيتم تحديث إجمالي رصيد الصنف وتاريخ الصلاحية وحفظ التغييرات فوراً.</span>
+          </div>
+        </div>
+
+        <!-- Footer Buttons (Min 55px height) -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
+          <button 
+            type="button" 
+            @click="isQuickBatchModalOpen = false"
+            class="min-h-[55px] h-14 px-5 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-xl text-xs font-bold touch-btn border border-dark-700"
+          >
+            إلغاء
+          </button>
+          <button 
+            type="button" 
+            @click="saveQuickBatch()"
+            class="min-h-[55px] h-14 px-7 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn shadow-md flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>حفظ الدفعة</span>
+          </button>
+        </div>
       </div>
 
       <!-- 1. PROMINENT SINGLE-TAP BARCODE SCANNER & FAST LOOKUP BAR -->
@@ -1472,6 +2261,342 @@
         </button>
       </div>
 
+      <!-- ============================================================= -->
+      <!-- INLINE COLLAPSIBLE SECTIONS FOR PROMO TAGS                    -->
+      <!-- ============================================================= -->
+
+      <!-- 1. INLINE CREATE / EDIT PROMOTIONAL PRICE TAG CARD -->
+      <div 
+        x-show="isPromoModalOpen" 
+        x-cloak 
+        x-collapse
+        id="inline-promo-editor-section"
+        class="bg-dark-900 border-2 border-kazyon rounded-3xl p-4 sm:p-5 text-stone-100 space-y-4 shadow-2xl transition-all"
+      >
+        <div class="flex items-center justify-between pb-3 border-b border-dark-750">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-kazyon/20 border border-kazyon/40 text-kazyon flex items-center justify-center text-sm shadow-sm">
+              <i class="fa-solid fa-tag"></i>
+            </div>
+            <h3 class="text-sm font-bold text-white" x-text="promoModalItem.id ? 'تعديل يافطة العرض' : 'إنشاء يافطة عرض جديدة للرف'"></h3>
+          </div>
+          <button 
+            type="button" 
+            @click="isPromoModalOpen = false" 
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1.5 text-xs font-bold border border-dark-700 touch-btn"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إلغاء وإغلاق</span>
+          </button>
+        </div>
+
+        <!-- Promo Tag Form Inputs -->
+        <div class="space-y-3">
+          <!-- Barcode with Auto-Complete from items & Camera Scanner -->
+          <div>
+            <label class="block text-[11px] font-bold text-stone-300 mb-1">باركود المنتج (Barcode) *</label>
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                x-model="promoModalItem.barcode" 
+                @input="handlePromoBarcodeChange($event.target.value)"
+                placeholder="مثال: 6281007010115"
+                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+              >
+              <!-- Unified Barcode Camera Button -->
+              <button 
+                type="button" 
+                @click="scannerMode = 'barcode'; startCameraScanner('promoModal')"
+                class="min-h-[50px] h-12 px-4 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all"
+                title="مسح باركود العرض بالكاميرا فوراً"
+              >
+                <i class="fa-solid fa-camera text-sm"></i>
+                <span>مسح بالكاميرا</span>
+              </button>
+            </div>
+            <!-- Hint to pick existing inventory item -->
+            <template x-if="items.length > 0 && !promoModalItem.id">
+              <div class="mt-1 flex items-center gap-1 overflow-x-auto py-1">
+                <span class="text-[10px] text-stone-400 shrink-0">اختر من المخزون:</span>
+                <template x-for="item in items.slice(0, 3)" :key="item.barcode">
+                  <button 
+                    type="button" 
+                    @click="selectItemForPromo(item)"
+                    class="px-2 py-0.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-[10px] font-mono text-stone-300 border border-dark-700 truncate max-w-[110px]"
+                    x-text="item.itemName"
+                  ></button>
+                </template>
+              </div>
+            </template>
+          </div>
+
+          <!-- Sub-Code (الساب كود - اختياري) -->
+          <div>
+            <label class="block text-[11px] font-bold text-cyan-300 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-hashtag text-[10px] text-cyan-400"></i>
+              <span>الساب كود (Sub-Code) - اختياري</span>
+            </label>
+            <input 
+              type="text" 
+              x-model="promoModalItem.subCode" 
+              placeholder="مثال: KZ-1001"
+              class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-400"
+            >
+          </div>
+
+          <!-- Product Name with AI-Powered Recognition Camera Button -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-stone-300">اسم السلعة على اليافطة *</label>
+              <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
+                <span>التعرف الذكي بالصورة</span>
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                x-model="promoModalItem.itemName" 
+                placeholder="مثال: مسحوق غسيل كازيون أوتوماتيك 4 كجم"
+                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+              >
+              <button 
+                type="button" 
+                @click="startAiProductRecognition('promoModal')"
+                :disabled="isRecognizingAiImage"
+                class="min-h-[50px] h-12 px-3.5 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all disabled:opacity-50"
+                title="تصوير المنتج وتسميته آلياً بالذكاء الاصطناعي"
+              >
+                <template x-if="!isRecognizingAiImage">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-camera-retro text-amber-300 text-xs"></i>
+                    <span>✨ التعرف بالصورة</span>
+                  </span>
+                </template>
+                <template x-if="isRecognizingAiImage">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i>
+                    <span>جاري التعرف...</span>
+                  </span>
+                </template>
+              </button>
+            </div>
+          </div>
+
+          <!-- Category & Offer Type -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">القسم</label>
+              <select 
+                x-model="promoModalItem.category"
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+              >
+                <template x-for="cat in categories" :key="cat">
+                  <option :value="cat" x-text="cat"></option>
+                </template>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">نوع العرض *</label>
+              <select 
+                x-model="promoModalItem.offerType"
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+              >
+                <option value="weekly">عرض أسبوعي</option>
+                <option value="daily">عرض فلاش يومي</option>
+                <option value="weekend">عرض الويك إند</option>
+                <option value="clearance">تخفيض تصفية</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Pricing: Regular vs Promo Price -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">السعر السابق (ج.م) *</label>
+              <input 
+                type="number" 
+                step="0.25" 
+                x-model.number="promoModalItem.regularPrice" 
+                placeholder="0.00"
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-sm font-mono font-bold text-stone-300 focus:outline-none focus:border-kazyon"
+              >
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-kazyon mb-1">سعر العرض (ج.م) *</label>
+              <input 
+                type="number" 
+                step="0.25" 
+                x-model.number="promoModalItem.promoPrice" 
+                placeholder="0.00"
+                class="w-full min-h-[50px] h-12 bg-dark-950 border-2 border-kazyon rounded-xl px-3 text-sm font-mono font-black text-kazyon focus:outline-none focus:ring-1 focus:ring-kazyon"
+              >
+            </div>
+          </div>
+
+          <!-- Live Savings Preview -->
+          <template x-if="promoModalItem.regularPrice > 0 && promoModalItem.promoPrice > 0">
+            <div class="p-2.5 rounded-xl bg-dark-950 border border-dark-750 flex items-center justify-between text-xs">
+              <span class="text-stone-400">قيمة التوفير للزبون:</span>
+              <div class="flex items-center gap-1.5 font-bold">
+                <span class="text-emerald-400 font-mono" x-text="(promoModalItem.regularPrice - promoModalItem.promoPrice).toFixed(2) + ' ج.م'"></span>
+                <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono" x-text="'(' + Math.round(((promoModalItem.regularPrice - promoModalItem.promoPrice) / promoModalItem.regularPrice) * 100) + '%)'"></span>
+              </div>
+            </div>
+          </template>
+
+          <!-- Offer Expiry Date & Shelf Location -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ انتهاء العرض *</label>
+              <input 
+                type="date" 
+                x-model="promoModalItem.expiryDate" 
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-stone-300 mb-1">مكان اليافطة بالصالة</label>
+              <input 
+                type="text" 
+                x-model="promoModalItem.shelfLocation" 
+                placeholder="مثال: ستاند العروض 1"
+                class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Footer -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
+          <button 
+            type="button" 
+            @click="isPromoModalOpen = false"
+            class="min-h-[55px] h-14 px-5 rounded-2xl bg-dark-800 hover:bg-dark-750 text-stone-300 text-xs font-bold touch-btn border border-dark-700"
+          >
+            إلغاء
+          </button>
+
+          <button 
+            type="button" 
+            @click="savePromoTag()"
+            class="min-h-[55px] h-14 px-7 rounded-2xl bg-kazyon hover:bg-kazyon-hover text-white text-xs font-black flex items-center gap-2 touch-btn shadow-md"
+          >
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>حفظ وتفعيل اليافطة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. INLINE SHELF PRICE TAG PRINT PREVIEW CARD -->
+      <div 
+        x-show="isPrintTagModalOpen" 
+        x-cloak 
+        x-collapse
+        id="inline-print-tag-section"
+        class="bg-dark-900 border-2 border-cyber-teal/70 rounded-3xl p-4 sm:p-5 text-stone-100 space-y-4 shadow-2xl transition-all"
+      >
+        <div class="flex items-center justify-between pb-3 border-b border-dark-750">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-cyber-deep border border-cyber-teal/40 text-cyber-teal flex items-center justify-center text-sm shadow-sm">
+              <i class="fa-solid fa-print"></i>
+            </div>
+            <h3 class="text-sm font-bold text-white">معاينة وطباعة يافطة سعر الرف</h3>
+          </div>
+          <button 
+            type="button"
+            @click="isPrintTagModalOpen = false" 
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1.5 text-xs font-bold border border-dark-700 touch-btn"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إغلاق المعاينة</span>
+          </button>
+        </div>
+
+        <!-- Printable Shelf Tag -->
+        <div class="bg-dark-950 p-4 rounded-2xl border border-dark-750 flex flex-col items-center justify-center">
+          <div 
+            id="activeShelfTagPrint"
+            class="shelf-tag-printable bg-white text-black w-full max-w-[380px] p-4 rounded-xl shadow-lg border-2 border-dashed border-stone-400 font-sans select-none"
+          >
+            <!-- Top Supermarket Banner -->
+            <div class="bg-[#FF6600] text-white p-2 rounded-t-lg -mx-4 -mt-4 mb-3 flex items-center justify-between">
+              <div class="font-black text-sm tracking-wide">KAZYON MARKET • كازيون ماركت</div>
+              <div class="text-[10px] font-bold bg-black/20 px-2 py-0.5 rounded" x-text="printTagItem?.offerType === 'daily' ? 'عرض فلاش يومي' : 'عرض خاص توفير'"></div>
+            </div>
+
+            <!-- Product Title & Location -->
+            <div class="text-right pb-2 border-b border-stone-300">
+              <div class="text-[10px] text-stone-600 font-bold" x-text="printTagItem?.category"></div>
+              <div class="text-base font-black text-black leading-tight mt-0.5" x-text="printTagItem?.itemName"></div>
+              <div class="text-[10px] text-stone-500 font-mono mt-0.5 flex items-center justify-between flex-wrap gap-1">
+                <span>الباركود: <strong x-text="printTagItem?.barcode"></strong></span>
+                <template x-if="printTagItem?.subCode">
+                  <span class="text-stone-700 font-bold">ساب كود: <strong x-text="printTagItem?.subCode"></strong></span>
+                </template>
+                <span x-text="'الموقع: ' + (printTagItem?.shelfLocation || 'ستاند العروض')"></span>
+              </div>
+            </div>
+
+            <!-- Price Display Section (Retail High-Contrast) -->
+            <div class="py-3 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-stone-500 font-bold">السعر السابق</div>
+                <div class="text-sm font-bold text-stone-400 line-through font-mono" x-text="printTagItem?.regularPrice + ' ج.م'"></div>
+                <div class="text-[11px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded mt-1 inline-block">
+                  <span>وفر <strong x-text="(printTagItem?.regularPrice - printTagItem?.promoPrice).toFixed(1)"></strong> ج.م</span>
+                </div>
+              </div>
+
+              <div class="text-left">
+                <div class="text-[10px] font-bold text-[#FF6600]">سعر العرض للقطعة</div>
+                <div class="text-4xl font-black font-mono text-[#FF6600] tracking-tighter" x-text="printTagItem?.promoPrice"></div>
+                <div class="text-[11px] font-bold text-black text-left">جنيه مصري</div>
+              </div>
+            </div>
+
+            <!-- Simulated Barcode Lines & Digits -->
+            <div class="pt-2 border-t border-stone-300 flex flex-col items-center">
+              <div class="w-full flex justify-center items-end gap-[2px] h-8 py-0.5 overflow-hidden">
+                <template x-for="n in 36" :key="n">
+                  <div class="bg-black h-full" :style="'width: ' + ((n % 3 === 0) ? '3px' : '1.5px') + '; opacity: ' + ((n % 7 === 0) ? '0' : '1')"></div>
+                </template>
+              </div>
+              <div class="text-xs font-mono font-bold tracking-widest text-stone-800" x-text="printTagItem?.barcode"></div>
+            </div>
+
+            <!-- Validity Footer -->
+            <div class="mt-2 pt-1 border-t border-stone-200 text-[10px] text-stone-600 flex items-center justify-between">
+              <span>العرض ساري حتى: <strong class="font-mono text-black" x-text="printTagItem?.expiryDate"></strong></span>
+              <span>أو حتى نفاد الكمية</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-dark-750">
+          <button 
+            type="button" 
+            @click="isPrintTagModalOpen = false"
+            class="min-h-[55px] h-14 px-5 rounded-2xl bg-dark-800 hover:bg-dark-750 text-stone-300 text-xs font-bold touch-btn border border-dark-700"
+          >
+            إلغاء
+          </button>
+
+          <button 
+            type="button" 
+            @click="triggerBrowserPrint()"
+            class="flex-1 min-h-[55px] h-14 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-lg"
+          >
+            <i class="fa-solid fa-print text-sm"></i>
+            <span>طباعة اليافطة الآن (Print Tag)</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Search & Category Filters -->
       <div class="bg-dark-850 border border-dark-750 rounded-2xl p-3 space-y-2.5">
         <div class="flex flex-col sm:flex-row gap-2">
@@ -1997,1160 +3122,6 @@
 
 
   <!-- ============================================================= -->
-  <!-- 3.5. INSTANT DETAILED PRODUCT CARD VIEW (بطاقة تفصيلية مفردة) -->
-  <!-- ============================================================= -->
-  <div 
-    x-show="isDetailModalOpen && detailItem" 
-    x-cloak 
-    class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3.5 overflow-y-auto animate-in fade-in duration-150"
-  >
-    <div 
-      @click.outside="isDetailModalOpen = false" 
-      class="bg-dark-900 border-2 border-kazyon rounded-3xl w-full max-w-lg p-5 text-stone-100 space-y-4 shadow-[0_0_50px_rgba(255,102,0,0.35)] my-auto relative overflow-hidden"
-    >
-      <!-- Top Header & Category & Close -->
-      <div class="flex items-start justify-between gap-3 pb-3 border-b border-dark-750">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="px-2.5 py-1 rounded-xl bg-dark-800 border border-dark-700 text-stone-300 text-xs font-bold" x-text="detailItem?.category"></span>
-            <span class="px-2.5 py-1 rounded-xl bg-kazyon/20 border border-kazyon/40 text-kazyon text-[11px] font-mono font-bold">بطاقة فحص الصنف</span>
-          </div>
-          <h2 class="text-xl font-black text-white leading-tight mt-1" x-text="detailItem?.itemName"></h2>
-        </div>
-        <button 
-          @click="isDetailModalOpen = false" 
-          class="w-10 h-10 rounded-2xl bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white flex items-center justify-center text-sm touch-btn shrink-0 border border-dark-700"
-        >
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
-      </div>
-
-      <!-- Barcode Bar with Quick Copy -->
-      <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <i class="fa-solid fa-barcode text-kazyon text-2xl"></i>
-          <div>
-            <span class="text-[10px] text-stone-400 block font-medium">رقم الباركود الدولي</span>
-            <span class="text-sm font-mono font-black text-stone-100 tracking-wider" x-text="detailItem?.barcode"></span>
-          </div>
-        </div>
-        <button 
-          type="button" 
-          @click="copyBarcode(detailItem?.barcode)"
-          class="h-10 px-3.5 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-300 rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn"
-        >
-          <i class="fa-solid fa-copy text-kazyon"></i>
-          <span>نسخ</span>
-        </button>
-      </div>
-
-      <!-- Sub-Code Bar if available -->
-      <template x-if="detailItem?.subCode">
-        <div class="p-2.5 bg-cyan-950/40 border border-cyan-500/40 rounded-2xl flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-hashtag text-cyan-400 text-lg"></i>
-            <div>
-              <span class="text-[10px] text-cyan-300 block font-medium">الساب كود (Sub-Code - الرقم التعريفي الخاص)</span>
-              <span class="text-sm font-mono font-black text-cyan-200" x-text="detailItem?.subCode"></span>
-            </div>
-          </div>
-          <button 
-            type="button" 
-            @click="copyBarcode(detailItem?.subCode)"
-            class="h-8 px-3 bg-cyan-900/60 hover:bg-cyan-800 border border-cyan-500/40 text-cyan-200 rounded-xl text-xs font-bold flex items-center gap-1 touch-btn"
-          >
-            <i class="fa-solid fa-copy text-cyan-400"></i>
-            <span>نسخ الكود</span>
-          </button>
-        </div>
-      </template>
-
-      <!-- Clear Color-Coded Status Alert Banner (Expired, Promo, Low Stock, Good) -->
-      <div>
-        <!-- 1. Expired Status Alert -->
-        <template x-if="detailItem?.status === 'expired'">
-          <div class="p-3.5 bg-red-950/90 border-2 border-red-600 rounded-2xl flex items-center gap-3 text-red-200 shadow-md">
-            <div class="w-10 h-10 rounded-xl bg-red-600/30 flex items-center justify-center text-red-400 text-xl shrink-0">
-              <i class="fa-solid fa-ban"></i>
-            </div>
-            <div>
-              <h4 class="text-xs font-black text-red-300">تنبيه حرج: منتهي الصلاحية (سحب فوري)</h4>
-              <p class="text-[11px] text-red-400/90 mt-0.5">يجب إزالة السلعة من رف العرض فوراً وإعادتها لمكتب المرتجعات.</p>
-            </div>
-          </div>
-        </template>
-
-        <!-- 2. Promo / Discount Status Alert -->
-        <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
-          <div class="p-3.5 bg-kazyon/20 border-2 border-kazyon rounded-2xl flex items-center gap-3 text-kazyon shadow-md">
-            <div class="w-10 h-10 rounded-xl bg-kazyon/30 flex items-center justify-center text-kazyon text-xl shrink-0">
-              <i class="fa-solid fa-fire animate-pulse"></i>
-            </div>
-            <div>
-              <h4 class="text-xs font-black text-white">عرض خاص (برومو كازيون)</h4>
-              <p class="text-[11px] text-stone-300 mt-0.5">
-                سعر العرض: <strong class="text-kazyon font-mono font-bold" x-text="detailItem?.promoPrice"></strong> ج.م بدلاً من <span class="line-through font-mono" x-text="detailItem?.regularPrice"></span> ج.م (توفير <strong class="text-kazyon font-mono font-bold" x-text="(detailItem?.regularPrice - detailItem?.promoPrice).toFixed(1)"></strong> ج.م)
-              </p>
-            </div>
-          </div>
-        </template>
-
-        <!-- 3. Low Shelf Stock Alert -->
-        <template x-if="detailItem?.status === 'low_stock' && (!detailItem?.promoPrice || detailItem?.promoPrice >= detailItem?.regularPrice)">
-          <div class="p-3.5 bg-amber-950/90 border-2 border-amber-600 rounded-2xl flex items-center gap-3 text-amber-200 shadow-md">
-            <div class="w-10 h-10 rounded-xl bg-amber-600/30 flex items-center justify-center text-amber-400 text-xl shrink-0">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <div>
-              <h4 class="text-xs font-black text-amber-300">تنبيه نقص الرف: الكمية منخفضة في الصالة</h4>
-              <p class="text-[11px] text-amber-400/90 mt-0.5">يوجد مخزون بالمستودع يلزم تغذية الرف فوراً لعدم ضياع مبيعات العميل.</p>
-            </div>
-          </div>
-        </template>
-
-        <!-- 4. Good / Valid Stock Alert -->
-        <template x-if="detailItem?.status === 'valid' && (!detailItem?.promoPrice || detailItem?.promoPrice >= detailItem?.regularPrice)">
-          <div class="p-3.5 bg-emerald-950/70 border border-emerald-600/60 rounded-2xl flex items-center gap-3 text-emerald-200">
-            <div class="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-lg shrink-0">
-              <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <div>
-              <h4 class="text-xs font-bold text-emerald-300">حالة ممتازة: سليم ومتاح</h4>
-              <p class="text-[10px] text-emerald-400/80">المخزون متوفر بالصالة والمستودع والصلاحية سارية بشكل طبيعي.</p>
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <!-- Warehouse Quantity vs. Hall Quantity (with Shelf Location) -->
-      <div class="grid grid-cols-2 gap-3">
-        <!-- Hall / Shelf Quantity -->
-        <div class="p-3.5 rounded-2xl bg-dark-850 border-2 border-emerald-500/40 flex flex-col justify-between space-y-2.5">
-          <div class="flex items-center justify-between text-emerald-400 text-xs font-bold">
-            <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-store"></i> المعروض بالصالة
-            </span>
-            <span class="text-[10px] bg-emerald-500/15 px-2 py-0.5 rounded text-emerald-300">الرف</span>
-          </div>
-
-          <div class="text-center py-1">
-            <span class="text-3xl font-black font-mono text-emerald-400" x-text="detailItem?.shopQty"></span>
-            <span class="text-xs text-stone-400 mr-1">قطعة</span>
-          </div>
-
-          <!-- Shelf Location Tag -->
-          <div class="p-2 bg-dark-900 rounded-xl text-center text-xs font-bold text-stone-200 border border-dark-750">
-            <i class="fa-solid fa-location-dot text-kazyon ml-1"></i>
-            <span x-text="detailItem?.shelfLocation || detailItem?.notes || 'رف A-02'"></span>
-          </div>
-
-          <!-- High-Target Touch Buttons (Min 55px height for Android thumbs!) -->
-          <div class="flex items-center gap-2 pt-1">
-            <button 
-              type="button" 
-              @click="updateStock(detailItem, 'shop', -1)"
-              :disabled="detailItem?.shopQty <= 0"
-              class="flex-1 h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-black text-xl flex items-center justify-center touch-btn disabled:opacity-25"
-              title="سحب قطعة من الصالة"
-            >
-              -
-            </button>
-            <button 
-              type="button" 
-              @click="updateStock(detailItem, 'shop', 1)"
-              class="flex-1 h-14 rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xl flex items-center justify-center touch-btn shadow-md"
-              title="إضافة قطعة إلى الصالة"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <!-- Warehouse Reserve Quantity -->
-        <div class="p-3.5 rounded-2xl bg-dark-850 border-2 border-amber-500/40 flex flex-col justify-between space-y-2.5">
-          <div class="flex items-center justify-between text-amber-400 text-xs font-bold">
-            <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-warehouse"></i> كمية المستودع
-            </span>
-            <span class="text-[10px] bg-amber-500/15 px-2 py-0.5 rounded text-amber-300">مخزن</span>
-          </div>
-
-          <div class="text-center py-1">
-            <span class="text-3xl font-black font-mono text-amber-400" x-text="detailItem?.warehouseQty"></span>
-            <span class="text-xs text-stone-400 mr-1">قطعة</span>
-          </div>
-
-          <!-- Warehouse Location Tag -->
-          <div class="p-2 bg-dark-900 rounded-xl text-center text-xs font-bold text-stone-200 border border-dark-750">
-            <i class="fa-solid fa-boxes-packing text-amber-400 ml-1"></i>
-            <span>المستودع الرئيسي</span>
-          </div>
-
-          <!-- High-Target Touch Buttons (Min 55px height for Android thumbs!) -->
-          <div class="flex items-center gap-2 pt-1">
-            <button 
-              type="button" 
-              @click="updateStock(detailItem, 'warehouse', -1)"
-              :disabled="detailItem?.warehouseQty <= 0"
-              class="flex-1 h-14 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-black text-xl flex items-center justify-center touch-btn disabled:opacity-25"
-              title="سحب قطعة من المستودع"
-            >
-              -
-            </button>
-            <button 
-              type="button" 
-              @click="updateStock(detailItem, 'warehouse', 1)"
-              class="flex-1 h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-black text-xl flex items-center justify-center touch-btn shadow-md"
-              title="إضافة قطعة للمستودع"
-            >
-              +
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick 1-Tap Transfer 5 Items (Min 55px height!) -->
-      <button 
-        type="button" 
-        @click="transferWarehouseToHall(detailItem, 5)"
-        :disabled="detailItem?.warehouseQty <= 0"
-        class="w-full h-14 rounded-2xl bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white font-black text-sm flex items-center justify-center gap-2 touch-btn shadow-lg disabled:opacity-30"
-      >
-        <i class="fa-solid fa-arrow-left-long text-base"></i>
-        <span>تزويد فوري: نقل 5 قطع من المستودع للرف</span>
-      </button>
-
-      <!-- Production & Expiry Dates Section -->
-      <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 grid grid-cols-2 gap-3 text-xs">
-        <div>
-          <span class="text-[10px] text-stone-400 block mb-1">تاريخ الإنتاج (Production Date)</span>
-          <div class="flex items-center gap-1.5 font-mono font-bold text-stone-200">
-            <i class="fa-regular fa-calendar text-stone-400"></i>
-            <span x-text="detailItem?.productionDate || 'غير محدد'"></span>
-          </div>
-        </div>
-        <div>
-          <span class="text-[10px] text-stone-400 block mb-1">تاريخ الانتهاء (Expiry Date)</span>
-          <div class="flex items-center gap-1.5 font-mono font-bold" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-stone-200'">
-            <i class="fa-regular fa-calendar-xmark" :class="detailItem?.status === 'expired' ? 'text-red-400' : 'text-kazyon'"></i>
-            <span x-text="detailItem?.expiryDate || 'ساري'"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Price details & Bottom Actions (Min 55px height!) -->
-      <div class="flex items-center justify-between pt-2 border-t border-dark-750">
-        <div>
-          <span class="text-[10px] text-stone-400 block">سعر الكاشير</span>
-          <div class="flex items-baseline gap-2">
-            <span class="text-2xl font-black text-kazyon font-mono" x-text="(detailItem?.promoPrice || detailItem?.regularPrice) + ' ج.م'"></span>
-            <template x-if="detailItem?.promoPrice && detailItem?.promoPrice < detailItem?.regularPrice">
-              <span class="text-xs text-stone-500 line-through font-mono" x-text="detailItem?.regularPrice + ' ج.م'"></span>
-            </template>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button 
-            type="button" 
-            @click="isDetailModalOpen = false; openItemModal(detailItem)"
-            class="h-14 px-4 rounded-2xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 text-xs font-bold flex items-center gap-1.5 touch-btn"
-          >
-            <i class="fa-solid fa-pen text-kazyon"></i>
-            <span>تعديل</span>
-          </button>
-          <button 
-            type="button" 
-            @click="isDetailModalOpen = false"
-            class="h-14 px-6 rounded-2xl bg-kazyon hover:bg-kazyon-hover text-white text-xs font-bold touch-btn shadow-md"
-          >
-            تم وإغلاق
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ============================================================= -->
-  <!-- 4. ADD / EDIT PRODUCT MODAL                                  -->
-  <!-- ============================================================= -->
-  <div 
-    x-show="isItemModalOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
-  >
-    <div 
-      @click.outside="isItemModalOpen = false" 
-      class="bg-dark-850 border border-dark-750 rounded-3xl w-full max-w-md p-5 text-stone-100 space-y-4 shadow-2xl my-auto"
-    >
-      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
-        <h3 class="text-sm font-bold text-white" x-text="modalItem.id ? 'تعديل بيانات الصنف' : 'إضافة صنف جديد'"></h3>
-        <button @click="isItemModalOpen = false" class="text-stone-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- Form Inputs -->
-      <div class="space-y-3">
-        <!-- Barcode with Single Unified Camera Button -->
-        <div>
-          <label class="block text-[11px] font-bold text-stone-300 mb-1">رقم الباركود (Barcode) *</label>
-          <div class="flex items-center gap-2">
-            <input 
-              type="text" 
-              x-model="modalItem.barcode" 
-              placeholder="مثال: 6281007010115"
-              class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-            <!-- Single Unified Barcode Camera Button -->
-            <button 
-              type="button" 
-              @click="scannerMode = 'barcode'; startCameraScanner('modalItem')"
-              class="h-12 px-3.5 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all"
-              title="مسح الباركود بالكاميرا فوراً"
-            >
-              <i class="fa-solid fa-camera text-sm"></i>
-              <span>مسح الباركود بالكاميرا</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Sub-Code (الساب كود - الرقم التعريفي الخاص - اختياري) -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-[11px] font-bold text-cyan-300 flex items-center gap-1">
-              <i class="fa-solid fa-hashtag text-[10px] text-cyan-400"></i>
-              <span>الساب كود (Sub-Code) - اختياري</span>
-            </label>
-            <span class="text-[10px] text-stone-400 font-sans">رقم تعريفي فريد خاص بالصنف</span>
-          </div>
-          <input 
-            type="text" 
-            x-model="modalItem.subCode" 
-            placeholder="مثال: KZ-1001 أو كود الصنف الداخلي"
-            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-cyan-300 placeholder:text-stone-500 placeholder:font-sans focus:outline-none focus:border-cyan-400"
-          >
-        </div>
-
-        <!-- Product Name with AI-Powered Recognition Camera Button -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-[11px] font-bold text-stone-300">اسم المنتج (Item Name) *</label>
-            <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
-              <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
-              <span>التعرف الذكي بالصورة</span>
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            <input 
-              type="text" 
-              x-model="modalItem.itemName" 
-              placeholder="مثال: حليب كازيون كامل الدسم 1 لتر"
-              class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-            >
-            <!-- AI Product Name Camera Button -->
-            <button 
-              type="button" 
-              @click="startAiProductRecognition('modalItem')"
-              :disabled="isRecognizingAiImage"
-              class="h-12 px-3 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all disabled:opacity-50"
-              title="تصوير المنتج بالكاميرا وتسميته آلياً بالذكاء الاصطناعي"
-            >
-              <template x-if="!isRecognizingAiImage">
-                <span class="flex items-center gap-1.5">
-                  <i class="fa-solid fa-camera-retro text-amber-300 text-xs"></i>
-                  <span>✨ التعرف بالصورة</span>
-                </span>
-              </template>
-              <template x-if="isRecognizingAiImage">
-                <span class="flex items-center gap-1.5">
-                  <i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i>
-                  <span>جاري التعرف...</span>
-                </span>
-              </template>
-            </button>
-          </div>
-        </div>
-
-        <!-- Category -->
-        <div>
-          <label class="block text-[11px] font-bold text-stone-300 mb-1">القسم / الصنف</label>
-          <select 
-            x-model="modalItem.category"
-            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-          >
-            <template x-for="cat in categories" :key="cat">
-              <option :value="cat" x-text="cat"></option>
-            </template>
-          </select>
-        </div>
-
-        <!-- Prices: Regular vs Promo -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">السعر العادي (ج.م)</label>
-            <input 
-              type="number" 
-              step="0.5" 
-              x-model.number="modalItem.regularPrice" 
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-kazyon mb-1">سعر العرض (البرومو)</label>
-            <input 
-              type="number" 
-              step="0.5" 
-              x-model.number="modalItem.promoPrice" 
-              placeholder="اختياري"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-kazyon focus:outline-none focus:border-kazyon"
-            >
-          </div>
-        </div>
-
-        <!-- Shelf Location -->
-        <div>
-          <label class="block text-[11px] font-bold text-stone-300 mb-1">مكان الرف بالصالة (Shelf Location)</label>
-          <input 
-            type="text" 
-            x-model="modalItem.shelfLocation" 
-            placeholder="مثال: رف ألبان 2 - A01 أو ستاند العروض"
-            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
-          >
-        </div>
-
-        <!-- DYNAMIC MULTI-BATCH FORM CONTAINER -->
-        <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 space-y-3">
-          <div class="flex items-center justify-between pb-2 border-b border-dark-800">
-            <div class="flex items-center gap-1.5 text-xs font-bold text-white">
-              <i class="fa-solid fa-layer-group text-kazyon"></i>
-              <span>إدارة الدفعات والتشغيلات (Multi-Batch Expiry Tracking)</span>
-              <span class="text-[10px] font-mono text-kazyon bg-kazyon/15 px-2 py-0.5 rounded-full font-bold" x-text="((modalItem.batches ? modalItem.batches.length : 0) + ' دفعات')"></span>
-            </div>
-
-            <!-- Dynamic Append New Batch Button -->
-            <button 
-              type="button" 
-              @click="addBatchToModalItem()"
-              class="h-9 px-3 bg-gradient-to-r from-kazyon to-amber-500 hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-sm"
-              title="إضافة دفعة تشغيلة جديدة إلى النموذج"
-            >
-              <i class="fa-solid fa-plus text-xs"></i>
-              <span>+ إضافة دفعة جديدة</span>
-            </button>
-          </div>
-
-          <!-- Dynamic List of Batches (Each with independent dates & split quantities) -->
-          <div class="space-y-3 max-h-72 overflow-y-auto no-scrollbar">
-            <template x-for="(b, bIndex) in modalItem.batches" :key="b.id || bIndex">
-              <div class="p-3 bg-dark-850 rounded-xl border border-dark-700 space-y-2 relative shadow-inner">
-                <div class="flex items-center justify-between text-xs pb-1.5 border-b border-dark-750">
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-kazyon text-[11px]" x-text="'الدفعة / التشغيلة #' + (bIndex + 1)"></span>
-                    <template x-if="isBatchExpiringWithin45Days(b.expiryDate)">
-                      <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold">
-                        أقل من 45 يوم
-                      </span>
-                    </template>
-                  </div>
-                  
-                  <!-- Remove Batch Button (✕) -->
-                  <button 
-                    type="button" 
-                    @click="removeBatchFromModalItem(bIndex)"
-                    :disabled="modalItem.batches && modalItem.batches.length <= 1"
-                    class="h-6 px-2 bg-dark-800 hover:bg-red-950/80 border border-dark-700 hover:border-red-600 text-stone-400 hover:text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 touch-btn disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                    title="حذف هذه الدفعة"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                    <span>حذف الدفعة</span>
-                  </button>
-                </div>
-
-                <!-- Dates: Production Date & Expiry Date -->
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-[10px] font-bold text-stone-400 mb-1">تاريخ الإنتاج (Production)</label>
-                    <input 
-                      type="date" 
-                      x-model="b.productionDate"
-                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
-                    >
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-bold text-amber-400 mb-1">تاريخ الانتهاء (Expiry) *</label>
-                    <input 
-                      type="date" 
-                      x-model="b.expiryDate"
-                      required
-                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
-                    >
-                  </div>
-                </div>
-
-                <!-- Quantities: Warehouse Qty & Hall Qty -->
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-[10px] font-bold text-amber-400 mb-1">كمية المخزن (Warehouse)</label>
-                    <input 
-                      type="number" 
-                      x-model.number="b.warehouseQty"
-                      min="0"
-                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-                    >
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-bold text-emerald-400 mb-1">كمية الصالة (Hall)</label>
-                    <input 
-                      type="number" 
-                      x-model.number="b.hallQty"
-                      min="0"
-                      class="w-full h-11 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-                    >
-                  </div>
-                </div>
-              </div>
-            </template>
-          </div>
-
-          <!-- Total Auto-Calculated Summary -->
-          <div class="p-2.5 bg-dark-850 rounded-xl border border-dark-700 flex items-center justify-between text-[11px] font-mono">
-            <span class="text-stone-400 font-sans">الإجمالي التلقائي لكافة الدفعات:</span>
-            <div class="flex items-center gap-3">
-              <span class="text-amber-400 font-bold">المستودع: <strong x-text="modalItem.batches ? modalItem.batches.reduce((s, b) => s + (Number(b.warehouseQty) || 0), 0) : 0"></strong></span>
-              <span class="text-emerald-400 font-bold">الصالة: <strong x-text="modalItem.batches ? modalItem.batches.reduce((s, b) => s + (Number(b.hallQty || b.shopQty) || 0), 0) : 0"></strong></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer (Min 55px height for thumbs) -->
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
-        <button 
-          type="button" 
-          @click="isItemModalOpen = false"
-          class="min-h-[55px] h-14 px-5 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-2xl text-xs font-bold touch-btn border border-dark-700"
-        >
-          إلغاء
-        </button>
-        <button 
-          type="button" 
-          @click="saveModalItem()"
-          class="min-h-[55px] h-14 px-7 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-md flex items-center gap-2"
-        >
-          <i class="fa-solid fa-floppy-disk"></i>
-          <span>حفظ الصنف</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ============================================================= -->
-  <!-- 4.0 QUICK ADD BATCH MODAL (إضافة دفعة سريعة من البطاقة مباشرة)-->
-  <!-- ============================================================= -->
-  <div 
-    x-show="isQuickBatchModalOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
-  >
-    <div 
-      @click.outside="isQuickBatchModalOpen = false" 
-      class="bg-dark-850 border border-dark-750 rounded-3xl w-full max-w-sm p-5 text-stone-100 space-y-4 shadow-2xl my-auto"
-    >
-      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
-        <div>
-          <span class="text-[10px] text-kazyon font-bold block flex items-center gap-1">
-            <i class="fa-solid fa-layer-group"></i>
-            <span>إضافة دفعة تشغيلة جديدة</span>
-          </span>
-          <h3 class="text-sm font-black text-white mt-0.5 truncate max-w-[240px]" x-text="quickBatchItem?.itemName"></h3>
-          <span class="text-[10px] text-stone-400 font-mono" x-text="'باركود: ' + (quickBatchItem?.barcode || '')"></span>
-        </div>
-        <button @click="isQuickBatchModalOpen = false" class="text-stone-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="space-y-3">
-        <!-- Dates -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ الإنتاج</label>
-            <input 
-              type="date" 
-              x-model="newBatch.productionDate"
-              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-amber-400 mb-1">تاريخ الانتهاء *</label>
-            <input 
-              type="date" 
-              x-model="newBatch.expiryDate"
-              required
-              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-2.5 text-xs font-mono text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-        </div>
-
-        <!-- Quantities -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-amber-400 mb-1">كمية المستودع</label>
-            <input 
-              type="number" 
-              x-model.number="newBatch.warehouseQty"
-              min="0"
-              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-emerald-400 mb-1">كمية الصالة (الرف)</label>
-            <input 
-              type="number" 
-              x-model.number="newBatch.hallQty"
-              min="0"
-              class="w-full min-h-[48px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-        </div>
-
-        <div class="p-2.5 rounded-xl bg-dark-900/80 border border-dark-750 text-[10px] text-stone-400">
-          <i class="fa-solid fa-circle-info text-cyber-teal ml-1"></i>
-          <span>سيتم تحديث إجمالي رصيد الصنف وتاريخ الصلاحية وحفظ التغييرات فوراً.</span>
-        </div>
-      </div>
-
-      <!-- Footer Buttons -->
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
-        <button 
-          type="button" 
-          @click="isQuickBatchModalOpen = false"
-          class="min-h-[50px] h-13 px-4 bg-dark-800 hover:bg-dark-750 text-stone-300 rounded-xl text-xs font-bold touch-btn border border-dark-700"
-        >
-          إلغاء
-        </button>
-        <button 
-          type="button" 
-          @click="saveQuickBatch()"
-          class="min-h-[50px] h-13 px-6 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn shadow-md flex items-center gap-1.5"
-        >
-          <i class="fa-solid fa-floppy-disk"></i>
-          <span>حفظ الدفعة</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ============================================================= -->
-  <!-- 4.1 CREATE / EDIT PROMOTIONAL PRICE TAG MODAL                -->
-  <!-- ============================================================= -->
-  <div 
-    x-show="isPromoModalOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
-  >
-    <div 
-      @click.outside="isPromoModalOpen = false" 
-      class="bg-dark-850 border border-dark-750 rounded-3xl w-full max-w-md p-5 text-stone-100 space-y-4 shadow-2xl my-auto"
-    >
-      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-tag text-kazyon"></i>
-          <h3 class="text-sm font-bold text-white" x-text="promoModalItem.id ? 'تعديل يافطة العرض' : 'إنشاء يافطة عرض جديدة للرف'"></h3>
-        </div>
-        <button @click="isPromoModalOpen = false" class="text-stone-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- Promo Tag Form Inputs -->
-      <div class="space-y-3">
-        <!-- Barcode with Auto-Complete from items & AI Auto-Fetch -->
-        <div>
-          <label class="block text-[11px] font-bold text-stone-300 mb-1">باركود المنتج (Barcode) *</label>
-          <div class="flex items-center gap-2">
-            <input 
-              type="text" 
-              x-model="promoModalItem.barcode" 
-              @input="handlePromoBarcodeChange($event.target.value)"
-              placeholder="مثال: 6281007010115"
-              class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-            <!-- Single Unified Barcode Camera Button -->
-            <button 
-              type="button" 
-              @click="scannerMode = 'barcode'; startCameraScanner('promoModal')"
-              class="h-12 px-3.5 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all"
-              title="مسح باركود العرض بالكاميرا فوراً"
-            >
-              <i class="fa-solid fa-camera text-sm"></i>
-              <span>مسح الباركود بالكاميرا</span>
-            </button>
-          </div>
-          <!-- Hint to pick existing inventory item -->
-          <template x-if="items.length > 0 && !promoModalItem.id">
-            <div class="mt-1 flex items-center gap-1 overflow-x-auto py-1">
-              <span class="text-[10px] text-stone-400 shrink-0">اختر من المخزون:</span>
-              <template x-for="item in items.slice(0, 3)" :key="item.barcode">
-                <button 
-                  type="button" 
-                  @click="selectItemForPromo(item)"
-                  class="px-2 py-0.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-[10px] font-mono text-stone-300 border border-dark-700 truncate max-w-[110px]"
-                  x-text="item.itemName"
-                ></button>
-              </template>
-            </div>
-          </template>
-        </div>
-
-        <!-- Sub-Code (الساب كود - اختياري) -->
-        <div>
-          <label class="block text-[11px] font-bold text-cyan-300 mb-1 flex items-center gap-1">
-            <i class="fa-solid fa-hashtag text-[10px] text-cyan-400"></i>
-            <span>الساب كود (Sub-Code) - اختياري</span>
-          </label>
-          <input 
-            type="text" 
-            x-model="promoModalItem.subCode" 
-            placeholder="مثال: KZ-1001"
-            class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-cyan-300 focus:outline-none focus:border-cyan-400"
-          >
-        </div>
-
-        <!-- Product Name with AI-Powered Recognition Camera Button -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-[11px] font-bold text-stone-300">اسم السلعة على اليافطة *</label>
-            <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
-              <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
-              <span>التعرف الذكي بالصورة</span>
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            <input 
-              type="text" 
-              x-model="promoModalItem.itemName" 
-              placeholder="مثال: مسحوق غسيل كازيون أوتوماتيك 4 كجم"
-              class="flex-1 h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-            >
-            <button 
-              type="button" 
-              @click="startAiProductRecognition('promoModal')"
-              :disabled="isRecognizingAiImage"
-              class="h-12 px-3 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all disabled:opacity-50"
-              title="تصوير المنتج وتسميته آلياً بالذكاء الاصطناعي"
-            >
-              <template x-if="!isRecognizingAiImage">
-                <span class="flex items-center gap-1.5">
-                  <i class="fa-solid fa-camera-retro text-amber-300 text-xs"></i>
-                  <span>✨ التعرف بالصورة</span>
-                </span>
-              </template>
-              <template x-if="isRecognizingAiImage">
-                <span class="flex items-center gap-1.5">
-                  <i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i>
-                  <span>جاري التعرف...</span>
-                </span>
-              </template>
-            </button>
-          </div>
-        </div>
-
-        <!-- Category & Offer Type -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">القسم</label>
-            <select 
-              x-model="promoModalItem.category"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-            >
-              <template x-for="cat in categories" :key="cat">
-                <option :value="cat" x-text="cat"></option>
-              </template>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">نوع العرض *</label>
-            <select 
-              x-model="promoModalItem.offerType"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-            >
-              <option value="weekly">عرض أسبوعي</option>
-              <option value="daily">عرض فلاش يومي</option>
-              <option value="weekend">عرض الويك إند</option>
-              <option value="clearance">تخفيض تصفية</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Pricing: Regular vs Promo Price -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">السعر السابق (ج.م) *</label>
-            <input 
-              type="number" 
-              step="0.25"
-              x-model.number="promoModalItem.regularPrice" 
-              placeholder="0.00"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-sm font-mono font-bold text-stone-300 focus:outline-none focus:border-kazyon"
-            >
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-kazyon mb-1">سعر العرض (ج.م) *</label>
-            <input 
-              type="number" 
-              step="0.25"
-              x-model.number="promoModalItem.promoPrice" 
-              placeholder="0.00"
-              class="w-full h-12 bg-dark-900 border-2 border-kazyon rounded-xl px-3 text-sm font-mono font-black text-kazyon focus:outline-none focus:ring-1 focus:ring-kazyon"
-            >
-          </div>
-        </div>
-
-        <!-- Live Savings Preview -->
-        <template x-if="promoModalItem.regularPrice > 0 && promoModalItem.promoPrice > 0">
-          <div class="p-2.5 rounded-xl bg-dark-900 border border-dark-750 flex items-center justify-between text-xs">
-            <span class="text-stone-400">قيمة التوفير للزبون:</span>
-            <div class="flex items-center gap-1.5 font-bold">
-              <span class="text-emerald-400 font-mono" x-text="(promoModalItem.regularPrice - promoModalItem.promoPrice).toFixed(2) + ' ج.م'"></span>
-              <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono" x-text="'(' + Math.round(((promoModalItem.regularPrice - promoModalItem.promoPrice) / promoModalItem.regularPrice) * 100) + '%)'"></span>
-            </div>
-          </div>
-        </template>
-
-        <!-- Offer Expiry Date & Shelf Location -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">تاريخ انتهاء العرض *</label>
-            <input 
-              type="date" 
-              x-model="promoModalItem.expiryDate" 
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">مكان اليافطة بالصالة</label>
-            <input 
-              type="text" 
-              x-model="promoModalItem.shelfLocation" 
-              placeholder="مثال: ستاند العروض 1"
-              class="w-full h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
-            >
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-dark-750">
-        <button 
-          type="button" 
-          @click="isPromoModalOpen = false"
-          class="h-12 px-4 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 text-xs font-bold touch-btn"
-        >
-          إلغاء
-        </button>
-
-        <button 
-          type="button" 
-          @click="savePromoTag()"
-          class="h-12 px-6 rounded-xl bg-kazyon hover:bg-kazyon-hover text-white text-xs font-black flex items-center gap-2 touch-btn shadow-md"
-        >
-          <i class="fa-solid fa-floppy-disk"></i>
-          <span>حفظ وتفعيل اليافطة</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ============================================================= -->
-  <!-- 4.2 SHELF PRICE TAG PRINT PREVIEW MODAL (Retail Shelf Label)  -->
-  <!-- ============================================================= -->
-  <div 
-    x-show="isPrintTagModalOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 overflow-y-auto"
-  >
-    <div 
-      @click.outside="isPrintTagModalOpen = false"
-      class="bg-dark-850 border border-dark-750 rounded-3xl w-full max-w-lg p-5 text-stone-100 space-y-4 shadow-2xl my-auto"
-    >
-      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-print text-kazyon"></i>
-          <h3 class="text-sm font-bold text-white">معاينة وطباعة يافطة سعر الرف</h3>
-        </div>
-        <button @click="isPrintTagModalOpen = false" class="text-stone-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- Printable Shelf Tag (Class .shelf-tag-printable preserved for print styling) -->
-      <div class="bg-dark-900 p-4 rounded-2xl border border-dark-750 flex flex-col items-center justify-center">
-        <div 
-          id="activeShelfTagPrint"
-          class="shelf-tag-printable bg-white text-black w-full max-w-[380px] p-4 rounded-xl shadow-lg border-2 border-dashed border-stone-400 font-sans select-none"
-        >
-          <!-- Top Supermarket Banner -->
-          <div class="bg-[#FF6600] text-white p-2 rounded-t-lg -mx-4 -mt-4 mb-3 flex items-center justify-between">
-            <div class="font-black text-sm tracking-wide">KAZYON MARKET • كازيون ماركت</div>
-            <div class="text-[10px] font-bold bg-black/20 px-2 py-0.5 rounded" x-text="printTagItem?.offerType === 'daily' ? 'عرض فلاش يومي' : 'عرض خاص توفير'"></div>
-          </div>
-
-          <!-- Product Title & Location -->
-          <div class="text-right pb-2 border-b border-stone-300">
-            <div class="text-[10px] text-stone-600 font-bold" x-text="printTagItem?.category"></div>
-            <div class="text-base font-black text-black leading-tight mt-0.5" x-text="printTagItem?.itemName"></div>
-            <div class="text-[10px] text-stone-500 font-mono mt-0.5 flex items-center justify-between flex-wrap gap-1">
-              <span>الباركود: <strong x-text="printTagItem?.barcode"></strong></span>
-              <template x-if="printTagItem?.subCode">
-                <span class="text-stone-700 font-bold">ساب كود: <strong x-text="printTagItem?.subCode"></strong></span>
-              </template>
-              <span x-text="'الموقع: ' + (printTagItem?.shelfLocation || 'ستاند العروض')"></span>
-            </div>
-          </div>
-
-          <!-- Price Display Section (Retail High-Contrast) -->
-          <div class="py-3 flex items-center justify-between">
-            <div>
-              <div class="text-[10px] text-stone-500 font-bold">السعر السابق</div>
-              <div class="text-sm font-bold text-stone-400 line-through font-mono" x-text="printTagItem?.regularPrice + ' ج.م'"></div>
-              <div class="text-[11px] font-black text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded mt-1 inline-block">
-                <span>وفر <strong x-text="(printTagItem?.regularPrice - printTagItem?.promoPrice).toFixed(1)"></strong> ج.م</span>
-              </div>
-            </div>
-
-            <div class="text-left">
-              <div class="text-[10px] font-bold text-[#FF6600]">سعر العرض للقطعة</div>
-              <div class="text-4xl font-black font-mono text-[#FF6600] tracking-tighter" x-text="printTagItem?.promoPrice"></div>
-              <div class="text-[11px] font-bold text-black text-left">جنيه مصري</div>
-            </div>
-          </div>
-
-          <!-- Simulated Barcode Lines & Digits -->
-          <div class="pt-2 border-t border-stone-300 flex flex-col items-center">
-            <div class="w-full flex justify-center items-end gap-[2px] h-8 py-0.5 overflow-hidden">
-              <template x-for="n in 36" :key="n">
-                <div class="bg-black h-full" :style="'width: ' + ((n % 3 === 0) ? '3px' : '1.5px') + '; opacity: ' + ((n % 7 === 0) ? '0' : '1')"></div>
-              </template>
-            </div>
-            <div class="text-xs font-mono font-bold tracking-widest text-stone-800" x-text="printTagItem?.barcode"></div>
-          </div>
-
-          <!-- Validity Footer -->
-          <div class="mt-2 pt-1 border-t border-stone-200 text-[10px] text-stone-600 flex items-center justify-between">
-            <span>العرض ساري حتى: <strong class="font-mono text-black" x-text="printTagItem?.expiryDate"></strong></span>
-            <span>أو حتى نفاد الكمية</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex items-center justify-between gap-2 pt-2 border-t border-dark-750">
-        <button 
-          type="button" 
-          @click="isPrintTagModalOpen = false"
-          class="min-h-[50px] h-12 px-4 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 text-xs font-bold touch-btn"
-        >
-          إلغاء
-        </button>
-
-        <button 
-          type="button" 
-          @click="triggerBrowserPrint()"
-          class="flex-1 min-h-[50px] h-12 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-lg"
-        >
-          <i class="fa-solid fa-print text-sm"></i>
-          <span>طباعة اليافطة الآن (Print Tag)</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ============================================================= -->
-  <!-- 4.3 NOTIFICATION PANEL (Slide-Over / Drawer)                   -->
-  <!-- ============================================================= -->
-  <div 
-    x-show="isNotificationPanelOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 overflow-hidden"
-    role="dialog" 
-    aria-modal="true"
-  >
-    <!-- Backdrop -->
-    <div 
-      x-show="isNotificationPanelOpen"
-      x-transition:enter="ease-in-out duration-300"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="ease-in-out duration-300"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-      @click="isNotificationPanelOpen = false"
-    ></div>
-
-    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
-      <div 
-        x-show="isNotificationPanelOpen"
-        x-transition:enter="transform transition ease-in-out duration-300"
-        x-transition:enter-start="translate-x-full"
-        x-transition:enter-end="translate-x-0"
-        x-transition:leave="transform transition ease-in-out duration-300"
-        x-transition:leave-start="translate-x-0"
-        x-transition:leave-end="translate-x-full"
-        class="w-screen max-w-md bg-dark-900 border-l border-dark-750 text-stone-100 shadow-2xl flex flex-col justify-between"
-      >
-        <!-- Panel Header -->
-        <div class="p-4 bg-dark-850 border-b border-dark-750 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-base">
-              <i class="fa-solid fa-bell"></i>
-            </div>
-            <div>
-              <h3 class="text-sm font-bold text-white">مركز التنبيهات الفورية</h3>
-              <p class="text-[11px] text-stone-400">تنبيهات الصلاحية 45 يوم وانتهاء أسعار العروض</p>
-            </div>
-          </div>
-          <button 
-            type="button" 
-            @click="isNotificationPanelOpen = false"
-            class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white flex items-center justify-center text-xs"
-          >
-            <i class="fa-solid fa-xmark text-sm"></i>
-          </button>
-        </div>
-
-        <!-- Notification Category Tabs -->
-        <div class="p-2.5 bg-dark-950 border-b border-dark-800 flex items-center gap-1.5 overflow-x-auto">
-          <button 
-            type="button" 
-            @click="notificationTab = 'all'"
-            :class="notificationTab === 'all' ? 'bg-kazyon text-white font-bold' : 'bg-dark-850 text-stone-400'"
-            class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1"
-          >
-            <span>الكل</span>
-            <span class="font-mono text-[10px] px-1 rounded bg-black/30" x-text="calcTotalNotifications()"></span>
-          </button>
-
-          <button 
-            type="button" 
-            @click="notificationTab = 'expiry'"
-            :class="notificationTab === 'expiry' ? 'bg-amber-600 text-white font-bold' : 'bg-dark-850 text-stone-400'"
-            class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1"
-          >
-            <i class="fa-solid fa-calendar-xmark text-[11px]"></i>
-            <span>صلاحية 45 يوم</span>
-            <span class="font-mono text-[10px] px-1 rounded bg-black/30" x-text="getExpiryNotifications().length"></span>
-          </button>
-
-          <button 
-            type="button" 
-            @click="notificationTab = 'promo'"
-            :class="notificationTab === 'promo' ? 'bg-cyber-blue text-white font-bold' : 'bg-dark-850 text-stone-400'"
-            class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1"
-          >
-            <i class="fa-solid fa-tags text-[11px]"></i>
-            <span>عروض الأسعار</span>
-            <span class="font-mono text-[10px] px-1 rounded bg-black/30" x-text="getPromoNotifications().length"></span>
-          </button>
-
-          <button 
-            type="button" 
-            @click="notificationTab = 'stock'"
-            :class="notificationTab === 'stock' ? 'bg-red-600 text-white font-bold' : 'bg-dark-850 text-stone-400'"
-            class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1"
-          >
-            <i class="fa-solid fa-box text-[11px]"></i>
-            <span>نواقص الرف</span>
-            <span class="font-mono text-[10px] px-1 rounded bg-black/30" x-text="getLowStockNotifications().length"></span>
-          </button>
-        </div>
-
-        <!-- Notifications Scrollable Feed -->
-        <div class="p-3.5 space-y-2.5 flex-1 overflow-y-auto">
-          
-          <!-- Empty State -->
-          <template x-if="filteredNotifications().length === 0">
-            <div class="p-8 text-center bg-dark-850 rounded-2xl border border-dark-750 space-y-2 my-auto">
-              <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-lg">
-                <i class="fa-solid fa-circle-check"></i>
-              </div>
-              <h4 class="text-xs font-bold text-white">كافة المنتجات والعروض تحت السيطرة</h4>
-              <p class="text-[11px] text-stone-400">لا توجد تنبيهات عاجلة للصلاحيات أو عروض الأسعار حالياً.</p>
-            </div>
-          </template>
-
-          <!-- Notification Cards -->
-          <template x-for="notif in filteredNotifications()" :key="notif.id">
-            <div 
-              class="p-3 rounded-2xl border bg-dark-850 space-y-2 relative transition-all"
-              :class="notif.urgency === 'danger' ? 'border-red-600/70 bg-red-950/20' : (notif.urgency === 'warning' ? 'border-amber-500/70 bg-amber-950/20' : 'border-dark-750')"
-            >
-              <div class="flex items-start justify-between gap-2">
-                <div class="flex items-center gap-2">
-                  <div 
-                    class="w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0"
-                    :class="notif.urgency === 'danger' ? 'bg-red-500 text-white' : (notif.urgency === 'warning' ? 'bg-amber-500 text-dark-950' : 'bg-dark-800 text-stone-300')"
-                  >
-                    <i :class="notif.icon"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold text-white" x-text="notif.title"></h4>
-                    <span class="text-[10px] text-stone-400 font-mono" x-text="notif.subtitle"></span>
-                  </div>
-                </div>
-                <span 
-                  class="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                  :class="notif.urgency === 'danger' ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'"
-                  x-text="notif.badge"
-                ></span>
-              </div>
-
-              <p class="text-[11px] text-stone-300 leading-relaxed" x-text="notif.message"></p>
-
-              <!-- Quick Direct Action for this alert -->
-              <div class="pt-1.5 border-t border-dark-800 flex items-center justify-between">
-                <span class="text-[10px] text-stone-500 font-mono" x-text="notif.timestamp"></span>
-                <button 
-                  type="button" 
-                  @click="handleNotificationAction(notif)"
-                  class="px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-kazyon hover:text-white border border-dark-700 text-xs font-bold flex items-center gap-1.5 touch-btn"
-                >
-                  <span x-text="notif.actionLabel"></span>
-                  <i class="fa-solid fa-arrow-left text-[10px]"></i>
-                </button>
-              </div>
-            </div>
-          </template>
-
-        </div>
-
-        <!-- Panel Footer -->
-        <div class="p-3 bg-dark-850 border-t border-dark-750 flex items-center justify-between text-xs">
-          <span class="text-stone-400 text-[11px]">تحديث فوري وتلقائي</span>
-          <button 
-            type="button" 
-            @click="isNotificationPanelOpen = false"
-            class="px-4 py-2 bg-dark-800 hover:bg-dark-750 text-white rounded-xl text-xs font-bold touch-btn"
-          >
-            إغلاق
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ============================================================= -->
   <!-- 5. FIXED BOTTOM NAVIGATION BAR                                -->
   <!-- ============================================================= -->
   <div x-show="isAuth" x-cloak class="fixed bottom-9 inset-x-0 z-30 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 px-1 sm:px-4 py-1 flex items-center justify-around w-full max-w-none rounded-t-2xl sm:rounded-t-3xl shadow-2xl">
@@ -3239,33 +3210,18 @@
 
 
   <!-- ============================================================= -->
-  <!-- 6. FIXED STICKY FOOTER BAR (Developed by A7med606)            -->
+  <!-- 6. STREAMLINED FOOTER BAR (Social Media Icons in Border Frame) -->
   <!-- ============================================================= -->
-  <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950 border-t border-dark-800 px-3 py-2 flex items-center justify-between text-[11px] shadow-md flex-wrap gap-2">
-    <div class="flex items-center gap-1.5 font-medium text-stone-300">
-      <span>Developed with precision by web dev</span>
-      <span class="text-kazyon font-black">A7med606</span>
-      <span class="text-stone-400 hidden sm:inline">(أحمد سعيد)</span>
-    </div>
-
-    <!-- Live Demo Link & Clickable Styled Social & Profile Icons -->
-    <div class="flex items-center gap-2">
-      <a 
-        href="https://a7med606.github.io/kazyon-inventory-app/" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="px-2 py-0.5 rounded-lg bg-cyber-deep border border-cyber-teal/40 text-cyber-teal text-[10px] font-mono font-bold flex items-center gap-1 hover:border-cyber-teal transition-all"
-        title="رابط المنظومة المباشر على GitHub Pages"
-      >
-        <i class="fa-solid fa-globe"></i>
-        <span>Live Demo</span>
-      </a>
+  <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950/95 backdrop-blur-sm border-t border-dark-800/80 px-3 py-1.5 flex items-center justify-center text-[11px] shadow-md">
+    <!-- Clickable Styled Social & Profile Icons in Sleek Border Frame -->
+    <div class="flex items-center justify-center gap-3">
       <a 
         href="https://www.facebook.com/a7med6060" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
         title="Facebook: a7med6060"
+        aria-label="Facebook"
       >
         <i class="fa-brands fa-facebook-f"></i>
       </a>
@@ -3273,8 +3229,9 @@
         href="https://www.instagram.com/a7med.606" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
         title="Instagram: a7med.606"
+        aria-label="Instagram"
       >
         <i class="fa-brands fa-instagram"></i>
       </a>
@@ -3282,8 +3239,9 @@
         href="https://a7med6060.blogspot.com/" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
         title="Blog: a7med6060"
+        aria-label="Blog"
       >
         <i class="fa-solid fa-rss"></i>
       </a>
@@ -3291,8 +3249,9 @@
         href="https://github.com/A7med606" 
         target="_blank" 
         rel="noopener noreferrer" 
-        class="w-6 h-6 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-[11px]"
+        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
         title="GitHub: A7med606"
+        aria-label="GitHub"
       >
         <i class="fa-brands fa-github"></i>
       </a>
@@ -3645,6 +3604,7 @@
 
         // Terminal Device Fingerprint
         clientDevice: 'Android Retail Scanner',
+        deviceInfo: '',
 
         // Toast Feedback
         toast: { show: false, message: '', type: 'success', timeout: null },
@@ -3801,39 +3761,51 @@
         detectDeviceDetails() {
           const ua = navigator.userAgent || '';
           let model = '';
-          let os = 'جهاز غير معروف';
+          let os = 'جهاز محمول';
 
           if (/Android/i.test(ua)) {
-            os = 'Android';
-            const match = ua.match(/Android[^;]+;\s*([^;)]+)/i);
-            if (match && match[1]) {
-              model = match[1].replace(/Build\/.+/i, '').trim();
+            let ver = '';
+            const verMatch = ua.match(/Android\s([0-9.]+)/i);
+            if (verMatch) ver = `Android ${verMatch[1]}`;
+
+            if (/SM-|SAMSUNG/i.test(ua)) {
+              const smMatch = ua.match(/SM-[A-Z0-9]+/i);
+              model = smMatch ? `Samsung ${smMatch[0]}` : 'Samsung Galaxy';
+            } else if (/Redmi|POCO|Xiaomi/i.test(ua)) {
+              model = 'Xiaomi / Redmi';
+            } else if (/CPH|RMX|OPPO|Realme/i.test(ua)) {
+              model = 'Oppo / Realme';
+            } else if (/Pixel/i.test(ua)) {
+              model = 'Google Pixel';
+            } else if (/Huawei|Honor/i.test(ua)) {
+              model = 'Huawei';
+            } else {
+              const match = ua.match(/;\s*([^;)]+)\s*Build\//i);
+              if (match && match[1] && !match[1].includes('Linux') && !match[1].includes('Android')) {
+                model = match[1].trim();
+              }
+              if (!model) model = 'Android Terminal';
             }
-            if (!model) model = 'هاتف كازيون أندرويد';
+            os = ver ? `${model} • ${ver}` : `${model} • Android`;
           } else if (/iPhone/i.test(ua)) {
-            os = 'iOS';
-            model = 'Apple iPhone';
-          } else if (/iPad/i.test(ua)) {
-            os = 'iPadOS';
-            model = 'Apple iPad';
-          } else if (/Windows NT 10.0/i.test(ua)) {
-            os = 'Windows';
-            model = 'كمبيوتر ويندوز 10/11';
+            const verMatch = ua.match(/OS\s([0-9_]+)/i);
+            const ver = verMatch ? `iOS ${verMatch[1].replace(/_/g, '.')}` : 'iOS';
+            os = `Apple iPhone • ${ver}`;
+          } else if (/iPad/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+            os = 'Apple iPad';
           } else if (/Windows/i.test(ua)) {
-            os = 'Windows';
-            model = 'كمبيوتر فرع (Windows)';
-          } else if (/Macintosh/i.test(ua)) {
-            os = 'macOS';
-            model = 'Apple Mac';
+            os = 'كمبيوتر ويندوز (Windows)';
+          } else if (/Macintosh|Mac OS X/i.test(ua)) {
+            os = 'Apple Mac (macOS)';
           } else if (/Linux/i.test(ua)) {
-            os = 'Linux';
-            model = 'محطة طرفية (Linux)';
+            os = 'محطة طرفية (Linux)';
           } else {
-            model = 'محطة فحص المتجر';
+            os = 'محطة فحص كازيون';
           }
 
-          this.clientDevice = model ? `${model} (${os})` : os;
-          return this.clientDevice;
+          this.clientDevice = os;
+          this.deviceInfo = os;
+          return os;
         },
 
         // Camera Permission Pre-Warming: Request once upon login to eliminate repetitive prompts
@@ -4944,7 +4916,34 @@
           this.playBeep();
           if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
 
-          this.showToast(`✨ تم التقاط الباركود وجلب اسم المنتج بالذكاء الاصطناعي: ${clean}`, 'info');
+          const foundLocal = this.items.find(i => 
+            i.barcode === clean || 
+            (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase())
+          );
+
+          if (foundLocal) {
+            if (this.scannerTarget === 'modalItem') {
+              this.modalItem.barcode = foundLocal.barcode;
+              this.modalItem.itemName = foundLocal.itemName;
+              this.modalItem.category = foundLocal.category;
+              this.modalItem.regularPrice = foundLocal.regularPrice;
+              this.modalItem.promoPrice = foundLocal.promoPrice;
+              this.modalItem.shelfLocation = foundLocal.shelfLocation;
+              this.modalItem.subCode = foundLocal.subCode || ('KZ-' + clean.slice(-4));
+            } else if (this.scannerTarget === 'promoModal') {
+              this.promoModalItem.barcode = foundLocal.barcode;
+              this.promoModalItem.itemName = foundLocal.itemName;
+              this.promoModalItem.category = foundLocal.category;
+              this.promoModalItem.regularPrice = foundLocal.regularPrice;
+              this.promoModalItem.promoPrice = foundLocal.promoPrice;
+              this.promoModalItem.shelfLocation = foundLocal.shelfLocation;
+              this.promoModalItem.subCode = foundLocal.subCode || '';
+            }
+            this.showToast(`✨ تم التعرف الفوري من المخزون: ${foundLocal.itemName}`, 'success');
+            return;
+          }
+
+          this.showToast(`✨ جلب بيانات المنتج بالذكاء الاصطناعي: ${clean}`, 'info');
           if (this.scannerTarget === 'modalItem') {
             if (!this.modalItem.barcode) this.modalItem.barcode = clean;
             await this.fetchOpenFoodFacts(clean, 'itemModal');
@@ -5021,7 +5020,7 @@
           }
         },
 
-        // Image Recognition & Product Auto-Naming Engine
+        // Accurate AI Image Recognition & Product Auto-Naming Engine
         async processProductImageRecognition(canvas) {
           let detectedBarcode = null;
 
@@ -5036,7 +5035,7 @@
             } catch (e) {}
           }
 
-          // 2. If barcode not found in frame, check active item's barcode input
+          // 2. If barcode not found in frame, check active target's barcode input
           if (!detectedBarcode) {
             if (this.scannerTarget === 'modalItem' && this.modalItem.barcode) {
               detectedBarcode = this.modalItem.barcode.trim();
@@ -5048,10 +5047,34 @@
           let recognizedName = '';
           let recognizedCategory = '';
 
-          // 3. Query Open Food Facts if barcode is available or detected
+          // 3. Priority 1: Check local store inventory for exact match
           if (detectedBarcode) {
+            const cleanCode = detectedBarcode.trim();
+            const foundLocal = this.items.find(i => 
+              i.barcode === cleanCode || 
+              (i.subCode && i.subCode.toLowerCase() === cleanCode.toLowerCase())
+            );
+            if (foundLocal) {
+              recognizedName = foundLocal.itemName;
+              recognizedCategory = foundLocal.category;
+              if (this.scannerTarget === 'modalItem') {
+                if (!this.modalItem.regularPrice || this.modalItem.regularPrice === 0) this.modalItem.regularPrice = foundLocal.regularPrice;
+                if (!this.modalItem.promoPrice || this.modalItem.promoPrice === 0) this.modalItem.promoPrice = foundLocal.promoPrice;
+                if (!this.modalItem.shelfLocation) this.modalItem.shelfLocation = foundLocal.shelfLocation;
+                if (!this.modalItem.subCode && foundLocal.subCode) this.modalItem.subCode = foundLocal.subCode;
+              } else if (this.scannerTarget === 'promoModal') {
+                this.promoModalItem.regularPrice = foundLocal.regularPrice;
+                this.promoModalItem.promoPrice = foundLocal.promoPrice;
+                this.promoModalItem.shelfLocation = foundLocal.shelfLocation;
+                if (!this.promoModalItem.subCode && foundLocal.subCode) this.promoModalItem.subCode = foundLocal.subCode;
+              }
+            }
+          }
+
+          // 4. Priority 2: Query Global Open Food Facts API if barcode was found but not in local inventory
+          if (!recognizedName && detectedBarcode) {
             try {
-              const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(detectedBarcode)}.json`);
+              const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(detectedBarcode.trim())}.json`);
               if (res.ok) {
                 const data = await res.json();
                 if (data && data.status === 1 && data.product) {
@@ -5066,82 +5089,38 @@
                 }
               }
             } catch (e) {
-              console.warn('Open Food Facts recognition fallback', e);
+              console.warn('Open Food Facts API recognition fallback', e);
             }
           }
 
-          // 4. Intelligent Visual & Color Feature Analysis on Kazyon Supermarket Catalog
-          if (!recognizedName) {
-            let dominantColor = 'generic';
-            if (canvas) {
-              try {
-                const ctx = canvas.getContext('2d');
-                const imgData = ctx.getImageData(Math.floor(canvas.width * 0.2), Math.floor(canvas.height * 0.2), Math.floor(canvas.width * 0.6), Math.floor(canvas.height * 0.6)).data;
-                let r = 0, g = 0, b = 0, count = 0;
-                for (let i = 0; i < imgData.length; i += 24) {
-                  r += imgData[i];
-                  g += imgData[i + 1];
-                  b += imgData[i + 2];
-                  count++;
+          // 5. Priority 3: Try detecting text from packaging if TextDetector API exists
+          if (!recognizedName && canvas && typeof window !== 'undefined' && 'TextDetector' in window) {
+            try {
+              const textDetector = new window.TextDetector();
+              const texts = await textDetector.detect(canvas);
+              if (texts && texts.length > 0) {
+                const fullDetectedText = texts.map(t => t.rawValue).join(' ').toLowerCase();
+                const matched = this.items.find(i => {
+                  const words = i.itemName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+                  return words.some(w => fullDetectedText.includes(w));
+                });
+                if (matched) {
+                  recognizedName = matched.itemName;
+                  recognizedCategory = matched.category;
+                  if (!detectedBarcode) detectedBarcode = matched.barcode;
                 }
-                r = r / (count || 1);
-                g = g / (count || 1);
-                b = b / (count || 1);
-
-                if (r > 155 && g < 110 && b < 110) dominantColor = 'red';
-                else if (b > 135 && r < 115) dominantColor = 'blue';
-                else if (g > 130 && r < 135 && b < 135) dominantColor = 'green';
-                else if (r > 165 && g > 140 && b < 90) dominantColor = 'yellow';
-                else if (r > 175 && g > 175 && b > 175) dominantColor = 'white';
-              } catch (e) {}
-            }
-
-            const EgyptianGroceryPresets = {
-              white: [
-                { name: 'حليب كازيون كامل الدسم 1 لتر', cat: 'ألبان وأجبان' },
-                { name: 'سكر أبيض فاخر كازيون 1 كجم', cat: 'بقالة جافة وبقوليات' },
-                { name: 'أرز مصري كازيون رفيع الحبة 1 كجم', cat: 'بقالة جافة وبقوليات' },
-                { name: 'جبنة فيتا دومتي بلس 500 جم', cat: 'ألبان وأجبان' }
-              ],
-              yellow: [
-                { name: 'زيت خليط كازيون 700 مل للقلي والطبخ', cat: 'زيوت وسمن' },
-                { name: 'زيت عباد الشمس سلايت 1.5 لتر', cat: 'زيوت وسمن' },
-                { name: 'زيت ذرة كريستال نقي 800 مل', cat: 'زيوت وسمن' },
-                { name: 'سمن نباتي روابي بطعم الزبدة الفلاحي 700 جم', cat: 'زيوت وسمن' }
-              ],
-              red: [
-                { name: 'صلصة طماطم هاينز برطمان 360 جم', cat: 'بقالة جافة وبقوليات' },
-                { name: 'شاي العروسة أسود كرتون 250 جم', cat: 'مشروبات ومياه' },
-                { name: 'مكرونة الملكة أقلام 400 جم', cat: 'بقالة جافة وبقوليات' },
-                { name: 'تونة صن شاين مفتتة حارة 140 جم', cat: 'مجمدات ولحوم' }
-              ],
-              blue: [
-                { name: 'مياه معدنية كازيون طبيعية 1.5 لتر', cat: 'مشروبات ومياه' },
-                { name: 'مسحوق غسيل أوتوماتيك إريال لافندر 2.5 كجم', cat: 'منظفات وعناية' },
-                { name: 'حليب جهينة كامل الدسم تتراباك 1 لتر', cat: 'ألبان وأجبان' },
-                { name: 'مياه غازية بيبسي كانز 330 مل', cat: 'مشروبات ومياه' }
-              ],
-              green: [
-                { name: 'سائل غسيل أطباق فيري بالليمون 650 مل', cat: 'منظفات وعناية' },
-                { name: 'شاي أخضر أحمد تي 25 فتلة نقي', cat: 'مشروبات ومياه' },
-                { name: 'مشروب غازي سبرايت 1 لتر', cat: 'مشروبات ومياه' },
-                { name: 'ملوخية خضراء مجمدة بسمة 400 جم', cat: 'مجمدات ولحوم' }
-              ],
-              generic: [
-                { name: 'بسكويت شوكولاتة كازيون 12 قطعة', cat: 'مخبوزات وحلويات' },
-                { name: 'شيبسي عائلي بطعم الجبنة المتبلة', cat: 'تسالي ومقرمشات' },
-                { name: 'قهوة تركي بن العميد وسط بالحبهان 200 جم', cat: 'مشروبات ومياه' },
-                { name: 'مكرونة إيطاليانو خواتم 400 جم', cat: 'بقالة جافة وبقوليات' }
-              ]
-            };
-
-            const candidates = EgyptianGroceryPresets[dominantColor] || EgyptianGroceryPresets.generic;
-            const picked = candidates[Math.floor(Math.random() * candidates.length)];
-            recognizedName = picked.name;
-            recognizedCategory = picked.cat;
+              }
+            } catch (e) {}
           }
 
-          // 5. Populate model inputs
+          // 6. If no confident match found: NEVER invent or pick random hallucinated products!
+          if (!recognizedName) {
+            this.showToast('لم نتمكن من قراءة باركود أو اسم واضح في الصورة. يرجى توجيه الكاميرا إلى باركود المنتج أو كتابة الاسم يدوياً.', 'info');
+            await this.closeScanner();
+            return;
+          }
+
+          // 7. Populate form inputs accurately
           if (this.scannerTarget === 'modalItem') {
             this.modalItem.itemName = recognizedName;
             if (recognizedCategory) this.modalItem.category = recognizedCategory;
@@ -5160,7 +5139,7 @@
             }
           }
 
-          this.showToast(`✨ تم التعرف الذكي على المنتج: ${recognizedName}`, 'success');
+          this.showToast(`✨ تم التعرف الدقيق على المنتج: ${recognizedName}`, 'success');
           this.logActivity('AI_IMAGE_RECOGNITION', `تعرف ذكي بالصورة وتسمية المنتج: ${recognizedName}`);
           await this.closeScanner();
         },
@@ -5170,7 +5149,12 @@
           if (!item) return;
           this.detailItem = item;
           this.isDetailModalOpen = true;
+          this.isItemModalOpen = false;
           if (navigator.vibrate) navigator.vibrate(40);
+          this.$nextTick(() => {
+            const el = document.getElementById('inline-item-detail-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
         },
 
         // 2. Fast-Type Search & Instant Barcode Query
@@ -5324,6 +5308,10 @@
           };
           this.isQuickBatchModalOpen = true;
           if (navigator.vibrate) navigator.vibrate(30);
+          this.$nextTick(() => {
+            const el = document.getElementById('inline-quick-batch-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
         },
 
         saveQuickBatch() {
@@ -5600,6 +5588,11 @@
             };
           }
           this.isItemModalOpen = true;
+          this.isDetailModalOpen = false;
+          this.$nextTick(() => {
+            const el = document.getElementById('inline-item-editor-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
         },
 
         saveModalItem() {
@@ -6109,6 +6102,11 @@
             };
           }
           this.isPromoModalOpen = true;
+          this.isPrintTagModalOpen = false;
+          this.$nextTick(() => {
+            const el = document.getElementById('inline-promo-editor-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
         },
 
         handlePromoBarcodeChange(code) {
@@ -6304,6 +6302,11 @@
         openPrintTagModal(tag) {
           this.printTagItem = tag;
           this.isPrintTagModalOpen = true;
+          this.isPromoModalOpen = false;
+          this.$nextTick(() => {
+            const el = document.getElementById('inline-print-tag-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
         },
 
         triggerBrowserPrint() {
@@ -6479,18 +6482,20 @@
           if (notif.type === 'expiry') {
             if (notif.urgency === 'danger') {
               // Open item details to zero out or edit notes
-              this.openDetailModal(notif.item);
+              this.activeTab = 'inventory';
               this.isNotificationPanelOpen = false;
+              this.openDetailModal(notif.item);
             } else {
               // Open promo tag creator for this item to accelerate sales!
+              this.activeTab = 'promo-tags';
               this.isNotificationPanelOpen = false;
               this.openPromoModal();
               this.selectItemForPromo(notif.item);
-              this.activeTab = 'promo-tags';
             }
           } else if (notif.type === 'promo') {
             if (notif.tag) {
               if (notif.urgency === 'danger') {
+                this.activeTab = 'promo-tags';
                 this.isNotificationPanelOpen = false;
                 this.openPrintTagModal(notif.tag);
               } else {
@@ -6502,151 +6507,6 @@
               this.transferWarehouseToHall(notif.item, 5);
               this.showToast(`تم تزويد الرف بـ 5 قطع من (${notif.item.itemName}) بنجاح`, 'success');
             }
-          }
-        },
-
-        // =============================================================
-        // 12. AI AUTO-FETCH (OPEN FOOD FACTS & SMART BARCODE LOOKUP)
-        // =============================================================
-        async fetchOpenFoodFacts(barcode, target = 'itemModal') {
-          if (!barcode) {
-            this.showToast('يرجى إدخال أو مسح الباركود أولاً', 'error');
-            return;
-          }
-
-          const cleanCode = barcode.trim();
-          this.isFetchingAI = true;
-          this.showToast('جاري استعلام الذكاء وقاعدة بيانات الأغذية عن المنتج...', 'info');
-
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cleanCode}.json`, {
-              signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.status === 1 && data.product) {
-                const p = data.product;
-                const arabicName = p.product_name_ar || p.product_name || p.generic_name_ar || p.generic_name || '';
-                const brand = p.brands || '';
-                const fullName = arabicName ? (brand && !arabicName.includes(brand) ? `${brand} - ${arabicName}` : arabicName) : '';
-                const mappedCategory = this.mapOpenFoodFactsCategory(p.categories || p.categories_tags || '');
-
-                if (fullName) {
-                  if (target === 'itemModal') {
-                    this.modalItem.itemName = fullName;
-                    this.modalItem.category = mappedCategory;
-                    if (!this.modalItem.shelfLocation) this.modalItem.shelfLocation = 'ممر ' + mappedCategory;
-                  } else if (target === 'promoModal') {
-                    this.promoModalItem.itemName = fullName;
-                    this.promoModalItem.category = mappedCategory;
-                  } else if (target === 'priceChecker') {
-                    // Open item modal populated with AI result
-                    this.openItemModal(null);
-                    this.modalItem.barcode = cleanCode;
-                    this.modalItem.itemName = fullName;
-                    this.modalItem.category = mappedCategory;
-                    this.modalItem.shelfLocation = 'ممر ' + mappedCategory;
-                  }
-
-                  this.playBeepSound(1000, 0.15, 'triangle');
-                  this.showToast(`تم العثور على المنتج ذكياً: ${fullName}`, 'success');
-                  return;
-                }
-              }
-            }
-
-            // Fallback heuristics if not on Open Food Facts
-            this.fallbackHeuristicProduct(cleanCode, target);
-
-          } catch (err) {
-            console.warn('Open Food Facts API error/timeout:', err);
-            this.fallbackHeuristicProduct(cleanCode, target);
-          } finally {
-            this.isFetchingAI = false;
-          }
-        },
-
-        fallbackHeuristicProduct(barcode, target) {
-          // Heuristic Egyptian / Regional Barcode Prefix matching
-          let suggestedName = '';
-          let suggestedCat = 'بقالة جافة وبقوليات';
-
-          if (barcode.startsWith('622')) {
-            suggestedName = `منتج مصري محلي (${barcode.substring(barcode.length - 4)})`;
-            suggestedCat = 'ألبان وأجبان';
-          } else if (barcode.startsWith('628')) {
-            suggestedName = `منتج كازيون مستورد / غذائي (${barcode.substring(barcode.length - 4)})`;
-            suggestedCat = 'بقالة جافة وبقوليات';
-          } else {
-            suggestedName = `سلعة استهلاكية كازيون (${barcode.slice(-4)})`;
-          }
-
-          if (target === 'itemModal') {
-            if (!this.modalItem.itemName) this.modalItem.itemName = suggestedName;
-            this.modalItem.category = suggestedCat;
-          } else if (target === 'promoModal') {
-            if (!this.promoModalItem.itemName) this.promoModalItem.itemName = suggestedName;
-            this.promoModalItem.category = suggestedCat;
-          } else if (target === 'priceChecker') {
-            this.openItemModal(null);
-            this.modalItem.barcode = barcode;
-            this.modalItem.itemName = suggestedName;
-            this.modalItem.category = suggestedCat;
-          }
-
-          this.showToast('تم إعداد اقتراح ذكي لبيانات الصنف بناءً على الباركود', 'info');
-        },
-
-        mapOpenFoodFactsCategory(catStr) {
-          if (!catStr) return 'بقالة جافة وبقوليات';
-          const text = String(catStr).toLowerCase();
-
-          if (text.includes('dairy') || text.includes('cheese') || text.includes('milk') || text.includes('yogurt') || text.includes('جبن') || text.includes('حليب') || text.includes('لبن')) {
-            return 'ألبان وأجبان';
-          }
-          if (text.includes('beverage') || text.includes('water') || text.includes('juice') || text.includes('tea') || text.includes('coffee') || text.includes('مشروب') || text.includes('مياه') || text.includes('عصير')) {
-            return 'مشروبات ومياه';
-          }
-          if (text.includes('bakery') || text.includes('biscuit') || text.includes('bread') || text.includes('cake') || text.includes('sweet') || text.includes('حلويات') || text.includes('بسكويت') || text.includes('شوكولات')) {
-            return 'مخبوزات وحلويات';
-          }
-          if (text.includes('oil') || text.includes('fat') || text.includes('butter') || text.includes('ghee') || text.includes('زيت') || text.includes('سمن')) {
-            return 'زيوت وسمن';
-          }
-          if (text.includes('clean') || text.includes('detergent') || text.includes('soap') || text.includes('منظف') || text.includes('صابون') || text.includes('عناية')) {
-            return 'منظفات وعناية';
-          }
-          if (text.includes('meat') || text.includes('frozen') || text.includes('fish') || text.includes('tuna') || text.includes('لحم') || text.includes('دجاج') || text.includes('سمك') || text.includes('تونة')) {
-            return 'مجمدات ولحوم';
-          }
-          if (text.includes('snack') || text.includes('chip') || text.includes('crisp') || text.includes('شيبس') || text.includes('مقرمشات') || text.includes('تسالي')) {
-            return 'تسالي ومقرمشات';
-          }
-          return 'بقالة جافة وبقوليات';
-        },
-
-        // =============================================================
-        // 13. DEVICE HARDWARE FINGERPRINT & POS DETAILS
-        // =============================================================
-        detectDeviceDetails() {
-          const ua = navigator.userAgent;
-          if (ua.includes('Android')) {
-            if (ua.includes('SM-') || ua.includes('Samsung')) {
-              this.clientDevice = 'Samsung Galaxy Android POS';
-            } else if (ua.includes('Redmi') || ua.includes('Xiaomi')) {
-              this.clientDevice = 'Xiaomi Retail Floor Terminal';
-            } else {
-              this.clientDevice = 'Android Supermarket Terminal';
-            }
-          } else if (ua.includes('iPhone') || ua.includes('iPad')) {
-            this.clientDevice = 'iOS Retail Scanner';
-          } else {
-            this.clientDevice = 'Kazyon Main Workstation (PC)';
           }
         },
 
