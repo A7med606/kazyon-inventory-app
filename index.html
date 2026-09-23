@@ -9,7 +9,7 @@
   <meta property="og:description" content="نظام إدارة ومخزون كازيون ماركت الميداني، كاشف الأسعار والعروض، سجل الهوالك والمرتجعات، مسح الباركود السريع والتزامن الفوري للأندرويد">
 
   <!-- Mobile Browser Theme -->
-  <meta name="theme-color" content="#121212">
+  <meta name="theme-color" content="#070F1E">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -31,18 +31,18 @@
           colors: {
             kazyon: {
               DEFAULT: '#FF6600',
-              hover: '#E65C00',
-              dark: '#CC5200',
+              hover: '#FF7A1A',
+              dark: '#E65C00',
               light: '#FF8533',
-              glow: 'rgba(255, 102, 0, 0.4)',
+              glow: 'rgba(255, 102, 0, 0.45)',
             },
             neo: {
-              bg: '#090D16',       // Deep Slate Executive Dark Mode Canvas
-              card: '#131D31',     // Executive Dark Card Container
-              cardHover: '#1A2742',
-              border: '#1E2D4A',   // Clean Subtle Border
-              borderLight: '#283C63',
-              surface: '#0E1626',
+              bg: '#070F1E',       // OLED Rich Navy Dark Canvas
+              card: '#101A30',     // Frosted Slate Card Container
+              cardHover: '#16233F',
+              border: '#1E293B',   // Clean Subtle 1px Border Highlight
+              borderLight: '#273854',
+              surface: '#0B1426',
             },
             cyber: {
               teal: '#38BDF8',
@@ -51,14 +51,14 @@
               deep: '#0B1E38',
             },
             dark: {
-              950: '#060A12', // Ultra deep charcoal/black
-              900: '#090D16', // Deep Slate Executive Dark Mode Background
-              850: '#131D31', // Deep slate card container
-              800: '#1A2742', // Elevated interactive surface
-              750: '#1E2D4A', // Clean subtle border
-              700: '#283C63', // Prominent border
-              650: '#334D7D',
-              600: '#3D5C94', // Light slate accent border
+              950: '#040810', // Deepest OLED black / status bars
+              900: '#070F1E', // Next-Gen OLED Dark Slate Navy Canvas
+              850: '#101A30', // Elevated frosted-glass slate card
+              800: '#16233F', // Interactive elevated surface
+              750: '#1E293B', // Refined subtle 1px border highlight
+              700: '#273854', // Prominent border
+              650: '#334B70',
+              600: '#43618E',
             }
           },
           fontFamily: {
@@ -113,7 +113,7 @@
       padding: 0;
       overflow-x: hidden;
       font-family: 'Cairo', sans-serif;
-      background-color: #090D16;
+      background-color: #070F1E;
       color: #F8FAFC;
       touch-action: manipulation;
       overscroll-behavior-y: none;
@@ -241,13 +241,13 @@
 <body x-data="kazyonApp()" class="w-screen min-w-full min-h-screen max-w-none bg-dark-900 text-stone-100 flex flex-col justify-between select-none antialiased overflow-x-hidden">
 
   <!-- ============================================================= -->
-  <!-- 1. STRICT AUTHENTICATION SCREEN (General / 6060)              -->
+  <!-- 1. STREAMLINED AUTHENTICATION SCREEN (Minimalist Focus Form)   -->
   <!-- ============================================================= -->
-  <div x-show="!isAuth" x-cloak class="fixed inset-0 z-50 bg-dark-950 flex flex-col justify-between p-5 overflow-y-auto">
+  <div x-show="!isAuth" x-cloak class="fixed inset-0 z-50 bg-[#070F1E] flex flex-col justify-between p-4 sm:p-6 overflow-y-auto select-none">
     <!-- Top Branding -->
-    <div class="flex flex-col items-center justify-center pt-8">
-      <div class="relative w-20 h-20 rounded-3xl bg-gradient-to-tr from-kazyon to-amber-500 p-1 shadow-[0_0_35px_rgba(255,102,0,0.45)] mb-3 flex items-center justify-center">
-        <div class="w-full h-full bg-dark-900 rounded-[20px] flex items-center justify-center text-kazyon text-3xl">
+    <div class="flex flex-col items-center justify-center pt-8 sm:pt-12">
+      <div class="relative w-20 h-20 rounded-3xl bg-gradient-to-tr from-kazyon via-amber-500 to-kazyon p-1 shadow-[0_0_35px_rgba(255,102,0,0.4)] mb-3 flex items-center justify-center">
+        <div class="w-full h-full bg-[#070F1E] rounded-[20px] flex items-center justify-center text-kazyon text-3xl">
           <i class="fa-solid fa-barcode"></i>
         </div>
       </div>
@@ -259,167 +259,129 @@
       </p>
     </div>
 
-    <!-- Login Box -->
-    <div class="w-full max-w-sm mx-auto bg-dark-850 border border-dark-750 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-3.5">
-      <div class="flex items-center justify-between pb-2 border-b border-dark-750">
+    <!-- Minimalist Focus Form (No distracting shortcuts / quick buttons) -->
+    <div class="w-full max-w-sm mx-auto bg-[#101A30] border border-[#1E293B] rounded-3xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] space-y-4">
+      <div class="flex items-center justify-between pb-2.5 border-b border-dark-750">
         <div class="flex items-center gap-2">
           <div class="w-2.5 h-2.5 rounded-full bg-kazyon animate-pulse"></div>
-          <h2 class="text-xs font-bold text-stone-200">بوابة الدخول وتتبع الأمان</h2>
+          <h2 class="text-xs font-bold text-stone-200">تسجيل الدخول للمنظومة</h2>
         </div>
-        <span class="text-[10px] font-mono text-kazyon font-bold bg-kazyon/15 px-2 py-0.5 rounded-md">RBAC SECURITY</span>
+        <div class="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-lg">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span x-text="clientIp"></span>
+        </div>
       </div>
 
-      <!-- Dynamic Client IP Tracking Box -->
-      <div class="p-3 bg-dark-900 rounded-2xl border border-dark-750 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-xs shrink-0">
-            <i class="fa-solid fa-network-wired" :class="isDetectingIp ? 'fa-spin' : ''"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[10px] text-stone-400 block font-medium">عنوان IP الخاص بجهازك</span>
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            </div>
-            <div class="text-xs font-bold font-mono text-white mt-0.5 flex items-center gap-1">
-              <span x-text="clientIp"></span>
-              <span class="text-[10px] font-sans text-emerald-400 font-semibold">(متصل بالشبكة)</span>
-            </div>
-          </div>
-        </div>
-        <button 
-          type="button" 
-          @click="initIpDetection()"
-          class="w-7 h-7 bg-dark-800 hover:bg-dark-750 text-stone-400 hover:text-white rounded-lg flex items-center justify-center text-[10px]"
-          title="إعادة فحص IP"
-        >
-          <i class="fa-solid fa-rotate-right" :class="isDetectingIp ? 'fa-spin text-kazyon' : ''"></i>
-        </button>
-      </div>
-
-      <!-- Auth Error Alert -->
-      <div x-show="loginError" x-cloak class="p-3 bg-red-950/80 border border-red-800 text-red-200 text-xs rounded-2xl flex items-center gap-2">
+      <!-- Auth Error Alert with smooth transition -->
+      <div 
+        x-show="loginError" 
+        x-cloak 
+        x-transition.opacity.duration.200ms
+        class="p-3 bg-red-950/80 border border-red-800 text-red-200 text-xs rounded-2xl flex items-center gap-2"
+      >
         <i class="fa-solid fa-circle-exclamation text-red-400 text-sm shrink-0"></i>
         <span x-text="loginError"></span>
       </div>
 
-      <!-- Username -->
+      <!-- Username Input -->
       <div>
         <label class="block text-xs font-bold text-stone-300 mb-1.5">
           <i class="fa-solid fa-user-gear text-kazyon ml-1"></i> اسم المستخدم (Username)
         </label>
-        <input 
-          type="text" 
-          x-model="credentials.username" 
-          @keydown.enter="login()"
-          placeholder="General أو admin" 
-          class="w-full h-13 bg-dark-900 border border-dark-700 rounded-2xl px-4 text-sm font-semibold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon font-mono"
-          autocomplete="username"
-        >
+        <div class="relative flex items-center">
+          <input 
+            type="text" 
+            x-model="credentials.username" 
+            @keydown.enter="login()"
+            placeholder="اسم المستخدم..." 
+            class="w-full h-14 bg-dark-900 border border-dark-700 hover:border-dark-650 focus:border-kazyon focus:ring-1 focus:ring-kazyon rounded-2xl px-4 text-sm font-semibold text-white placeholder:text-stone-500 font-mono transition-colors"
+            autocomplete="username"
+            autofocus
+          >
+        </div>
       </div>
 
-      <!-- Password -->
+      <!-- Password Input -->
       <div>
         <label class="block text-xs font-bold text-stone-300 mb-1.5">
           <i class="fa-solid fa-lock text-kazyon ml-1"></i> كلمة السر (Password)
         </label>
-        <div class="relative">
+        <div class="relative flex items-center">
           <input 
             :type="showPass ? 'text' : 'password'" 
             x-model="credentials.password" 
             @keydown.enter="login()"
-            placeholder="••••" 
-            class="w-full h-13 bg-dark-900 border border-dark-700 rounded-2xl px-4 pl-12 text-sm font-mono font-bold text-white focus:outline-none focus:border-kazyon focus:ring-1 focus:ring-kazyon"
+            placeholder="••••••••" 
+            class="w-full h-14 bg-dark-900 border border-dark-700 hover:border-dark-650 focus:border-kazyon focus:ring-1 focus:ring-kazyon rounded-2xl px-4 pl-12 text-sm font-mono font-bold text-white placeholder:text-stone-500 transition-colors"
             autocomplete="current-password"
           >
           <button 
             type="button" 
             @click="showPass = !showPass"
-            class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-stone-400 hover:text-white"
+            class="absolute left-3 w-8 h-8 flex items-center justify-center text-stone-400 hover:text-white touch-btn"
+            title="إظهار / إخفاء كلمة السر"
           >
             <i :class="showPass ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
           </button>
         </div>
       </div>
 
-      <!-- Login Submit Button (High target touch min 56px) -->
+      <!-- Bold Thumb-Friendly Submit Button (Min height 56px) -->
       <button 
         type="button" 
         @click="login()"
-        class="w-full h-14 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-[0_5px_20px_rgba(255,102,0,0.35)] touch-btn mt-2"
+        class="w-full h-14 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-[0_5px_25px_rgba(255,102,0,0.4)] touch-btn mt-2 transition-all"
       >
         <span>تسجيل الدخول للمنظومة</span>
-        <i class="fa-solid fa-arrow-left"></i>
+        <i class="fa-solid fa-arrow-left text-xs"></i>
       </button>
-
-      <!-- Quick 1-tap Role Selection Helpers -->
-      <div class="pt-2 border-t border-dark-750 space-y-1.5">
-        <span class="text-[10px] text-stone-400 block text-center font-bold">اختيار الحساب السريع (RBAC Accounts):</span>
-        <div class="grid grid-cols-2 gap-2">
-          <!-- Role 1: General (Main Admin) -->
-          <button 
-            type="button" 
-            @click="credentials.username = 'General'; credentials.password = '6060'; login()"
-            class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-kazyon text-right text-xs touch-btn flex flex-col justify-between"
-          >
-            <div class="flex items-center justify-between text-[11px] font-bold text-kazyon">
-              <span>مشرف عام</span>
-              <i class="fa-solid fa-user-shield"></i>
-            </div>
-            <span class="font-mono text-white text-[11px] font-bold mt-1">General (6060)</span>
-            <span class="text-[9px] text-stone-400 mt-0.5">تحكم كامل وسجل الأمان</span>
-          </button>
-
-          <!-- Role 2: Staff (Ahmed Said - Store Employee) -->
-          <button 
-            type="button" 
-            @click="credentials.username = 'admin'; credentials.password = '123'; login()"
-            class="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 hover:border-cyber-teal text-right text-xs touch-btn flex flex-col justify-between"
-          >
-            <div class="flex items-center justify-between text-[11px] font-bold text-cyber-teal">
-              <span>أحمد سعيد (موظف الفرع)</span>
-              <i class="fa-solid fa-user-check"></i>
-            </div>
-            <span class="font-mono text-white text-[11px] font-bold mt-1">admin (123)</span>
-            <span class="text-[9px] text-stone-400 mt-0.5">المساعد الشخصي وكاشف الأسعار</span>
-          </button>
-        </div>
-
-        <!-- Request Custom Account via WhatsApp (طلب حساب خاص) -->
-        <a 
-          href="https://wa.me/201016558430?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D8%BA%D8%A8%20%D9%81%D9%8A%20%D8%B7%D9%84%D8%A8%20%D8%AD%D8%B3%D8%A7%D8%A8%20%D8%AE%D8%A7%D8%B5%20%D9%84%D9%85%D9%86%D8%B8%D9%88%D9%85%D8%A9%20%D9%83%D8%A7%D8%B2%D9%8A%D9%88%D9%86%20%D9%85%D8%A7%D8%B1%D9%83%D8%AA"
-          target="_blank" 
-          rel="noopener noreferrer"
-          class="w-full min-h-[50px] py-2.5 px-3 rounded-2xl bg-emerald-600/15 hover:bg-emerald-600/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-center gap-2 touch-btn transition-colors mt-2"
-        >
-          <i class="fa-brands fa-whatsapp text-emerald-400 text-base"></i>
-          <span>طلب حساب خاص أو فرع جديد عبر واتساب</span>
-        </a>
-      </div>
     </div>
 
-    <!-- Login Footer Developer Details -->
+    <!-- Login Footer Developer Social Icons in Sleek Border Frame -->
     <div class="py-4 text-center">
-      <p class="text-xs text-stone-400 font-semibold">
+      <p class="text-[11px] text-stone-400 font-semibold mb-2">
         Developed with precision by web dev <span class="text-kazyon font-bold">A7med606</span>
       </p>
-      <div class="flex items-center justify-center gap-3.5 mt-2.5">
-        <a href="https://www.facebook.com/a7med6060" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+      <div class="flex items-center justify-center gap-3">
+        <a 
+          href="https://www.facebook.com/a7med6060" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          title="Facebook: a7med6060"
+        >
           <i class="fa-brands fa-facebook-f"></i>
         </a>
-        <a href="https://www.instagram.com/a7med.606" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+        <a 
+          href="https://www.instagram.com/a7med.606" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          title="Instagram: a7med.606"
+        >
           <i class="fa-brands fa-instagram"></i>
         </a>
-        <a href="https://a7med6060.blogspot.com/" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+        <a 
+          href="https://a7med6060.blogspot.com/" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          title="Blog: a7med6060"
+        >
           <i class="fa-solid fa-rss"></i>
         </a>
-        <a href="https://github.com/A7med606" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 hover:text-kazyon hover:border-kazyon transition-all text-xs">
+        <a 
+          href="https://github.com/A7med606" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          title="GitHub: A7med606"
+        >
           <i class="fa-brands fa-github"></i>
         </a>
       </div>
     </div>
   </div>
-
-
   <!-- ============================================================= -->
   <!-- 2. MAIN APPLICATION CONTENT (AUTHENTICATED)                  -->
   <!-- ============================================================= -->
@@ -514,6 +476,19 @@
             </div>
             <span class="hidden md:inline">سجل الأمان</span>
             <span class="text-[10px] font-mono px-1 rounded bg-dark-900/60" x-text="activeSessions.length || 1"></span>
+          </button>
+        </template>
+        <!-- Shortcut to Bulk Importer (Admin Only) -->
+        <template x-if="currentUser.role === 'admin'">
+          <button 
+            type="button" 
+            @click="activeTab = 'importer'"
+            class="h-10 px-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 touch-btn"
+            :class="activeTab === 'importer' ? 'bg-kazyon text-white border-kazyon' : 'bg-dark-850 hover:bg-dark-800 border-dark-700 text-stone-300'"
+            title="استيراد وتحديث شيت إكسيل"
+          >
+            <i class="fa-solid fa-file-import text-sm"></i>
+            <span class="hidden md:inline">استيراد</span>
           </button>
         </template>
 
@@ -1485,9 +1460,8 @@
         </div>
       </div>
 
-      <!-- 1. PROMINENT SINGLE-TAP BARCODE SCANNER & FAST LOOKUP BAR -->
+      <!-- 1. PROMINENT SINGLE-TAP BARCODE SCANNER & INSTANT AUTOFOCUS SEARCH BAR -->
       <div class="bg-gradient-to-r from-kazyon via-amber-500 to-kazyon rounded-3xl p-3.5 shadow-[0_8px_30px_rgba(255,102,0,0.35)] space-y-3">
-        
         <!-- Large Single-Tap Barcode Camera Button (Min 56px height for Android thumbs) -->
         <button 
           type="button" 
@@ -1501,33 +1475,37 @@
           <span class="text-[10px] bg-kazyon text-white px-2 py-0.5 rounded-lg font-mono font-bold">SCAN 0ms</span>
         </button>
 
-        <!-- Fast-Type Search & Instant Barcode Query Bar (Debounced Search for Low-Tier Devices) -->
+        <!-- Fast-Type Search & Instant Barcode Query Bar (Instant Autofocus) -->
         <div class="space-y-1.5">
           <div class="relative flex items-center gap-2">
             <div class="relative flex-1 flex items-center">
               <i class="fa-solid fa-magnifying-glass absolute right-3.5 text-stone-400 text-xs pointer-events-none" :class="isSearching ? 'text-kazyon animate-pulse' : 'text-stone-400'"></i>
               <input 
+                id="main-barcode-search-input"
+                x-ref="barcodeSearchInput"
                 type="text" 
                 x-model="fastBarcodeInput" 
                 @keydown.enter="quickBarcodeLookup(fastBarcodeInput)"
                 @input="handleSearchInput($event.target.value)"
                 placeholder="اكتب الباركود، الساب كود (Sub-Code)، أو اسم السلعة..." 
                 class="w-full min-h-[55px] h-14 bg-dark-950/90 border border-white/25 rounded-2xl pr-10 pl-10 text-xs sm:text-sm font-mono font-bold text-white placeholder:text-stone-400 placeholder:font-sans focus:outline-none focus:border-white focus:ring-2 focus:ring-white/50"
+                autofocus
+                autocomplete="off"
               >
               <!-- Searching Debounce Spinner -->
               <div x-show="isSearching" class="absolute left-9 text-kazyon text-xs flex items-center gap-1 pointer-events-none">
                 <i class="fa-solid fa-circle-notch fa-spin"></i>
               </div>
               <button 
+                type="button"
                 x-show="fastBarcodeInput" 
-                @click="clearSearch()"
-                class="absolute left-2 w-8 h-8 rounded-xl bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center text-xs"
+                @click="clearSearch(); $refs.barcodeSearchInput.focus()"
+                class="absolute left-2 w-8 h-8 rounded-xl bg-dark-800 text-stone-400 hover:text-white flex items-center justify-center text-xs touch-btn"
                 title="مسح البحث"
               >
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-
             <!-- Instant Query / Card Pop-Up Button (Min 55px height) -->
             <button 
               type="button" 
@@ -1540,86 +1518,146 @@
               <span>البطاقة</span>
             </button>
           </div>
-
-          <!-- Debounce Search & Offline-Ready Status Bar -->
+          <!-- Debounce Search & Fast Cache Status Bar -->
           <div class="flex items-center justify-between text-[11px] text-stone-200/90 px-1 pt-0.5">
             <div class="flex items-center gap-1.5">
               <i class="fa-solid fa-bolt text-amber-300"></i>
-              <span>بحث ذكي مؤجل (Debounced 250ms) خفيف على المعالج</span>
+              <span>بحث فوري بالتركيز التلقائي (Autofocus)</span>
             </div>
             <div class="flex items-center gap-1 text-[10px] text-emerald-300 font-mono">
               <i class="fa-solid fa-shield-halved"></i>
-              <span>تخزين محلي 0ms</span>
+              <span>ذاكرة محلية 0ms</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Instant Filter Chips Section -->
-      <div class="bg-dark-850 border border-dark-750 p-2.5 rounded-2xl space-y-2">
-        <!-- Horizontal Category Chips (0ms Lag) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+      <!-- SMART QUICK-FILTER CHIPS & CATEGORY BAR (أزرار التصفية السريعة) -->
+      <div class="bg-dark-850 border border-dark-750 p-3 rounded-2xl space-y-2.5 shadow-sm">
+        <!-- 1. Dedicated Smart Quick-Filter Chips (أزرار التصفية السريعة للتنقل بلمسة واحدة) -->
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <!-- Chip: All -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'all'"
+            :class="statusFilter === 'all' 
+              ? 'bg-kazyon text-white font-black shadow-[0_0_14px_rgba(255,102,0,0.45)] border-kazyon' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-layer-group text-xs"></i>
+            <span>الكل</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'all' ? 'bg-black/30 text-white' : 'bg-dark-900 text-stone-400'" x-text="items.length"></span>
+          </button>
+
+          <!-- Chip: Near Expiry (<45 days) -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'near_expiry'"
+            :class="statusFilter === 'near_expiry' 
+              ? 'bg-amber-500 text-dark-950 font-black shadow-[0_0_14px_rgba(245,158,11,0.5)] border-amber-400' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-triangle-exclamation text-amber-400" :class="statusFilter === 'near_expiry' ? 'text-dark-950' : ''"></i>
+            <span>منتهية قريباً ⚠️</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'near_expiry' ? 'bg-black/30 text-dark-950 font-black' : 'bg-dark-900 text-amber-300'" x-text="calcNearExpiryCount()"></span>
+          </button>
+
+          <!-- Chip: Active Promos -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'promo'"
+            :class="statusFilter === 'promo' 
+              ? 'bg-kazyon text-white font-black shadow-[0_0_14px_rgba(255,102,0,0.45)] border-kazyon' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-tags text-kazyon" :class="statusFilter === 'promo' ? 'text-white' : ''"></i>
+            <span>العروض السارية 🏷️</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'promo' ? 'bg-black/30 text-white' : 'bg-dark-900 text-kazyon'" x-text="calcPromoCount()"></span>
+          </button>
+
+          <!-- Chip: Low Stock -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'low_stock'"
+            :class="statusFilter === 'low_stock' 
+              ? 'bg-red-600 text-white font-black shadow-[0_0_14px_rgba(239,68,68,0.5)] border-red-500' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-store-slash text-red-400" :class="statusFilter === 'low_stock' ? 'text-white' : ''"></i>
+            <span>نواقص الرف 🚨</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'low_stock' ? 'bg-black/30 text-white' : 'bg-dark-900 text-red-300'" x-text="calcLowStockCount()"></span>
+          </button>
+
+          <!-- Chip: Warehouse Reserve -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'warehouse'"
+            :class="statusFilter === 'warehouse' 
+              ? 'bg-sky-500 text-white font-black shadow-[0_0_14px_rgba(14,165,233,0.45)] border-sky-400' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-warehouse text-sky-400" :class="statusFilter === 'warehouse' ? 'text-white' : ''"></i>
+            <span>المخزن 📦</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'warehouse' ? 'bg-black/30 text-white' : 'bg-dark-900 text-sky-300'" x-text="calcWarehouseCount()"></span>
+          </button>
+
+          <!-- Chip: Hall Stock -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'hall'"
+            :class="statusFilter === 'hall' 
+              ? 'bg-emerald-500 text-white font-black shadow-[0_0_14px_rgba(16,185,129,0.45)] border-emerald-400' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-shop text-emerald-400" :class="statusFilter === 'hall' ? 'text-white' : ''"></i>
+            <span>الصالة 🏬</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'hall' ? 'bg-black/30 text-white' : 'bg-dark-900 text-emerald-300'" x-text="calcHallCount()"></span>
+          </button>
+
+          <!-- Chip: Expired -->
+          <button 
+            type="button" 
+            @click="statusFilter = 'expired'"
+            :class="statusFilter === 'expired' 
+              ? 'bg-rose-600 text-white font-black shadow-[0_0_14px_rgba(225,29,72,0.5)] border-rose-500' 
+              : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border-dark-700'"
+            class="min-h-[46px] px-3.5 py-2 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1.5 border transition-all shrink-0 font-bold"
+          >
+            <i class="fa-solid fa-ban text-rose-400" :class="statusFilter === 'expired' ? 'text-white' : ''"></i>
+            <span>منتهية الصلاحية ⛔</span>
+            <span class="px-1.5 py-0.2 rounded-md font-mono text-[10px]" :class="statusFilter === 'expired' ? 'bg-black/30 text-white' : 'bg-dark-900 text-rose-300'" x-text="calcExpiredCount()"></span>
+          </button>
+        </div>
+
+        <!-- 2. Horizontal Department / Category Chips -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-dark-750">
+          <span class="text-[10px] text-stone-400 font-bold ml-1 shrink-0">الأقسام:</span>
           <button 
             type="button" 
             @click="selectedCategory = 'all'"
-            :class="selectedCategory === 'all' ? 'bg-kazyon text-white font-black shadow-md' : 'bg-dark-800 text-stone-300 border border-dark-700'"
-            class="px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap touch-btn flex items-center gap-1"
+            :class="selectedCategory === 'all' ? 'bg-stone-200 text-dark-950 font-black shadow-sm' : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border border-dark-700'"
+            class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap touch-btn flex items-center gap-1"
           >
-            <span>الكل</span>
-            <span class="text-[10px] opacity-80" x-text="'(' + items.length + ')'"></span>
+            <span>كل الأقسام</span>
           </button>
           
           <template x-for="cat in categories" :key="cat">
             <button 
               type="button" 
               @click="selectedCategory = cat"
-              :class="selectedCategory === cat ? 'bg-kazyon text-white font-black shadow-md' : 'bg-dark-800 text-stone-300 border border-dark-700'"
-              class="px-3.5 py-2.5 rounded-xl text-xs whitespace-nowrap touch-btn"
+              :class="selectedCategory === cat ? 'bg-stone-200 text-dark-950 font-black shadow-sm' : 'bg-dark-800 hover:bg-dark-750 text-stone-300 border border-dark-700'"
+              class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap touch-btn"
               x-text="cat"
             ></button>
           </template>
         </div>
-
-        <!-- Status Filter Badges (Quick Filter Pills) -->
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1.5 border-t border-dark-800">
-          <button 
-            type="button" 
-            @click="statusFilter = 'all'"
-            :class="statusFilter === 'all' ? 'text-kazyon font-bold border-b-2 border-kazyon' : 'text-stone-400'"
-            class="pb-1 text-xs whitespace-nowrap px-2"
-          >
-            كافة الأصناف
-          </button>
-          <button 
-            type="button" 
-            @click="statusFilter = 'promo'"
-            :class="statusFilter === 'promo' ? 'text-kazyon font-bold border-b-2 border-kazyon' : 'text-stone-400'"
-            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
-          >
-            <i class="fa-solid fa-fire text-kazyon text-[10px]"></i>
-            <span>عروض البرومو</span>
-          </button>
-          <button 
-            type="button" 
-            @click="statusFilter = 'low_stock'"
-            :class="statusFilter === 'low_stock' ? 'text-amber-400 font-bold border-b-2 border-amber-400' : 'text-stone-400'"
-            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
-          >
-            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-[10px]"></i>
-            <span>نقص الرف</span>
-          </button>
-          <button 
-            type="button" 
-            @click="statusFilter = 'expired'"
-            :class="statusFilter === 'expired' ? 'text-red-400 font-bold border-b-2 border-red-400' : 'text-stone-400'"
-            class="pb-1 text-xs whitespace-nowrap px-2 flex items-center gap-1"
-          >
-            <i class="fa-solid fa-ban text-red-400 text-[10px]"></i>
-            <span>منتهي الصلاحية</span>
-          </button>
-        </div>
       </div>
-
       <!-- Action Row: Count, Force Sync & Add Item -->
       <div class="flex items-center justify-between px-1 flex-wrap gap-2">
         <span class="text-xs text-stone-400 font-medium">
@@ -1660,10 +1698,11 @@
           <div 
             :id="'card-' + item.id"
             :class="{
-              'border-red-600/70 bg-red-950/15': item.status === 'expired',
-              'border-amber-600/70 bg-amber-950/15': item.status === 'low_stock',
-              'border-kazyon/50 bg-kazyon/10': item.promoPrice && item.promoPrice < item.regularPrice,
-              'border-dark-750 bg-dark-850': item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice)
+              'border-red-600/70 bg-red-950/20 shadow-[0_0_15px_rgba(239,68,68,0.15)]': item.status === 'expired',
+              'border-amber-500/70 bg-amber-950/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]': item.status !== 'expired' && isItemNearExpiry(item),
+              'border-rose-500/60 bg-rose-950/15': item.status === 'low_stock' && !isItemNearExpiry(item),
+              'border-kazyon/50 bg-kazyon/10': item.promoPrice && item.promoPrice < item.regularPrice && item.status !== 'expired' && !isItemNearExpiry(item),
+              'border-dark-750 bg-dark-850': item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice) && !isItemNearExpiry(item)
             }"
             class="rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 relative overflow-hidden transition-all duration-100"
           >
@@ -1673,30 +1712,33 @@
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="px-2 py-0.5 rounded-md bg-dark-800 border border-dark-700 text-stone-300 text-[10px] font-bold" x-text="item.category"></span>
                   
-                  <!-- Graphical Status Badges -->
+                  <!-- Graphical Status Badges with Clear Visual Color-Coding -->
                   <template x-if="item.status === 'expired'">
-                    <span class="px-2 py-0.5 rounded-md bg-red-500/20 border border-red-500/50 text-red-300 text-[10px] font-black inline-flex items-center gap-1">
-                      <i class="fa-solid fa-circle-xmark text-red-400"></i> منتهي الصلاحية
+                    <span class="px-2.5 py-0.5 rounded-md bg-red-500/20 border border-red-500/50 text-red-300 text-[10px] font-black inline-flex items-center gap-1">
+                      <i class="fa-solid fa-circle-xmark text-red-400"></i> منتهي الصلاحية ⛔
                     </span>
                   </template>
-                  <template x-if="item.status === 'low_stock'">
-                    <span class="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/50 text-amber-300 text-[10px] font-black inline-flex items-center gap-1">
-                      <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> نقص الرف
+                  <template x-if="item.status !== 'expired' && isItemNearExpiry(item)">
+                    <span class="px-2.5 py-0.5 rounded-md bg-amber-500/25 border border-amber-500/60 text-amber-300 text-[10px] font-black inline-flex items-center gap-1 animate-pulse">
+                      <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> يوشك على الانتهاء ⚠️
+                    </span>
+                  </template>
+                  <template x-if="item.status === 'low_stock' && !isItemNearExpiry(item)">
+                    <span class="px-2.5 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[10px] font-black inline-flex items-center gap-1">
+                      <i class="fa-solid fa-store-slash text-rose-400"></i> نقص الرف 🚨
                     </span>
                   </template>
                   <template x-if="item.promoPrice && item.promoPrice < item.regularPrice">
-                    <span class="px-2 py-0.5 rounded-md bg-kazyon/25 border border-kazyon/60 text-kazyon text-[10px] font-black inline-flex items-center gap-1">
-                      <i class="fa-solid fa-fire text-kazyon"></i> برومو كازيون
+                    <span class="px-2.5 py-0.5 rounded-md bg-kazyon/25 border border-kazyon/60 text-kazyon text-[10px] font-black inline-flex items-center gap-1">
+                      <i class="fa-solid fa-tags text-kazyon"></i> برومو كازيون 🏷️
                     </span>
                   </template>
-                  <template x-if="item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice)">
-                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
-                      سليم ومتاح
+                  <template x-if="item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice) && !isItemNearExpiry(item)">
+                    <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold inline-flex items-center gap-1">
+                      <i class="fa-solid fa-circle-check text-emerald-400"></i> متوفر وسليم ✅
                     </span>
                   </template>
                 </div>
-
-                <!-- Product Name -->
                 <h3 class="text-base font-extrabold text-white leading-snug pt-0.5 truncate hover:text-kazyon transition-colors" x-text="item.itemName"></h3>
                 
                 <!-- Barcode Tag with Sub-Code & Shelf Location -->
@@ -3122,26 +3164,64 @@
 
 
   <!-- ============================================================= -->
-  <!-- 5. FIXED BOTTOM NAVIGATION BAR                                -->
   <!-- ============================================================= -->
-  <div x-show="isAuth" x-cloak class="fixed bottom-9 inset-x-0 z-30 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 px-1 sm:px-4 py-1 flex items-center justify-around w-full max-w-none rounded-t-2xl sm:rounded-t-3xl shadow-2xl">
+  <!-- 5. ULTRA-SIMPLE THUMB-FIRST STICKY BOTTOM NAVIGATION BAR      -->
+  <!-- ============================================================= -->
+  <nav 
+    x-show="isAuth" 
+    x-cloak 
+    class="fixed bottom-0 inset-x-0 z-40 bg-dark-950/95 backdrop-blur-md border-t border-dark-750 px-2 py-1 flex items-center justify-around w-full max-w-none shadow-[0_-10px_25px_rgba(0,0,0,0.5)] select-none"
+    style="padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));"
+  >
     <!-- Tab 1: Inventory Hub -->
     <button 
       type="button" 
-      @click="activeTab = 'inventory'"
-      :class="activeTab === 'inventory' ? 'text-kazyon font-bold' : 'text-stone-400'"
-      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-2 touch-btn"
+      @click="activeTab = 'inventory'; $nextTick(() => { const el = document.getElementById('main-barcode-search-input'); if(el) el.focus(); })"
+      :class="activeTab === 'inventory' ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
+      class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
+      title="المخزون وجرد الأصناف"
     >
       <i class="fa-solid fa-boxes-stacked text-lg"></i>
-      <span class="text-[10px]">المخزون</span>
+      <span class="text-[10px] tracking-tight font-bold">المخزون</span>
+      <template x-if="activeTab === 'inventory'">
+        <div class="w-1.5 h-1.5 rounded-full bg-kazyon absolute bottom-0.5"></div>
+      </template>
     </button>
 
-    <!-- Tab 2: Promotional Shelf Price Tags (العروض والتخفيضات) -->
+    <!-- Tab 2: Quick Price Checker -->
+    <button 
+      type="button" 
+      @click="activeTab = 'price-checker'"
+      :class="activeTab === 'price-checker' ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
+      class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
+      title="كاشف الأسعار الفوري"
+    >
+      <i class="fa-solid fa-barcode text-lg"></i>
+      <span class="text-[10px] tracking-tight font-bold">كاشف الأسعار</span>
+      <template x-if="activeTab === 'price-checker'">
+        <div class="w-1.5 h-1.5 rounded-full bg-kazyon absolute bottom-0.5"></div>
+      </template>
+    </button>
+
+    <!-- Tab 3: Elevated Instant Camera Scanner Trigger (Floating Center Button) -->
+    <div class="relative -top-3 flex items-center justify-center px-1">
+      <button 
+        type="button" 
+        @click="scannerMode = 'barcode'; startCameraScanner('inventory')"
+        class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white flex items-center justify-center text-xl shadow-[0_0_22px_rgba(255,102,0,0.6)] border-2 border-dark-950 touch-btn shrink-0"
+        title="مسح سريع بالكاميرا (Camera Scanner)"
+      >
+        <i class="fa-solid fa-camera"></i>
+      </button>
+    </div>
+
+    <!-- Tab 4: Promotional Shelf Price Tags -->
     <button 
       type="button" 
       @click="activeTab = 'promo-tags'"
-      :class="activeTab === 'promo-tags' ? 'text-kazyon font-bold' : 'text-stone-400'"
-      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-2 touch-btn relative"
+      :class="activeTab === 'promo-tags' ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
+      class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
+      title="يافطات أسعار العروض"
     >
       <div class="relative">
         <i class="fa-solid fa-tags text-lg"></i>
@@ -3149,117 +3229,32 @@
           <span class="absolute -top-1 -right-2 px-1 rounded-full bg-kazyon text-white text-[8px] font-mono font-black" x-text="promoPriceTags.length"></span>
         </template>
       </div>
-      <span class="text-[10px]">أسعار العروض</span>
+      <span class="text-[10px] tracking-tight font-bold">عروض الأسعار</span>
+      <template x-if="activeTab === 'promo-tags'">
+        <div class="w-1.5 h-1.5 rounded-full bg-kazyon absolute bottom-0.5"></div>
+      </template>
     </button>
 
-    <!-- Tab 3: Quick Price Checker (Big Center Button) -->
+    <!-- Tab 5: Smart Notifications -->
     <button 
       type="button" 
-      @click="activeTab = 'price-checker'"
-      :class="activeTab === 'price-checker' ? 'text-kazyon font-bold' : 'text-stone-400'"
-      class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-2 touch-btn"
+      @click="activeTab = 'inventory'; isNotificationPanelOpen = !isNotificationPanelOpen; if(isNotificationPanelOpen) $nextTick(() => { const el = document.getElementById('inline-notifications-section'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
+      :class="isNotificationPanelOpen ? 'text-amber-400 font-black' : 'text-stone-400 hover:text-stone-200'"
+      class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
+      title="التنبيهات الفورية (45 يوم ونواقص الرف)"
     >
       <div class="relative">
-        <i class="fa-solid fa-barcode text-xl"></i>
-        <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-kazyon"></span>
+        <i class="fa-solid fa-bell text-lg" :class="calcTotalNotifications() > 0 ? 'text-amber-400 animate-wiggle' : ''"></i>
+        <template x-if="calcTotalNotifications() > 0">
+          <span class="absolute -top-1 -right-2 px-1 rounded-full bg-red-600 text-white text-[8px] font-mono font-black shadow-[0_0_8px_rgba(239,68,68,0.6)]" x-text="calcTotalNotifications()"></span>
+        </template>
       </div>
-      <span class="text-[10px]">كاشف الأسعار</span>
+      <span class="text-[10px] tracking-tight font-bold">التنبيهات</span>
+      <template x-if="isNotificationPanelOpen">
+        <div class="w-1.5 h-1.5 rounded-full bg-amber-400 absolute bottom-0.5"></div>
+      </template>
     </button>
-
-    <!-- Tab 4: Security & Activity Logs (Admin Only) -->
-    <template x-if="currentUser.role === 'admin'">
-      <button 
-        type="button" 
-        @click="activeTab = 'security-logs'"
-        :class="activeTab === 'security-logs' ? 'text-emerald-400 font-bold' : 'text-stone-400'"
-        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-2 touch-btn relative"
-      >
-        <div class="relative">
-          <i class="fa-solid fa-shield-halved text-lg"></i>
-          <span class="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-        <span class="text-[10px]">سجل الأمان</span>
-      </button>
-    </template>
-
-    <!-- Tab 5: Bulk Importer (Admin Only) -->
-    <template x-if="currentUser.role === 'admin'">
-      <button 
-        type="button" 
-        @click="activeTab = 'importer'"
-        :class="activeTab === 'importer' ? 'text-kazyon font-bold' : 'text-stone-400'"
-        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-2 touch-btn"
-      >
-        <i class="fa-solid fa-file-import text-lg"></i>
-        <span class="text-[10px]">استيراد الشيت</span>
-      </button>
-    </template>
-
-    <!-- Fast Camera Trigger (For Staff) -->
-    <template x-if="currentUser.role !== 'admin'">
-      <button 
-        type="button" 
-        @click="startCameraScanner('inventory')"
-        class="flex flex-col items-center justify-center gap-1 min-h-[55px] py-1 px-2 touch-btn text-kazyon"
-      >
-        <i class="fa-solid fa-camera text-lg"></i>
-        <span class="text-[10px]">مسح كاميرا</span>
-      </button>
-    </template>
-  </div>
-
-
-  <!-- ============================================================= -->
-  <!-- 6. STREAMLINED FOOTER BAR (Social Media Icons in Border Frame) -->
-  <!-- ============================================================= -->
-  <footer class="fixed bottom-0 inset-x-0 z-40 bg-dark-950/95 backdrop-blur-sm border-t border-dark-800/80 px-3 py-1.5 flex items-center justify-center text-[11px] shadow-md">
-    <!-- Clickable Styled Social & Profile Icons in Sleek Border Frame -->
-    <div class="flex items-center justify-center gap-3">
-      <a 
-        href="https://www.facebook.com/a7med6060" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
-        title="Facebook: a7med6060"
-        aria-label="Facebook"
-      >
-        <i class="fa-brands fa-facebook-f"></i>
-      </a>
-      <a 
-        href="https://www.instagram.com/a7med.606" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
-        title="Instagram: a7med.606"
-        aria-label="Instagram"
-      >
-        <i class="fa-brands fa-instagram"></i>
-      </a>
-      <a 
-        href="https://a7med6060.blogspot.com/" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
-        title="Blog: a7med6060"
-        aria-label="Blog"
-      >
-        <i class="fa-solid fa-rss"></i>
-      </a>
-      <a 
-        href="https://github.com/A7med606" 
-        target="_blank" 
-        rel="noopener noreferrer" 
-        class="w-7 h-7 rounded-full bg-dark-900 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
-        title="GitHub: A7med606"
-        aria-label="GitHub"
-      >
-        <i class="fa-brands fa-github"></i>
-      </a>
-    </div>
-  </footer>
-
-
-  <!-- ============================================================= -->
+  </nav>
   <!-- 6.5 DEDICATED FULL-SCREEN CAMERA OVERLAY MODAL (z-index: 9999) -->
   <!-- Zero-Overlap, No Misalignment, Instant Form Return            -->
   <!-- ============================================================= -->
@@ -3640,6 +3635,10 @@
             try {
               this.currentUser = JSON.parse(authUser);
               this.isAuth = true;
+              setTimeout(() => {
+                const el = document.getElementById('main-barcode-search-input');
+                if (el) el.focus();
+              });
             } catch (e) {
               this.isAuth = false;
             }
@@ -4376,6 +4375,10 @@
             if (window.confetti) {
               window.confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
             }
+            setTimeout(() => {
+              const el = document.getElementById('main-barcode-search-input');
+              if (el) el.focus();
+            });
           }
           // Role 2: Store Employee / Staff: Ahmed Said (admin / 123 or ahmed / 123)
           else if ((u === 'admin' || u === 'ahmed') && p === '123') {
@@ -4400,6 +4403,10 @@
             if (window.confetti) {
               window.confetti({ particleCount: 35, spread: 55, origin: { y: 0.7 } });
             }
+            setTimeout(() => {
+              const el = document.getElementById('main-barcode-search-input');
+              if (el) el.focus();
+            });
           } else {
             this.loginError = 'بيانات غير صحيحة! تأكد من الحساب (المشرف: General / 6060 | موظف الفرع أحمد سعيد: admin / 123).';
           }
@@ -4533,30 +4540,74 @@
           return this.items.reduce((acc, curr) => acc + (curr.warehouseQty || 0), 0);
         },
         calcAlertsCount() {
-          return this.items.filter(i => i.status === 'expired' || i.status === 'low_stock').length;
+          return this.items.filter(i => i.status === 'expired' || i.status === 'low_stock' || this.isItemNearExpiry(i)).length;
         },
-
-        // Real-Time Filtered Items
+        // Helper: Check if item or any of its batches expires within 45 days
+        isItemNearExpiry(item) {
+          if (!item) return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (item.expiryDate) {
+            const exp = new Date(item.expiryDate);
+            exp.setHours(0, 0, 0, 0);
+            const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+            if (diffDays <= 45) return true;
+          }
+          if (Array.isArray(item.batches)) {
+            return item.batches.some(b => {
+              if (!b.expiryDate) return false;
+              const bExp = new Date(b.expiryDate);
+              bExp.setHours(0, 0, 0, 0);
+              const bDiff = Math.ceil((bExp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+              return bDiff <= 45;
+            });
+          }
+          return false;
+        },
+        // Live Counters for Smart Quick-Filter Chips
+        calcNearExpiryCount() {
+          return this.items.filter(i => this.isItemNearExpiry(i)).length;
+        },
+        calcPromoCount() {
+          return this.items.filter(i => i.promoPrice && i.promoPrice < i.regularPrice).length;
+        },
+        calcLowStockCount() {
+          return this.items.filter(i => i.shopQty <= 3 || i.status === 'low_stock').length;
+        },
+        calcWarehouseCount() {
+          return this.items.filter(i => i.warehouseQty > 0).length;
+        },
+        calcHallCount() {
+          return this.items.filter(i => i.shopQty > 0).length;
+        },
+        calcExpiredCount() {
+          return this.items.filter(i => i.status === 'expired').length;
+        },
+        // Real-Time Filtered Items Supporting Smart Quick Chips
         filteredItems() {
           return this.items.filter(item => {
-            // Category filter
+            // 1. Department / Category filter
             if (this.selectedCategory !== 'all' && item.category !== this.selectedCategory) {
               return false;
             }
-
-            // Status filter
-            if (this.statusFilter === 'promo') {
+            // 2. Smart Quick Status Filter
+            if (this.statusFilter === 'near_expiry') {
+              if (!this.isItemNearExpiry(item)) return false;
+            } else if (this.statusFilter === 'promo') {
               if (!item.promoPrice || item.promoPrice >= item.regularPrice) return false;
             } else if (this.statusFilter === 'low_stock') {
-              if (item.status !== 'low_stock') return false;
+              if (item.shopQty > 3 && item.status !== 'low_stock') return false;
+            } else if (this.statusFilter === 'warehouse') {
+              if (!item.warehouseQty || item.warehouseQty <= 0) return false;
+            } else if (this.statusFilter === 'hall') {
+              if (!item.shopQty || item.shopQty <= 0) return false;
             } else if (this.statusFilter === 'expired') {
               if (item.status !== 'expired') return false;
             } else if (this.statusFilter === 'alerts') {
-              if (item.status !== 'expired' && item.status !== 'low_stock') return false;
+              if (item.status !== 'expired' && item.status !== 'low_stock' && !this.isItemNearExpiry(item)) return false;
             }
-
-            // Search query
-            if (this.searchQuery.trim()) {
+            // 3. Search query (Barcode, Sub-Code, or Name)
+            if (this.searchQuery && this.searchQuery.trim()) {
               const q = this.searchQuery.toLowerCase().trim();
               const matchName = item.itemName.toLowerCase().includes(q);
               const matchBarcode = item.barcode.includes(q);
@@ -4564,11 +4615,9 @@
               const matchCategory = item.category.toLowerCase().includes(q);
               return matchName || matchBarcode || matchSubCode || matchCategory;
             }
-
             return true;
           });
         },
-
         // Quick Price Checker Lookup
         checkPrice(code) {
           if (!code) return;
