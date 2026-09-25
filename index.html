@@ -9,7 +9,7 @@
   <meta property="og:description" content="نظام إدارة ومخزون كازيون ماركت الميداني، كاشف الأسعار والعروض، سجل الهوالك والمرتجعات، مسح الباركود السريع والتزامن الفوري للأندرويد">
 
   <!-- Mobile Browser Theme -->
-  <meta name="theme-color" content="#070F1E">
+  <meta name="theme-color" content="#030712">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -30,35 +30,42 @@
         extend: {
           colors: {
             kazyon: {
-              DEFAULT: '#FF6600',
-              hover: '#FF7A1A',
-              dark: '#E65C00',
-              light: '#FF8533',
-              glow: 'rgba(255, 102, 0, 0.45)',
+              DEFAULT: '#FF5500', // Kazyon Electric Orange
+              hover: '#FF6A1A',
+              dark: '#E04B00',
+              light: '#FF772E',
+              glow: 'rgba(255, 85, 0, 0.45)',
+            },
+            neon: {
+              orange: '#FF5500',
+              cyan: '#22D3EE',
+              emerald: '#10B981',
+              amber: '#FBBF24',
+              red: '#EF4444',
             },
             neo: {
-              bg: '#070F1E',       // OLED Rich Navy Dark Canvas
-              card: '#101A30',     // Frosted Slate Card Container
-              cardHover: '#16233F',
-              border: '#1E293B',   // Clean Subtle 1px Border Highlight
-              borderLight: '#273854',
-              surface: '#0B1426',
+              bg: '#030712',       // OLED Deep Midnight Slate
+              card: '#111827',     // Floating Translucent Glass Card
+              cardHover: '#161F30',
+              border: '#1F2937',   // Subtle 1px Border Highlight
+              borderLight: '#374151',
+              surface: '#070D1E',
             },
             cyber: {
-              teal: '#38BDF8',
-              cyan: '#00B4D8',
-              blue: '#0284C7',
-              deep: '#0B1E38',
+              teal: '#22D3EE',
+              cyan: '#06B6D4',
+              blue: '#3B82F6',
+              deep: '#0F172A',
             },
             dark: {
-              950: '#040810', // Deepest OLED black / status bars
-              900: '#070F1E', // Next-Gen OLED Dark Slate Navy Canvas
-              850: '#101A30', // Elevated frosted-glass slate card
-              800: '#16233F', // Interactive elevated surface
-              750: '#1E293B', // Refined subtle 1px border highlight
-              700: '#273854', // Prominent border
-              650: '#334B70',
-              600: '#43618E',
+              950: '#030712', // Deepest OLED Midnight Slate
+              900: '#070D1E', // Canvas Deep Slate
+              850: '#111827', // Floating Translucent Glass Card
+              800: '#161F30', // Elevated Interactive Surface
+              750: '#1F2937', // Refined Subtle 1px Border
+              700: '#374151', // Prominent Border
+              650: '#4B5563',
+              600: '#6B7280',
             }
           },
           fontFamily: {
@@ -113,13 +120,46 @@
       padding: 0;
       overflow-x: hidden;
       font-family: 'Cairo', sans-serif;
-      background-color: #070F1E;
+      background-color: #030712;
       color: #F8FAFC;
       touch-action: manipulation;
+      -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: none;
+      scroll-behavior: auto;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* High-Performance Instant Touch Scrolling on Android Viewports */
+    .scroll-touch, 
+    .overflow-y-auto, 
+    .overflow-y-scroll,
+    [data-scrollable="true"] {
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-y !important;
+      overscroll-behavior-y: contain;
+      scroll-behavior: auto !important;
+    }
+
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-x !important;
+      overscroll-behavior-x: contain;
+    }
+
+    /* GPU & Layout/Paint Containment: Zero-Lag 60/120Hz Fast Scrolling */
+    .product-card-optimized {
+      content-visibility: auto;
+      contain-intrinsic-size: 0 320px;
+      contain: layout style paint;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+
+    .batch-subcard-optimized {
+      contain: content;
+      transform: translateZ(0);
+    }
 
     /* Dedicated Full-Screen Camera Scanner Overlay (z-index: 9999) */
     .camera-fullscreen-overlay {
@@ -179,8 +219,14 @@
       transition: transform 0.04s ease, filter 0.04s ease !important;
     }
     .touch-btn:active {
-      transform: scale(0.96) !important;
-      filter: brightness(0.9) !important;
+      transform: scale(0.97) !important;
+      filter: brightness(1.15) !important;
+    }
+    .glass-card {
+      background-color: rgba(17, 24, 39, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid #1F2937;
     }
     .touch-btn-sm:active {
       transform: scale(0.94) !important;
@@ -243,11 +289,11 @@
   <!-- ============================================================= -->
   <!-- 1. STREAMLINED AUTHENTICATION SCREEN (Minimalist Focus Form)   -->
   <!-- ============================================================= -->
-  <div x-show="!isAuth" x-cloak class="fixed inset-0 z-50 bg-[#070F1E] flex flex-col justify-between p-4 sm:p-6 overflow-y-auto select-none">
+  <div x-show="!isAuth" x-cloak class="fixed inset-0 z-50 bg-[#030712] flex flex-col justify-between p-4 sm:p-6 overflow-y-auto select-none">
     <!-- Top Branding -->
     <div class="flex flex-col items-center justify-center pt-8 sm:pt-12">
       <div class="relative w-20 h-20 rounded-3xl bg-gradient-to-tr from-kazyon via-amber-500 to-kazyon p-1 shadow-[0_0_35px_rgba(255,102,0,0.4)] mb-3 flex items-center justify-center">
-        <div class="w-full h-full bg-[#070F1E] rounded-[20px] flex items-center justify-center text-kazyon text-3xl">
+        <div class="w-full h-full bg-[#030712] rounded-[20px] flex items-center justify-center text-kazyon text-3xl">
           <i class="fa-solid fa-barcode"></i>
         </div>
       </div>
@@ -260,7 +306,7 @@
     </div>
 
     <!-- Minimalist Focus Form (No distracting shortcuts / quick buttons) -->
-    <div class="w-full max-w-sm mx-auto bg-[#101A30] border border-[#1E293B] rounded-3xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] space-y-4">
+    <div class="w-full max-w-sm mx-auto bg-[#111827] border border-[#1F2937] rounded-3xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] space-y-4">
       <div class="flex items-center justify-between pb-2.5 border-b border-dark-750">
         <div class="flex items-center gap-2">
           <div class="w-2.5 h-2.5 rounded-full bg-kazyon animate-pulse"></div>
@@ -347,7 +393,7 @@
           href="https://www.facebook.com/a7med6060" 
           target="_blank" 
           rel="noopener noreferrer" 
-          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          class="w-8 h-8 rounded-full bg-[#111827] border border-[#1F2937] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
           title="Facebook: a7med6060"
         >
           <i class="fa-brands fa-facebook-f"></i>
@@ -356,7 +402,7 @@
           href="https://www.instagram.com/a7med.606" 
           target="_blank" 
           rel="noopener noreferrer" 
-          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          class="w-8 h-8 rounded-full bg-[#111827] border border-[#1F2937] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
           title="Instagram: a7med.606"
         >
           <i class="fa-brands fa-instagram"></i>
@@ -365,7 +411,7 @@
           href="https://a7med6060.blogspot.com/" 
           target="_blank" 
           rel="noopener noreferrer" 
-          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          class="w-8 h-8 rounded-full bg-[#111827] border border-[#1F2937] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
           title="Blog: a7med6060"
         >
           <i class="fa-solid fa-rss"></i>
@@ -374,7 +420,7 @@
           href="https://github.com/A7med606" 
           target="_blank" 
           rel="noopener noreferrer" 
-          class="w-8 h-8 rounded-full bg-[#101A30] border border-[#1E293B] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
+          class="w-8 h-8 rounded-full bg-[#111827] border border-[#1F2937] hover:border-kazyon text-stone-300 hover:text-kazyon flex items-center justify-center transition-all text-xs touch-btn"
           title="GitHub: A7med606"
         >
           <i class="fa-brands fa-github"></i>
@@ -570,104 +616,243 @@
     <!-- ============================================================= -->
     <div x-show="activeTab === 'inventory'" class="p-2 sm:p-3.5 space-y-3.5 w-full max-w-none">
       
-      <!-- Ahmed Said Personal Assistant Banner (المساعد الشخصي الذكي لموظف كازيون) -->
-      <div class="p-3 bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 rounded-3xl border border-dark-750 flex items-center justify-between flex-wrap gap-2 shadow-lg">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-cyber-deep border border-cyber-teal/40 text-cyber-teal flex items-center justify-center text-base shadow-sm shrink-0">
-            <i class="fa-solid fa-user-tie"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs font-black text-white">المساعد الشخصي لموظف كازيون:</span>
-              <span class="text-xs font-extrabold text-kazyon" x-text="currentUser.name || currentUser.username || (currentUser.role === 'admin' ? 'مشرف عام النظام (General Admin)' : 'موظف كازيون (Staff)')"></span>
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyber-deep border border-cyber-teal/40 text-cyber-teal text-[10px] font-mono font-bold shadow-sm">
-                <i class="fa-solid fa-mobile-screen-button text-xs"></i>
-                <span x-text="deviceInfo || 'جهاز محمول'"></span>
-              </span>
-              <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-bold">0ms POCKET ASSISTANT</span>
-            </div>
-            <p class="text-[10px] text-stone-400 mt-0.5">
-              كاشف الأسعار الفوري، تحديد مواقع الصالة مقابل المستودع، الدفعات والساب كود
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button 
-            type="button" 
-            @click="startCameraScanner('inventory')"
-            class="h-9 px-3 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn shadow-md"
-            title="فتح الكاميرا لمسح باركود سلعة فوراً"
-          >
-            <i class="fa-solid fa-camera"></i>
-            <span>مسح كاميرا</span>
-          </button>
-          <button 
-            type="button" 
-            @click="openItemModal()"
-            class="h-9 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center gap-1 touch-btn"
-            title="إضافة سلعة ودفعات يدوياً"
-          >
-            <i class="fa-solid fa-plus text-kazyon"></i>
-            <span>+ صنف جديد</span>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Instant Graphical Status KPI Metrics Grid (1-tap filtering) -->
+      <!-- ============================================================= -->
+      <!-- TOP STATUS KPI STRIP (4 High-Contrast Compact Glass Cards)     -->
+      <!-- ============================================================= -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <!-- Total Items -->
+        <!-- Metric 1: Total Items -->
         <button 
           type="button" 
           @click="statusFilter = 'all'"
-          :class="statusFilter === 'all' ? 'border-kazyon bg-dark-800 shadow-[0_0_15px_rgba(255,102,0,0.2)]' : 'border-dark-750 bg-dark-850'"
-          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px]"
+          :class="statusFilter === 'all' ? 'border-[#22D3EE] bg-[#111827] shadow-[0_0_15px_rgba(34,211,238,0.25)]' : 'border-[#1F2937] bg-[#111827]/80'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px] backdrop-blur-md transition-all"
         >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">إجمالي الأصناف</span>
-            <i class="fa-solid fa-cubes text-xs text-kazyon"></i>
+            <i class="fa-solid fa-boxes-stacked text-xs text-[#22D3EE]"></i>
           </div>
-          <div class="text-2xl font-black font-mono text-white mt-1" x-text="items.length"></div>
+          <div class="text-2xl font-black font-mono text-[#22D3EE] mt-1" x-text="items.length"></div>
         </button>
 
-        <!-- Shelf Hall Stock Total -->
-        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right min-h-[55px]">
+        <!-- Metric 2: Hall Stock -->
+        <button
+          type="button"
+          @click="statusFilter = 'hall'"
+          :class="statusFilter === 'hall' ? 'border-[#10B981] bg-[#111827] shadow-[0_0_15px_rgba(16,185,129,0.25)]' : 'border-[#1F2937] bg-[#111827]/80'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px] backdrop-blur-md transition-all"
+        >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">المعروض بالصالة</span>
-            <i class="fa-solid fa-store text-xs text-emerald-400"></i>
+            <i class="fa-solid fa-store text-xs text-[#10B981]"></i>
           </div>
-          <div class="text-2xl font-black font-mono text-emerald-400 mt-1" x-text="calcTotalHall()"></div>
-        </div>
+          <div class="text-2xl font-black font-mono text-[#10B981] mt-1" x-text="calcTotalHall()"></div>
+        </button>
 
-        <!-- Warehouse Reserve Stock Total -->
-        <div class="p-3 rounded-2xl border border-dark-750 bg-dark-850 flex flex-col justify-between text-right min-h-[55px]">
+        <!-- Metric 3: Warehouse Stock -->
+        <button
+          type="button"
+          @click="statusFilter = 'warehouse'"
+          :class="statusFilter === 'warehouse' ? 'border-[#FBBF24] bg-[#111827] shadow-[0_0_15px_rgba(251,191,36,0.25)]' : 'border-[#1F2937] bg-[#111827]/80'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px] backdrop-blur-md transition-all"
+        >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">بالمستودع</span>
-            <i class="fa-solid fa-warehouse text-xs text-amber-400"></i>
+            <i class="fa-solid fa-warehouse text-xs text-[#FBBF24]"></i>
           </div>
-          <div class="text-2xl font-black font-mono text-amber-400 mt-1" x-text="calcTotalWarehouse()"></div>
-        </div>
+          <div class="text-2xl font-black font-mono text-[#FBBF24] mt-1" x-text="calcTotalWarehouse()"></div>
+        </button>
 
-        <!-- Expired / Low Stock Alerts -->
+        <!-- Metric 4: Expiry & Low Stock Alerts -->
         <button 
           type="button" 
-          @click="statusFilter = statusFilter === 'alerts' ? 'all' : 'alerts'"
-          :class="statusFilter === 'alerts' ? 'border-red-500 bg-red-950/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'border-dark-750 bg-dark-850'"
-          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px]"
+          @click="isNotificationPanelOpen = !isNotificationPanelOpen; if(isNotificationPanelOpen) { notificationFilter = 'expiry'; $nextTick(() => { const el = document.getElementById('inline-notifications-section'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); }"
+          :class="calcTotalNotifications() > 0 ? 'border-[#EF4444] bg-[#111827] shadow-[0_0_15px_rgba(239,68,68,0.25)]' : 'border-[#1F2937] bg-[#111827]/80'"
+          class="p-3 rounded-2xl border flex flex-col justify-between text-right touch-btn min-h-[55px] backdrop-blur-md transition-all"
         >
           <div class="flex items-center justify-between text-stone-400">
             <span class="text-[11px] font-bold">تنبيهات فورية</span>
-            <i class="fa-solid fa-triangle-exclamation text-xs text-red-400"></i>
+            <i class="fa-solid fa-triangle-exclamation text-xs text-[#EF4444]" :class="calcTotalNotifications() > 0 ? 'animate-bounce' : ''"></i>
           </div>
           <div class="flex items-baseline justify-between mt-1">
-            <span class="text-2xl font-black font-mono text-red-400" x-text="calcAlertsCount()"></span>
-            <span class="text-[10px] bg-red-500/20 text-red-300 font-bold px-1.5 py-0.5 rounded">فحص</span>
+            <span class="text-2xl font-black font-mono text-[#EF4444]" x-text="calcAlertsCount()"></span>
+            <span class="text-[10px] bg-[#EF4444]/20 text-red-300 font-bold px-1.5 py-0.5 rounded">فحص</span>
           </div>
         </button>
       </div>
 
       <!-- ============================================================= -->
-      <!-- INLINE COLLAPSIBLE SECTIONS (ABOLISHED ALL POPUP MODALS)      -->
+      <!-- RADICALLY SIMPLIFIED GRAPHICAL DASHBOARD (شبكة الأزرار الرسومية) -->
       <!-- ============================================================= -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-kazyon animate-pulse"></div>
+            <h2 class="text-xs font-bold text-stone-300 uppercase tracking-wider">لوحة المهام الرسومية السريعة</h2>
+          </div>
+          <span class="text-[10px] text-stone-500 font-mono">1-TAP ANDROID ACTIONS</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <!-- CARD 1: 🔍 البحث السريع والفحص (Search & Scan) -->
+          <div 
+            @click="$refs.barcodeSearchInput.focus(); $nextTick(() => { const el = document.getElementById('main-barcode-search-input'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); })"
+            class="relative p-4 rounded-3xl bg-[#111827]/90 backdrop-blur-md border border-[#1F2937] hover:border-kazyon/60 flex items-center justify-between gap-3 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer touch-btn group transition-all"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-kazyon/25 via-kazyon/10 to-transparent border border-kazyon/40 text-kazyon flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_15px_rgba(255,85,0,0.25)] shrink-0 group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-barcode"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-white">البحث السريع والفحص</h3>
+                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold bg-[#22D3EE]/20 text-[#22D3EE] border border-[#22D3EE]/30">0ms</span>
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">فحص الباركود، الكود، والبحث اللحظي</p>
+              </div>
+            </div>
+            <!-- Direct Camera Trigger -->
+            <button 
+              type="button"
+              @click.stop="startCameraScanner('inventory')"
+              class="h-11 px-3 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl text-xs font-black flex items-center gap-1.5 touch-btn shadow-md shrink-0 active:scale-95"
+              title="فتح كاميرا مسح الباركود فوراً"
+            >
+              <i class="fa-solid fa-camera text-sm"></i>
+              <span class="text-[11px]">مسح</span>
+            </button>
+          </div>
+
+          <!-- CARD 2: 📦 إضافة منتج أو دفعة (Add Product / Batch) -->
+          <div 
+            @click="openItemModal()"
+            class="relative p-4 rounded-3xl bg-[#111827]/90 backdrop-blur-md border border-[#1F2937] hover:border-kazyon/60 flex items-center justify-between gap-3 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer touch-btn group transition-all"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-kazyon/25 via-kazyon/10 to-transparent border border-kazyon/40 text-kazyon flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_15px_rgba(255,85,0,0.25)] shrink-0 group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-box-open"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-white">إضافة منتج أو دفعة</h3>
+                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-kazyon/20 text-kazyon border border-kazyon/30">جديد</span>
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">تسجيل صنف جديد أو توريد دفعة للصالة</p>
+              </div>
+            </div>
+            <!-- Sub Quick-Batch Trigger -->
+            <button 
+              type="button"
+              @click.stop="openQuickBatchModal()"
+              class="h-11 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-2xl text-xs font-black flex items-center gap-1.5 touch-btn shrink-0 hover:border-kazyon hover:text-white"
+              title="توريد دفعة سريعة لصنف مسجل"
+            >
+              <i class="fa-solid fa-layer-group text-kazyon text-xs"></i>
+              <span class="text-[11px]">+ دفعة</span>
+            </button>
+          </div>
+
+          <!-- CARD 3: ⚠️ تنبيهات الصلاحية القريبة (Expiry Alerts) -->
+          <div 
+            @click="isNotificationPanelOpen = !isNotificationPanelOpen; if(isNotificationPanelOpen) { notificationFilter = 'expiry'; $nextTick(() => { const el = document.getElementById('inline-notifications-section'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); }"
+            class="relative p-4 rounded-3xl bg-[#111827]/90 backdrop-blur-md border border-[#1F2937] hover:border-[#FBBF24]/60 flex items-center justify-between gap-3 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer touch-btn group transition-all"
+            :class="calcTotalNotifications() > 0 ? 'border-[#FBBF24]/50' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#FBBF24]/20 via-[#FBBF24]/10 to-transparent border border-[#FBBF24]/40 text-[#FBBF24] flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_15px_rgba(251,191,36,0.25)] shrink-0 group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-white">تنبيهات الصلاحية</h3>
+                  <template x-if="calcTotalNotifications() > 0">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-[#FBBF24]/20 text-[#FBBF24] border border-[#FBBF24]/40 animate-pulse" x-text="calcTotalNotifications() + ' تنبيه'"></span>
+                  </template>
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">أصناف 45 يوماً والتواريخ المنتهية</p>
+              </div>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 group-hover:text-[#FBBF24] shrink-0">
+              <i :class="isNotificationPanelOpen ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs"></i>
+            </div>
+          </div>
+
+          <!-- CARD 4: 🏷️ أوراق أسعار العروض (Price Tags) -->
+          <div 
+            @click="activeTab = 'promo-tags'"
+            class="relative p-4 rounded-3xl bg-[#111827]/90 backdrop-blur-md border border-[#1F2937] hover:border-[#10B981]/60 flex items-center justify-between gap-3 shadow-[0_8px_25px_rgba(0,0,0,0.5)] cursor-pointer touch-btn group transition-all"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#10B981]/20 via-[#10B981]/10 to-transparent border border-[#10B981]/40 text-[#10B981] flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_15px_rgba(16,185,129,0.25)] shrink-0 group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-tags"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-white">أوراق أسعار العروض</h3>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40" x-text="calcActivePromosCount() + ' عرض ساري'"></span>
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">طباعة لافتات التخفيضات ولافتات الرف</p>
+              </div>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 group-hover:text-[#10B981] shrink-0">
+              <i class="fa-solid fa-arrow-left text-xs"></i>
+            </div>
+          </div>
+
+          <!-- CARD 5: 📊 الشيتات والمزامنة (Sheets & Sync) -->
+          <div 
+            class="relative p-4 rounded-3xl bg-[#111827]/90 backdrop-blur-md border border-[#1F2937] hover:border-[#22D3EE]/60 flex items-center justify-between flex-wrap sm:flex-nowrap gap-3 shadow-[0_8px_25px_rgba(0,0,0,0.5)] sm:col-span-2 lg:col-span-1 group transition-all"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#22D3EE]/20 via-[#22D3EE]/10 to-transparent border border-[#22D3EE]/40 text-[#22D3EE] flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_15px_rgba(34,211,238,0.25)] shrink-0 group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-file-excel"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-white">الشيتات والمزامنة</h3>
+                  <span 
+                    class="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold"
+                    :class="isOnline ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'"
+                    x-text="isOnline ? 'سحابي متصل' : 'أوفلاين محلي'"
+                  ></span>
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">استيراد وتصدير إكسيل وتزامن فوري</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0 w-full sm:w-auto justify-end mt-1 sm:mt-0">
+              <button 
+                type="button"
+                @click.stop="exportInventoryExcel()"
+                class="h-10 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn hover:text-emerald-400 hover:border-emerald-500"
+                title="تصدير شيت إكسيل لكافة الأصناف"
+              >
+                <i class="fa-solid fa-file-arrow-down text-emerald-400 text-xs"></i>
+                <span class="text-[11px]">تصدير</span>
+              </button>
+              <button 
+                type="button"
+                @click.stop="forceCloudSync()"
+                :disabled="isSyncingCloud"
+                class="h-10 px-3 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center gap-1.5 touch-btn hover:text-[#22D3EE] hover:border-[#22D3EE]"
+                title="مزامنة فورية الآن"
+              >
+                <i class="fa-solid fa-arrows-rotate text-[#22D3EE] text-xs" :class="isSyncingCloud ? 'fa-spin' : ''"></i>
+                <span class="text-[11px]">مزامنة</span>
+              </button>
+              <template x-if="currentUser.role === 'admin'">
+                <button 
+                  type="button"
+                  @click.stop="activeTab = 'importer'"
+                  class="h-10 px-3 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon text-white rounded-xl text-xs font-black flex items-center gap-1 touch-btn shadow-sm"
+                  title="استيراد وتحديث شيت إكسيل"
+                >
+                  <i class="fa-solid fa-file-import text-xs"></i>
+                  <span class="text-[11px]">استيراد</span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- 1. INLINE NOTIFICATION CENTER -->
       <div 
@@ -1119,6 +1304,7 @@
               <input 
                 type="text" 
                 x-model="modalItem.barcode" 
+                @change="handleModalBarcodeChange(modalItem.barcode)"
                 placeholder="مثال: 6281007010115"
                 class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
               >
@@ -1126,7 +1312,7 @@
                 type="button" 
                 @click="scannerMode = 'barcode'; startCameraScanner('modalItem')"
                 class="min-h-[50px] h-12 px-4 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all"
-                title="مسح الباركود بالكاميرا فوراً"
+                title="مسح الباركود بالكاميرا وجلب البيانات والاسم تلقائياً"
               >
                 <i class="fa-solid fa-camera text-sm"></i>
                 <span>مسح بالكاميرا</span>
@@ -1151,44 +1337,21 @@
             >
           </div>
 
-          <!-- Product Name with AI-Powered Recognition Camera Button -->
+          <!-- Product Name (Auto-Fetched from Barcode) -->
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="block text-[11px] font-bold text-stone-300">اسم المنتج (Item Name) *</label>
-              <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
-                <span>التعرف الذكي الدقيق بالصورة</span>
+              <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-bolt text-[9px]"></i>
+                <span>يُجلب تلقائياً فور مسح الباركود</span>
               </span>
             </div>
-            <div class="flex items-center gap-2">
-              <input 
-                type="text" 
-                x-model="modalItem.itemName" 
-                placeholder="مثال: حليب كازيون كامل الدسم 1 لتر"
-                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-              >
-              <!-- AI Product Name Camera Button -->
-              <button 
-                type="button" 
-                @click="startAiProductRecognition('modalItem')"
-                :disabled="isRecognizingAiImage"
-                class="min-h-[50px] h-12 px-3.5 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all disabled:opacity-50"
-                title="تصوير المنتج بالكاميرا وتسميته آلياً بالذكاء الاصطناعي"
-              >
-                <template x-if="!isRecognizingAiImage">
-                  <span class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-camera-retro text-amber-300 text-xs"></i>
-                    <span>✨ التعرف بالصورة</span>
-                  </span>
-                </template>
-                <template x-if="isRecognizingAiImage">
-                  <span class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i>
-                    <span>جاري التعرف...</span>
-                  </span>
-                </template>
-              </button>
-            </div>
+            <input 
+              type="text" 
+              x-model="modalItem.itemName" 
+              placeholder="مثال: حليب كازيون كامل الدسم 1 لتر"
+              class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3.5 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+            >
           </div>
 
           <!-- Category -->
@@ -1704,7 +1867,7 @@
               'border-kazyon/50 bg-kazyon/10': item.promoPrice && item.promoPrice < item.regularPrice && item.status !== 'expired' && !isItemNearExpiry(item),
               'border-dark-750 bg-dark-850': item.status === 'valid' && (!item.promoPrice || item.promoPrice >= item.regularPrice) && !isItemNearExpiry(item)
             }"
-            class="rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 relative overflow-hidden transition-all duration-100"
+            class="product-card-optimized rounded-3xl border p-4 shadow-sm flex flex-col justify-between space-y-3 relative overflow-hidden transition-all duration-100"
           >
             <!-- Card Top: Category & Bold Color-Coded Status Badge -->
             <div class="flex items-start justify-between gap-2">
@@ -1831,10 +1994,10 @@
               </div>
 
               <!-- Structured Sub-Card List for Every Individual Batch -->
-              <div class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
+              <div class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar scroll-touch">
                 <template x-for="(batch, bIdx) in (item.batches && item.batches.length > 0 ? item.batches : [{ productionDate: item.productionDate, expiryDate: item.expiryDate, warehouseQty: item.warehouseQty, hallQty: item.shopQty }])" :key="batch.id || bIdx">
                   <div 
-                    class="p-2 rounded-xl text-xs flex flex-col gap-1 border transition-all"
+                    class="batch-subcard-optimized p-2 rounded-xl text-xs flex flex-col gap-1 border transition-all"
                     :class="isBatchExpiringWithin45Days(batch.expiryDate) ? 'bg-amber-950/40 border-amber-500/70 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.15)]' : 'bg-dark-850/90 border-dark-750 text-stone-300'"
                   >
                     <!-- Batch Header & Smart 45-Day Expiry Warning Badge -->
@@ -2386,43 +2549,21 @@
             >
           </div>
 
-          <!-- Product Name with AI-Powered Recognition Camera Button -->
+          <!-- Product Name (Auto-Fetched from Barcode) -->
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="block text-[11px] font-bold text-stone-300">اسم السلعة على اليافطة *</label>
-              <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
-                <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
-                <span>التعرف الذكي بالصورة</span>
+              <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-bolt text-[9px]"></i>
+                <span>يُجلب تلقائياً فور مسح الباركود</span>
               </span>
             </div>
-            <div class="flex items-center gap-2">
-              <input 
-                type="text" 
-                x-model="promoModalItem.itemName" 
-                placeholder="مثال: مسحوق غسيل كازيون أوتوماتيك 4 كجم"
-                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
-              >
-              <button 
-                type="button" 
-                @click="startAiProductRecognition('promoModal')"
-                :disabled="isRecognizingAiImage"
-                class="min-h-[50px] h-12 px-3.5 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all disabled:opacity-50"
-                title="تصوير المنتج وتسميته آلياً بالذكاء الاصطناعي"
-              >
-                <template x-if="!isRecognizingAiImage">
-                  <span class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-camera-retro text-amber-300 text-xs"></i>
-                    <span>✨ التعرف بالصورة</span>
-                  </span>
-                </template>
-                <template x-if="isRecognizingAiImage">
-                  <span class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-notch fa-spin text-amber-300"></i>
-                    <span>جاري التعرف...</span>
-                  </span>
-                </template>
-              </button>
-            </div>
+            <input 
+              type="text" 
+              x-model="promoModalItem.itemName" 
+              placeholder="مثال: مسحوق غسيل كازيون أوتوماتيك 4 كجم"
+              class="w-full min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3.5 text-xs font-semibold text-white focus:outline-none focus:border-kazyon"
+            >
           </div>
 
           <!-- Category & Offer Type -->
@@ -3170,88 +3311,84 @@
   <nav 
     x-show="isAuth" 
     x-cloak 
-    class="fixed bottom-0 inset-x-0 z-40 bg-dark-950/95 backdrop-blur-md border-t border-dark-750 px-2 py-1 flex items-center justify-around w-full max-w-none shadow-[0_-10px_25px_rgba(0,0,0,0.5)] select-none"
+    class="fixed bottom-0 inset-x-0 z-40 bg-[#111827]/95 backdrop-blur-md border-t border-[#1F2937] px-2 py-1 flex items-center justify-around w-full max-w-none shadow-[0_-10px_25px_rgba(0,0,0,0.5)] select-none"
     style="padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));"
   >
-    <!-- Tab 1: Inventory Hub -->
+    <!-- Tab 1: Dashboard Home -->
     <button 
       type="button" 
-      @click="activeTab = 'inventory'; $nextTick(() => { const el = document.getElementById('main-barcode-search-input'); if(el) el.focus(); })"
-      :class="activeTab === 'inventory' ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
+      @click="activeTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' })"
+      :class="activeTab === 'inventory' && !isNotificationPanelOpen ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
       class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
-      title="المخزون وجرد الأصناف"
+      title="لوحة المهام الرئيسية للموظف"
     >
-      <i class="fa-solid fa-boxes-stacked text-lg"></i>
-      <span class="text-[10px] tracking-tight font-bold">المخزون</span>
-      <template x-if="activeTab === 'inventory'">
+      <i class="fa-solid fa-house text-lg"></i>
+      <span class="text-[10px] tracking-tight font-bold">الرئيسية</span>
+      <template x-if="activeTab === 'inventory' && !isNotificationPanelOpen">
         <div class="w-1.5 h-1.5 rounded-full bg-kazyon absolute bottom-0.5"></div>
       </template>
     </button>
 
-    <!-- Tab 2: Quick Price Checker -->
+    <!-- Tab 2: Quick Search & Scan -->
     <button 
       type="button" 
-      @click="activeTab = 'price-checker'"
-      :class="activeTab === 'price-checker' ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
-      class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
-      title="كاشف الأسعار الفوري"
+      @click="activeTab = 'inventory'; $nextTick(() => { const el = document.getElementById('main-barcode-search-input'); if(el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } })"
+      class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 text-stone-400 hover:text-[#22D3EE] touch-btn relative transition-colors"
+      title="البحث السريع والفحص الفوري"
     >
-      <i class="fa-solid fa-barcode text-lg"></i>
-      <span class="text-[10px] tracking-tight font-bold">كاشف الأسعار</span>
-      <template x-if="activeTab === 'price-checker'">
-        <div class="w-1.5 h-1.5 rounded-full bg-kazyon absolute bottom-0.5"></div>
-      </template>
+      <i class="fa-solid fa-magnifying-glass text-lg"></i>
+      <span class="text-[10px] tracking-tight font-bold">البحث</span>
     </button>
 
-    <!-- Tab 3: Elevated Instant Camera Scanner Trigger (Floating Center Button) -->
+    <!-- Tab 3: Elevated Floating Center Barcode Camera Trigger -->
     <div class="relative -top-3 flex items-center justify-center px-1">
       <button 
         type="button" 
         @click="scannerMode = 'barcode'; startCameraScanner('inventory')"
-        class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white flex items-center justify-center text-xl shadow-[0_0_22px_rgba(255,102,0,0.6)] border-2 border-dark-950 touch-btn shrink-0"
-        title="مسح سريع بالكاميرا (Camera Scanner)"
+        class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white flex items-center justify-center text-xl shadow-[0_0_25px_rgba(255,85,0,0.65)] border-2 border-[#030712] touch-btn shrink-0 active:scale-95 transition-all"
+        title="مسح سريع بالكاميرا (Instant Barcode Scan)"
       >
         <i class="fa-solid fa-camera"></i>
       </button>
     </div>
 
-    <!-- Tab 4: Promotional Shelf Price Tags -->
+    <!-- Tab 4: Promotional Price Tags -->
     <button 
       type="button" 
       @click="activeTab = 'promo-tags'"
-      :class="activeTab === 'promo-tags' ? 'text-kazyon font-black' : 'text-stone-400 hover:text-stone-200'"
+      :class="activeTab === 'promo-tags' ? 'text-[#10B981] font-black' : 'text-stone-400 hover:text-stone-200'"
       class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
-      title="يافطات أسعار العروض"
+      title="يافطات وأسعار العروض والتخفيضات"
     >
       <div class="relative">
         <i class="fa-solid fa-tags text-lg"></i>
-        <template x-if="promoPriceTags.length > 0">
-          <span class="absolute -top-1 -right-2 px-1 rounded-full bg-kazyon text-white text-[8px] font-mono font-black" x-text="promoPriceTags.length"></span>
+        <template x-if="calcActivePromosCount() > 0">
+          <span class="absolute -top-1 -right-2 px-1 rounded-full bg-[#10B981] text-white text-[8px] font-mono font-black" x-text="calcActivePromosCount()"></span>
         </template>
       </div>
-      <span class="text-[10px] tracking-tight font-bold">عروض الأسعار</span>
+      <span class="text-[10px] tracking-tight font-bold">العروض</span>
       <template x-if="activeTab === 'promo-tags'">
-        <div class="w-1.5 h-1.5 rounded-full bg-kazyon absolute bottom-0.5"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-[#10B981] absolute bottom-0.5"></div>
       </template>
     </button>
 
-    <!-- Tab 5: Smart Notifications -->
+    <!-- Tab 5: Expiry & Smart Alerts -->
     <button 
       type="button" 
-      @click="activeTab = 'inventory'; isNotificationPanelOpen = !isNotificationPanelOpen; if(isNotificationPanelOpen) $nextTick(() => { const el = document.getElementById('inline-notifications-section'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); })"
-      :class="isNotificationPanelOpen ? 'text-amber-400 font-black' : 'text-stone-400 hover:text-stone-200'"
+      @click="activeTab = 'inventory'; isNotificationPanelOpen = !isNotificationPanelOpen; if(isNotificationPanelOpen) { notificationFilter = 'expiry'; $nextTick(() => { const el = document.getElementById('inline-notifications-section'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); }"
+      :class="isNotificationPanelOpen ? 'text-[#FBBF24] font-black' : 'text-stone-400 hover:text-stone-200'"
       class="flex-1 flex flex-col items-center justify-center gap-1 min-h-[52px] py-1 touch-btn relative transition-colors"
-      title="التنبيهات الفورية (45 يوم ونواقص الرف)"
+      title="تنبيهات الصلاحية القريبة (45 يوماً) والنواقص"
     >
       <div class="relative">
-        <i class="fa-solid fa-bell text-lg" :class="calcTotalNotifications() > 0 ? 'text-amber-400 animate-wiggle' : ''"></i>
+        <i class="fa-solid fa-triangle-exclamation text-lg" :class="calcTotalNotifications() > 0 ? 'text-[#FBBF24] animate-wiggle' : ''"></i>
         <template x-if="calcTotalNotifications() > 0">
-          <span class="absolute -top-1 -right-2 px-1 rounded-full bg-red-600 text-white text-[8px] font-mono font-black shadow-[0_0_8px_rgba(239,68,68,0.6)]" x-text="calcTotalNotifications()"></span>
+          <span class="absolute -top-1 -right-2 px-1 rounded-full bg-[#EF4444] text-white text-[8px] font-mono font-black shadow-[0_0_8px_rgba(239,68,68,0.6)]" x-text="calcTotalNotifications()"></span>
         </template>
       </div>
-      <span class="text-[10px] tracking-tight font-bold">التنبيهات</span>
+      <span class="text-[10px] tracking-tight font-bold">الصلاحية</span>
       <template x-if="isNotificationPanelOpen">
-        <div class="w-1.5 h-1.5 rounded-full bg-amber-400 absolute bottom-0.5"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-[#FBBF24] absolute bottom-0.5"></div>
       </template>
     </button>
   </nav>
@@ -3264,43 +3401,19 @@
     class="camera-fullscreen-overlay fixed inset-0 flex flex-col justify-between overflow-hidden select-none animate-in fade-in duration-150"
     style="z-index: 9999;"
   >
-    <!-- Header: Mode Title, Mode Toggle, Flash & Clear Cancel Button -->
+    <!-- Header: Focused Title, Torch & Clear Cancel Button -->
     <div class="p-3 sm:p-4 flex items-center justify-between bg-dark-950/95 backdrop-blur-md border-b border-dark-800 z-20 shrink-0">
       <div class="flex items-center gap-2 sm:gap-2.5">
-        <div 
-          class="w-9 h-9 rounded-xl border flex items-center justify-center text-sm transition-colors shadow-sm"
-          :class="scannerMode === 'ai-product' ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' : 'bg-kazyon/20 border-kazyon/50 text-kazyon'"
-        >
-          <i :class="scannerMode === 'ai-product' ? 'fa-solid fa-wand-magic-sparkles' : 'fa-solid fa-barcode'"></i>
+        <div class="w-10 h-10 rounded-2xl border bg-kazyon/20 border-kazyon/50 text-kazyon flex items-center justify-center text-base shadow-sm">
+          <i class="fa-solid fa-barcode"></i>
         </div>
         <div>
-          <h3 class="text-xs sm:text-sm font-black text-white" x-text="scannerMode === 'ai-product' ? '✨ كاميرا التعرف الذكي على المنتج' : '📷 ماسح باركود كازيون الميداني'"></h3>
-          <p class="text-[10px] text-stone-400" x-text="scannerMode === 'ai-product' ? 'التقط صورة لعلبة المنتج لتسميتها فوراً' : 'امسح الباركود لملء الحقل تلقائياً'"></p>
+          <h3 class="text-xs sm:text-sm font-black text-white">📷 ماسح باركود كازيون الميداني</h3>
+          <p class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-bolt text-[9px]"></i>
+            <span>جلب اسم المنتج وبياناته تلقائياً فور المسح</span>
+          </p>
         </div>
-      </div>
-
-      <!-- Mode Switcher Pills (Barcode vs AI Photo) -->
-      <div class="flex items-center gap-1 bg-dark-900 p-0.5 rounded-xl border border-dark-800">
-        <button 
-          type="button" 
-          @click="scannerMode = 'barcode'"
-          :class="scannerMode === 'barcode' ? 'bg-kazyon text-white font-bold shadow-sm' : 'text-stone-400 hover:text-white'"
-          class="px-2 sm:px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs transition-colors flex items-center gap-1 touch-btn"
-          title="مسح الباركود"
-        >
-          <i class="fa-solid fa-barcode text-[10px]"></i>
-          <span>باركود</span>
-        </button>
-        <button 
-          type="button" 
-          @click="scannerMode = 'ai-product'"
-          :class="scannerMode === 'ai-product' ? 'bg-gradient-to-r from-cyan-600 to-cyber-blue text-white font-bold shadow-sm' : 'text-stone-400 hover:text-white'"
-          class="px-2 sm:px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs transition-colors flex items-center gap-1 touch-btn"
-          title="التعرف بالصورة"
-        >
-          <i class="fa-solid fa-wand-magic-sparkles text-[10px] text-amber-300"></i>
-          <span>صورة المنتج</span>
-        </button>
       </div>
 
       <!-- Flash & Clear Prominent Cancel Button -->
@@ -3334,9 +3447,8 @@
       <!-- HTML5 Video Container (Locked via CSS) -->
       <div id="camera-scanner-viewport" class="w-full h-full absolute inset-0"></div>
 
-      <!-- Mode 1 Viewfinder: Barcode Laser Targeting Frame -->
-      <div 
-        x-show="scannerMode === 'barcode'" 
+      <!-- Barcode Laser Targeting Frame -->
+      <div
         class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4 z-10"
       >
         <div class="relative w-72 max-w-[85vw] h-48 sm:h-52 border-2 border-kazyon/90 rounded-2xl shadow-[0_0_30px_rgba(255,102,0,0.5)] overflow-hidden bg-black/10">
@@ -3348,15 +3460,15 @@
 
           <!-- Animated Red/Orange Laser Sweep -->
           <div class="absolute inset-x-0 h-0.5 bg-kazyon shadow-[0_0_15px_#FF6600] laser-line"></div>
-          
+
           <div class="absolute top-2 left-2.5 text-[9px] font-mono text-kazyon font-black tracking-wider bg-dark-950/70 px-1.5 py-0.5 rounded">
-            KAZYON RETICULE
+            KAZYON FAST SCAN
           </div>
         </div>
 
         <div class="mt-4 flex flex-col items-center justify-center gap-1.5">
           <p class="text-xs text-stone-100 bg-dark-950/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-dark-700 text-center font-bold shadow-lg">
-            ثبّت الباركود داخل الإطار للمسح التلقائي الفوري
+            وجّه الكاميرا نحو باركود المنتج للمسح وجلب الاسم آلياً ⚡
           </p>
           <span 
             x-show="isLowLightDetected && autoTorchEnabled" 
@@ -3365,34 +3477,6 @@
           >
             <i class="fa-solid fa-bolt text-amber-400"></i> تم تفعيل الإضاءة المساندة تلقائياً
           </span>
-        </div>
-      </div>
-
-      <!-- Mode 2 Viewfinder: AI Product Recognition Reticle -->
-      <div 
-        x-show="scannerMode === 'ai-product'" 
-        x-cloak 
-        class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4 z-10"
-      >
-        <div class="relative w-80 max-w-[88vw] h-64 border-2 border-dashed border-cyan-400 rounded-3xl shadow-[0_0_30px_rgba(56,189,248,0.4)] overflow-hidden bg-cyan-950/15 flex items-center justify-center">
-          <!-- 4 AI Corner Targeting Brackets -->
-          <div class="absolute top-2 left-2 w-6 h-6 border-t-4 border-l-4 border-cyan-300 rounded-tl-lg"></div>
-          <div class="absolute top-2 right-2 w-6 h-6 border-t-4 border-r-4 border-cyan-300 rounded-tr-lg"></div>
-          <div class="absolute bottom-2 left-2 w-6 h-6 border-b-4 border-l-4 border-cyan-300 rounded-bl-lg"></div>
-          <div class="absolute bottom-2 right-2 w-6 h-6 border-b-4 border-r-4 border-cyan-300 rounded-br-lg"></div>
-          
-          <div class="text-center p-4">
-            <i class="fa-solid fa-wand-magic-sparkles text-3xl text-cyan-300 animate-pulse block mb-2"></i>
-            <span class="text-[11px] font-mono text-cyan-200 font-black bg-dark-950/85 px-3 py-1 rounded-lg border border-cyan-500/40 shadow-md">
-              AI PRODUCT SCANNER
-            </span>
-          </div>
-        </div>
-
-        <div class="mt-4 flex flex-col items-center justify-center gap-1">
-          <p class="text-xs text-stone-100 bg-dark-950/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-cyan-500/50 text-center font-bold shadow-lg">
-            وجّه الكاميرا نحو علبة أو غلاف المنتج واضغط زر الالتقاط بالأسفل 📸
-          </p>
         </div>
       </div>
 
@@ -3424,8 +3508,7 @@
 
     <!-- Scanner Bottom Action Bar -->
     <div class="p-3 sm:p-4 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 space-y-2.5 z-20 shrink-0">
-      <!-- Mode 1: Barcode Bottom Simulation Chips -->
-      <div x-show="scannerMode === 'barcode'" class="space-y-2">
+      <div class="space-y-2">
         <div class="flex items-center justify-between text-[11px] text-stone-400">
           <span>محاكاة قراءة سريعة بنقرة واحدة (أكواد تجريبية):</span>
         </div>
@@ -3451,35 +3534,6 @@
           <i class="fa-solid fa-arrow-right-from-bracket"></i>
           <span>إلغاء ومتابعة ملء النموذج يدوياً</span>
         </button>
-      </div>
-
-      <!-- Mode 2: AI Product Recognition Action Zone -->
-      <div x-show="scannerMode === 'ai-product'" x-cloak class="space-y-2">
-        <button 
-          type="button" 
-          @click="captureAndRecognizeProduct()" 
-          :disabled="isRecognizingAiImage"
-          class="w-full min-h-[55px] h-14 bg-gradient-to-r from-cyan-600 via-cyber-blue to-cyan-600 hover:from-cyan-500 hover:to-cyber-teal text-white rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-2xl touch-btn active:scale-95 disabled:opacity-50"
-        >
-          <i :class="isRecognizingAiImage ? 'fa-solid fa-circle-notch fa-spin text-amber-300' : 'fa-solid fa-camera-retro text-amber-300 text-lg'"></i>
-          <span x-text="isRecognizingAiImage ? 'جاري تحليل الصورة والتعرف على المنتج بالذكاء الاصطناعي...' : '📸 التقط الصورة وتعرف على المنتج بالذكاء الاصطناعي'"></span>
-        </button>
-
-        <div class="flex items-center justify-between gap-2">
-          <label class="flex-1 min-h-[46px] h-11 bg-dark-900 hover:bg-dark-850 border border-dark-750 text-stone-300 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer touch-btn">
-            <i class="fa-solid fa-image text-cyan-400"></i>
-            <span>أو اختيار صورة من المعرض</span>
-            <input type="file" accept="image/*" @change="handleAiPhotoUpload($event)" class="hidden">
-          </label>
-          <button 
-            type="button" 
-            @click="closeScanner()"
-            class="min-h-[46px] h-11 px-4 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 text-red-300 hover:text-white rounded-xl text-[11px] font-bold touch-btn flex items-center gap-1.5"
-          >
-            <i class="fa-solid fa-xmark"></i>
-            <span>إلغاء والعودة</span>
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -4739,11 +4793,7 @@
                 { facingMode: 'environment' },
                 config,
                 (decodedText) => {
-                  if (this.scannerMode === 'ai-product') {
-                    this.handleScannedBarcodeInAiMode(decodedText);
-                  } else {
-                    this.handleScannedBarcode(decodedText);
-                  }
+                  this.handleScannedBarcode(decodedText);
                 },
                 () => {}
               );
@@ -4756,11 +4806,7 @@
                   backCam.id,
                   config,
                   (decodedText) => {
-                    if (this.scannerMode === 'ai-product') {
-                      this.handleScannedBarcodeInAiMode(decodedText);
-                    } else {
-                      this.handleScannedBarcode(decodedText);
-                    }
+                    this.handleScannedBarcode(decodedText);
                   },
                   () => {}
                 );
@@ -4919,34 +4965,68 @@
           this.playBeep();
           if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
 
+          // 1. Instant check against local store inventory first
+          const foundLocal = this.items.find(i => 
+            i.barcode === clean || 
+            (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase())
+          );
+
           if (this.scannerTarget === 'modalItem') {
             this.modalItem.barcode = clean;
-            this.showToast(`تم مسح الباركود بنجاح: ${clean}`, 'success');
             this.logActivity('BARCODE_SCAN', `مسح باركود سلعة للنموذج: ${clean}`);
-            this.fetchOpenFoodFacts(clean, 'itemModal');
+
+            if (foundLocal) {
+              this.modalItem.itemName = foundLocal.itemName;
+              this.modalItem.category = foundLocal.category;
+              this.modalItem.regularPrice = foundLocal.regularPrice;
+              this.modalItem.promoPrice = foundLocal.promoPrice;
+              this.modalItem.shelfLocation = foundLocal.shelfLocation;
+              this.modalItem.subCode = foundLocal.subCode || ('KZ-' + clean.slice(-4));
+              this.showToast(`✨ تم جلب بيانات واسم الصنف فورياً من المخزون: ${foundLocal.itemName}`, 'success');
+            } else {
+              if (!this.modalItem.subCode) {
+                this.modalItem.subCode = 'KZ-' + clean.slice(-4);
+              }
+              this.modalItem.itemName = '';
+              this.showToast(`تم مسح الباركود (${clean}) - جاري جلب اسم المنتج تلقائياً...`, 'info');
+              this.fetchOpenFoodFacts(clean, 'itemModal');
+            }
           } else if (this.scannerTarget === 'promoModal') {
             this.promoModalItem.barcode = clean;
-            this.handlePromoBarcodeChange(clean);
-            this.showToast(`تم مسح باركود العرض: ${clean}`, 'success');
             this.logActivity('BARCODE_SCAN', `مسح باركود يافطة عرض: ${clean}`);
-            this.fetchOpenFoodFacts(clean, 'promoModal');
+
+            if (foundLocal) {
+              this.promoModalItem.itemName = foundLocal.itemName;
+              this.promoModalItem.category = foundLocal.category;
+              this.promoModalItem.regularPrice = foundLocal.regularPrice;
+              this.promoModalItem.promoPrice = foundLocal.promoPrice;
+              this.promoModalItem.shelfLocation = foundLocal.shelfLocation;
+              this.promoModalItem.subCode = foundLocal.subCode || ('KZ-' + clean.slice(-4));
+              this.showToast(`✨ تم ملء اسم وبيانات العرض فورياً: ${foundLocal.itemName}`, 'success');
+            } else {
+              if (!this.promoModalItem.subCode) {
+                this.promoModalItem.subCode = 'KZ-' + clean.slice(-4);
+              }
+              this.promoModalItem.itemName = '';
+              this.showToast(`تم مسح الباركود (${clean}) - جاري جلب اسم السلعة...`, 'info');
+              this.fetchOpenFoodFacts(clean, 'promoModal');
+            }
           } else if (this.scannerTarget === 'price-checker') {
             this.priceSearchQuery = clean;
             this.checkPrice(clean);
           } else {
             this.fastBarcodeInput = clean;
             this.searchQuery = clean;
-            const found = this.items.find(i => i.barcode === clean || (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase()));
-            if (found) {
-              this.showToast(`تم مسح الباركود بنجاح: ${found.itemName}`, 'success');
-              this.logActivity('BARCODE_SCAN', `مسح باركود سلعة بالكاميرا: ${found.itemName} (${clean})`);
-              this.openDetailModal(found);
+            if (foundLocal) {
+              this.showToast(`تم مسح الباركود بنجاح: ${foundLocal.itemName}`, 'success');
+              this.logActivity('BARCODE_SCAN', `مسح باركود سلعة بالكاميرا: ${foundLocal.itemName} (${clean})`);
+              this.openDetailModal(foundLocal);
             } else {
-              this.showToast(`باركود غير مسجل (${clean})`, 'info');
+              this.showToast(`باركود جديد (${clean}) - جاري فتح النموذج وجلب الاسم تلقائياً...`, 'info');
               this.logActivity('BARCODE_SCAN', `مسح باركود جديد غير مسجل: ${clean}`);
               this.openItemModal({ 
                 barcode: clean, 
-                subCode: '',
+                subCode: 'KZ-' + clean.slice(-4),
                 itemName: '', 
                 regularPrice: 0, 
                 promoPrice: 0, 
@@ -4954,7 +5034,26 @@
                 warehouseQty: 0,
                 shelfLocation: 'رف A-01' 
               });
+              this.fetchOpenFoodFacts(clean, 'itemModal');
             }
+          }
+        },
+
+        // Manual Barcode Change / Blur Auto-Fill Handler
+        async handleModalBarcodeChange(barcode) {
+          if (!barcode || !barcode.trim()) return;
+          const clean = barcode.trim();
+          const found = this.items.find(i => i.barcode === clean || (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase()));
+          if (found) {
+            this.modalItem.itemName = found.itemName;
+            this.modalItem.category = found.category;
+            this.modalItem.regularPrice = found.regularPrice;
+            this.modalItem.promoPrice = found.promoPrice;
+            this.modalItem.shelfLocation = found.shelfLocation;
+            this.modalItem.subCode = found.subCode || ('KZ-' + clean.slice(-4));
+            this.showToast(`✨ تم جلب بيانات الصنف فورياً من المخزون: ${found.itemName}`, 'success');
+          } else if (!this.modalItem.itemName || this.modalItem.itemName.trim() === '') {
+            await this.fetchOpenFoodFacts(clean, 'itemModal');
           }
         },
 
@@ -5555,24 +5654,20 @@
               }
 
               if (target === 'itemModal') {
-                if (!this.modalItem.itemName || this.modalItem.itemName.trim() === '') {
-                  this.modalItem.itemName = fullName;
-                }
+                this.modalItem.itemName = fullName;
                 if (detectedCategory) this.modalItem.category = detectedCategory;
                 if (!this.modalItem.subCode) {
                   this.modalItem.subCode = 'KZ-' + cleanBarcode.slice(-4);
                 }
               } else if (target === 'promoModal') {
-                if (!this.promoModalItem.itemName || this.promoModalItem.itemName.trim() === '') {
-                  this.promoModalItem.itemName = fullName;
-                }
+                this.promoModalItem.itemName = fullName;
                 if (detectedCategory) this.promoModalItem.category = detectedCategory;
                 if (!this.promoModalItem.subCode) {
                   this.promoModalItem.subCode = 'KZ-' + cleanBarcode.slice(-4);
                 }
               }
 
-              this.showToast(`تم التعرف الذكي على: ${fullName}`, 'success');
+              this.showToast(`✨ تم جلب اسم المنتج تلقائياً: ${fullName}`, 'success');
               this.playBeep('success');
               this.logActivity('AI_LOOKUP', `جلب تلقائي لبيانات الباركود (${cleanBarcode}): ${fullName}`);
             } else {
