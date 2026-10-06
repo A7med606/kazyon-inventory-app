@@ -117,22 +117,20 @@
     }
     html {
       box-sizing: border-box;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
+      height: auto !important;
+      min-height: 100%;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
     }
     body {
-      width: 100%;
-      min-height: 100%;
       margin: 0;
       padding: 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: auto;
-      touch-action: pan-y;
+      width: 100%;
+      min-height: 100vh;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      overscroll-behavior-y: auto !important;
+      touch-action: pan-y !important;
       background-color: #030712;
       color: #F3F4F6;
       font-family: Cairo, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -141,22 +139,32 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Ultimate Mobile Momentum Scroll Architecture */
-    .scroll-container,
+    /* Natural Document Flow for Views, Forms, and Lists (Zero Scroll Traps) */
     .dashboard-view,
     .card-list,
+    .form-section,
+    .view-container,
+    #inline-smart-offer-section,
+    #inline-promo-editor-section,
+    #inline-item-editor-section,
+    #inline-item-detail-section {
+      height: auto !important;
+      min-height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      touch-action: pan-y !important;
+      transform: none !important;
+      will-change: auto !important;
+    }
+
+    /* Isolated Momentum Scrolling for Explicit Inner Scrollable Lists Only */
+    .scroll-container,
     .scrollable-area,
     .scroll-touch,
-    .overflow-y-auto,
-    .overflow-y-scroll,
     [data-scrollable="true"] {
       overflow-y: auto !important;
       -webkit-overflow-scrolling: touch !important;
-      transform: translateZ(0);
-      will-change: scroll-position !important;
-      overscroll-behavior-y: contain !important;
       touch-action: pan-y !important;
-      backface-visibility: hidden;
     }
 
     .overflow-x-auto {
@@ -166,25 +174,22 @@
       will-change: scroll-position;
     }
 
-    /* Prevent Mobile Keyboard Layout Lock & Touch Traps */
-    input, select, textarea, button {
+    /* Prevent Mobile Keyboard Layout Lock & 300ms Tap Delay */
+    input, select, textarea, button, a, label, [role="button"] {
       touch-action: manipulation;
     }
 
-    /* GPU & Layout/Paint Containment: Zero-Lag 60/120Hz Fast Scrolling */
+    /* Clean Card Layout without height containment glitches */
     .product-card-optimized {
-      content-visibility: auto;
-      contain-intrinsic-size: 0 320px;
-      contain: layout style paint;
+      contain: none !important;
+      content-visibility: visible !important;
       transform: translateZ(0);
       backface-visibility: hidden;
-      will-change: transform;
     }
 
     .batch-subcard-optimized {
       contain: content;
       transform: translateZ(0);
-      will-change: transform;
     }
 
     /* Dedicated Full-Screen Camera Scanner Overlay (z-index: 9999) */
@@ -310,7 +315,7 @@
   </style>
 </head>
 
-<body x-data="kazyonApp()" class="w-full min-w-full min-h-full max-w-none bg-dark-900 text-stone-100 flex flex-col justify-between antialiased overflow-x-hidden">
+<body x-data="kazyonApp()" class="w-full min-w-full max-w-none bg-[#030712] text-stone-100 antialiased">
 
   <!-- ============================================================= -->
   <!-- 1. STREAMLINED AUTHENTICATION SCREEN (Minimalist Focus Form)   -->
@@ -457,7 +462,7 @@
   <!-- ============================================================= -->
   <!-- 2. MAIN APPLICATION CONTENT (AUTHENTICATED)                  -->
   <!-- ============================================================= -->
-  <div x-show="isAuth" x-cloak class="w-full min-w-full max-w-none min-h-screen flex-1 flex flex-col pb-36 overflow-x-hidden">
+  <div x-show="isAuth" x-cloak class="w-full min-w-full max-w-none min-h-screen pb-36">
     
     <!-- Top Android Floor Header Bar -->
     <header class="sticky top-0 z-30 bg-dark-950/95 backdrop-blur-md border-b border-dark-750 px-3.5 py-2.5 flex items-center justify-between">
@@ -2864,7 +2869,7 @@
         x-cloak
         x-collapse
         id="inline-smart-offer-section"
-        class="bg-dark-900 border-2 border-kazyon rounded-3xl p-4 sm:p-6 text-stone-100 space-y-6 shadow-[0_15px_45px_rgba(255,85,0,0.25)] transition-all relative overflow-hidden"
+        class="bg-dark-900 border-2 border-kazyon rounded-3xl p-4 sm:p-6 text-stone-100 space-y-6 shadow-[0_15px_45px_rgba(255,85,0,0.25)] transition-all relative"
       >
         <!-- Background Ambient Glow -->
         <div class="absolute -top-24 -left-24 w-72 h-72 bg-kazyon/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -3114,23 +3119,34 @@
 
               <!-- Upload Custom Background Template Option -->
               <div class="flex items-center gap-2 pt-1">
-                <label class="flex-1 min-h-[42px] h-10 px-3 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 touch-btn cursor-pointer">
-                  <i class="fa-solid fa-file-arrow-up text-xs text-stone-400"></i>
-                  <span>رفع صورة قالب مخصص (Custom Template)</span>
+                <label class="flex-1 min-h-[46px] h-11 px-3 bg-dark-850 hover:bg-dark-800 border border-dark-700 hover:border-kazyon text-stone-300 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 touch-btn cursor-pointer transition-colors">
+                  <i class="fa-solid fa-cloud-arrow-up text-sm text-kazyon"></i>
+                  <span>رفع صورة قالب العرض (WhatsApp Image)</span>
                   <input type="file" accept="image/*" class="hidden" @change="handleSmartOfferCustomTemplateUpload($event)">
                 </label>
                 <template x-if="smartOfferTemplateImage">
                   <button
                     type="button"
                     @click="smartOfferTemplateImage = null; updatePosterCanvas()"
-                    class="h-10 px-2.5 rounded-xl bg-dark-800 text-stone-400 hover:text-red-400 border border-dark-700 text-xs font-bold touch-btn"
-                    title="استعادة قالب كازيون الافتراضي"
+                    class="h-11 px-3 rounded-xl bg-dark-800 text-stone-300 hover:text-red-400 border border-dark-700 text-xs font-bold touch-btn flex items-center gap-1.5"
+                    title="استعادة قالب كازيون 24 ساعة الافتراضي"
                   >
-                    افتراضي
+                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                    <span>افتراضي</span>
                   </button>
                 </template>
               </div>
             </div>
+
+            <!-- PRIMARY TRIGGER: 🎨 توليد عرض السعر النهائي -->
+            <button
+              type="button"
+              @click="generateFinalOfferPoster()"
+              class="w-full min-h-[56px] h-14 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2.5 touch-btn shadow-[0_8px_30px_rgba(255,85,0,0.45)] border-2 border-amber-300/60 active:scale-95 transition-all"
+            >
+              <i class="fa-solid fa-palette text-lg animate-bounce"></i>
+              <span>🎨 توليد عرض السعر النهائي</span>
+            </button>
 
           </div>
 
@@ -3142,19 +3158,19 @@
               <div class="w-full flex items-center justify-between">
                 <span class="text-xs font-black text-white flex items-center gap-1.5">
                   <i class="fa-solid fa-palette text-kazyon"></i>
-                  <span>معاينة بوستر العرض المولد (Live Poster)</span>
+                  <span>معاينة بوستر العرض المولد (Live Preview)</span>
                 </span>
                 <span class="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
-                  1080x1350 HD
+                  900x1200 HD
                 </span>
               </div>
 
-              <!-- Canvas Container with Aspect Ratio 4:5 (Standard Instagram / WhatsApp Promo Poster) -->
-              <div class="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-2 border-dark-700 bg-black flex items-center justify-center">
+              <!-- Canvas Container with Aspect Ratio 3:4 (Official Kazyon Template Aspect Ratio) -->
+              <div class="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-dark-700 bg-black flex items-center justify-center">
                 <canvas
                   id="smartOfferPosterCanvas"
-                  width="1080"
-                  height="1350"
+                  width="900"
+                  height="1200"
                   class="w-full h-full object-contain"
                 ></canvas>
               </div>
@@ -3164,16 +3180,16 @@
                 <button
                   type="button"
                   @click="downloadPosterImage()"
-                  class="flex-1 min-h-[48px] h-12 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95"
+                  class="flex-1 min-h-[50px] h-12 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95"
                 >
                   <i class="fa-solid fa-download text-sm"></i>
-                  <span>تحميل البوستر صورة (HD)</span>
+                  <span>📥 تحميل التصميم (PNG)</span>
                 </button>
 
                 <button
                   type="button"
                   @click="sharePosterImage()"
-                  class="min-h-[48px] h-12 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95 shrink-0"
+                  class="min-h-[50px] h-12 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95 shrink-0"
                   title="مشاركة البوستر على واتساب"
                 >
                   <i class="fa-brands fa-whatsapp text-base"></i>
@@ -3184,7 +3200,7 @@
 
             <!-- 2. CATCHY EGYPTIAN SLANG COPYWRITING (الإعلان النصي بالعامية "الصايعة") -->
             <div class="bg-dark-950 p-4 rounded-3xl border border-dark-750 space-y-3">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2">
                   <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
                     <i class="fa-solid fa-bullhorn animate-wiggle"></i>
@@ -3195,17 +3211,27 @@
                   </div>
                 </div>
 
-                <!-- Tone Swapper -->
+                <!-- Tone Swapper / Generator Button -->
                 <button
                   type="button"
                   @click="rotateSmartOfferCopyTone()"
-                  class="h-8 px-2.5 rounded-lg bg-dark-850 hover:bg-dark-800 text-stone-300 hover:text-white border border-dark-700 text-[10px] font-bold flex items-center gap-1 touch-btn"
-                  title="تغيير صياغة النص الإعلاني إلى صياغة أخرى"
+                  class="h-8 px-2.5 rounded-lg bg-dark-850 hover:bg-dark-800 text-stone-300 hover:text-white border border-dark-700 text-[10px] font-bold flex items-center gap-1.5 touch-btn active:scale-95"
+                  title="توليد إعلان بديل بالعامية المصرية"
                 >
                   <i class="fa-solid fa-shuffle text-kazyon text-[10px]"></i>
-                  <span>صياغة بديلة</span>
+                  <span>توليد صيغة جديدة</span>
                 </button>
               </div>
+
+              <!-- Quick Generate Slang Copy Trigger Banner -->
+              <button
+                type="button"
+                @click="rotateSmartOfferCopyTone()"
+                class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-kazyon/15 to-amber-500/15 border border-amber-400/40 text-amber-300 hover:text-white text-xs font-black flex items-center justify-center gap-2 touch-btn"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                <span>📢 توليد إعلان بالعامية المصرية ("يا بلاش الحق العرض...")</span>
+              </button>
 
               <!-- Generated Text Box with Monospace / Clean Arabic Readability -->
               <div class="relative bg-dark-900 rounded-2xl p-3.5 border border-dark-750 text-right">
@@ -5846,6 +5872,16 @@
           if (detectedBarcode) {
             this.isProcessingOcr = false;
             this.closeScanner();
+            if (activeTarget === 'smartOffer') {
+              this.isSmartOfferModalOpen = true;
+              this.activeTab = 'promo-tags';
+              this.smartOfferData.barcode = detectedBarcode;
+              this.smartOfferData.subCode = detectedSubCode || ('KZ-' + detectedBarcode.slice(-4));
+              if (detectedPrice) this.smartOfferData.promoPrice = detectedPrice;
+              this.showToast(`تم اكتشاف باركود (${detectedBarcode}) - جاري جلب الاسم تلقائياً...`, 'info');
+              await this.fetchOpenFoodFacts(detectedBarcode, 'smartOffer');
+              return;
+            }
             this.promoModalItem.barcode = detectedBarcode;
             this.promoModalItem.subCode = detectedSubCode || ('KZ-' + detectedBarcode.slice(-4));
             if (detectedPrice) this.promoModalItem.promoPrice = detectedPrice;
@@ -5857,8 +5893,17 @@
           // 8. OCR Read text but no registered item matched
           this.isProcessingOcr = false;
           this.showToast('تمت قراءة الورقة ضوئياً ولكن الكود غير مسجل في المخزون. تم فتح النموذج للكتابة اليدوية.', 'info');
-          if (detectedSubCode) this.promoModalItem.subCode = detectedSubCode;
-          if (detectedPrice) this.promoModalItem.promoPrice = detectedPrice;
+          if (activeTarget === 'smartOffer') {
+            this.isSmartOfferModalOpen = true;
+            this.activeTab = 'promo-tags';
+            if (detectedSubCode) this.smartOfferData.subCode = detectedSubCode;
+            if (detectedPrice) this.smartOfferData.promoPrice = detectedPrice;
+            this.updatePosterCanvas();
+            this.generateSmartOfferCopy();
+          } else {
+            if (detectedSubCode) this.promoModalItem.subCode = detectedSubCode;
+            if (detectedPrice) this.promoModalItem.promoPrice = detectedPrice;
+          }
           this.closeScanner();
         },
 
@@ -5915,6 +5960,41 @@
               const el = document.getElementById('inline-promo-editor-section');
               if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
+          } else if (this.scannerTarget === 'smartOffer') {
+            this.isSmartOfferModalOpen = true;
+            this.activeTab = 'promo-tags';
+            this.smartOfferData.barcode = clean;
+            this.logActivity('BARCODE_SCAN', `مسح باركود لصانع عروض الأسعار: ${clean}`);
+
+            if (foundLocal) {
+              this.smartOfferData.productName = foundLocal.itemName || '';
+              this.smartOfferData.subCode = foundLocal.subCode || ('KZ-' + clean.slice(-4));
+              this.smartOfferData.regularPrice = Number(foundLocal.regularPrice) || 0;
+              this.smartOfferData.promoPrice = (foundLocal.promoPrice && foundLocal.promoPrice < foundLocal.regularPrice) ? Number(foundLocal.promoPrice) : Math.round((Number(foundLocal.regularPrice) || 10) * 0.88);
+              this.smartOfferData.category = foundLocal.category || 'بقالة جافة وبقوليات';
+              this.generateSmartOfferCopy();
+              this.updatePosterCanvas();
+              this.showToast(`✨ تم جلب بيانات السلعة لصانع العروض: ${foundLocal.itemName}`, 'success');
+            } else {
+              this.smartOfferData.subCode = 'KZ-' + clean.slice(-4);
+              this.showToast(`تم مسح الباركود (${clean}) - جاري جلب الاسم تلقائياً...`, 'info');
+              this.fetchOpenFoodFacts(clean, 'smartOffer');
+            }
+
+            this.$nextTick(() => {
+              const el = document.getElementById('inline-smart-offer-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+          } else if (this.scannerTarget === 'smartOfferProductCam') {
+            this.isSmartOfferModalOpen = true;
+            this.activeTab = 'promo-tags';
+            if (foundLocal) {
+              this.fillSmartOfferFromItem(foundLocal);
+            } else {
+              this.smartOfferData.barcode = clean;
+              this.smartOfferData.subCode = 'KZ-' + clean.slice(-4);
+              this.fetchOpenFoodFacts(clean, 'smartOffer');
+            }
           } else if (this.scannerTarget === 'price-checker') {
             this.priceSearchQuery = clean;
             this.checkPrice(clean);
@@ -6545,6 +6625,14 @@
                 if (!this.promoModalItem.subCode) {
                   this.promoModalItem.subCode = 'KZ-' + cleanBarcode.slice(-4);
                 }
+              } else if (target === 'smartOffer') {
+                this.smartOfferData.productName = fullName;
+                if (detectedCategory) this.smartOfferData.category = detectedCategory;
+                if (!this.smartOfferData.subCode) {
+                  this.smartOfferData.subCode = 'KZ-' + cleanBarcode.slice(-4);
+                }
+                this.generateSmartOfferCopy();
+                this.updatePosterCanvas();
               }
 
               this.showToast(`✨ تم جلب اسم المنتج تلقائياً: ${fullName}`, 'success');
@@ -7372,298 +7460,452 @@
 
         copySmartOfferText() {
           if (!this.smartOfferGeneratedCopy) this.generateSmartOfferCopy();
+          const textToCopy = this.smartOfferGeneratedCopy;
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(this.smartOfferGeneratedCopy).then(() => {
+            navigator.clipboard.writeText(textToCopy).then(() => {
               this.showToast('📋 تم نسخ النص الإعلاني بنجاح! جاهز للصق على واتساب', 'success');
               if (navigator.vibrate) navigator.vibrate(50);
             }).catch(() => {
-              this.showToast('تم تحديد النص للنسخ', 'info');
+              this.fallbackCopyText(textToCopy);
             });
+          } else {
+            this.fallbackCopyText(textToCopy);
+          }
+        },
+
+        fallbackCopyText(text) {
+          try {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            textArea.style.top = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            if (successful) {
+              this.showToast('📋 تم نسخ النص الإعلاني بنجاح! جاهز للصق على واتساب', 'success');
+              if (navigator.vibrate) navigator.vibrate(50);
+            } else {
+              this.showToast('تم تحديد النص للنسخ', 'info');
+            }
+          } catch (e) {
+            this.showToast('يرجى تحديد النص ونسخه يدوياً', 'info');
           }
         },
 
         shareSmartOfferWhatsApp() {
           if (!this.smartOfferGeneratedCopy) this.generateSmartOfferCopy();
           const encoded = encodeURIComponent(this.smartOfferGeneratedCopy);
-          const url = `https://wa.me/?text=${encoded}`;
-          window.open(url, '_blank');
+          const url = `https://api.whatsapp.com/send?text=${encoded}`;
+          const link = document.createElement('a');
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
           this.logActivity('PROMO_SHARE', `مشاركة نص عرض بالعامية على واتساب: ${this.smartOfferData.productName}`);
         },
 
-        // High-Quality Visual Canvas Graphic Automation (Automated Design & Price Math)
+        // PRIMARY TRIGGER: 🎨 توليد عرض السعر النهائي
+        generateFinalOfferPoster() {
+          this.updatePosterCanvas();
+          this.generateSmartOfferCopy();
+          this.showToast('✨ تم توليد عرض السعر وتصميم البوستر بنجاح!', 'success');
+          if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+          if (window.confetti) window.confetti({ particleCount: 35, spread: 60, origin: { y: 0.7 } });
+          this.$nextTick(() => {
+            const previewEl = document.getElementById('smartOfferPosterCanvas');
+            if (previewEl && window.innerWidth < 1024) {
+              previewEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          });
+        },
+
+        // Clean Programmatic Image Compositing Engine (Kazyon 24-Hour Offer Template)
         updatePosterCanvas() {
           const canvas = document.getElementById('smartOfferPosterCanvas');
           if (!canvas) return;
           const ctx = canvas.getContext('2d');
-          const width = 1080;
-          const height = 1350;
+          const width = 900;
+          const height = 1200;
           canvas.width = width;
           canvas.height = height;
 
-          // 1. Draw Background: Custom Uploaded Template OR Default Kazyon 24-Hours Template
+          // 1. Draw Base Background: Uploaded Kazyon Template OR Procedural 24h Official Template
           if (this.smartOfferTemplateImage) {
             const bgImg = new Image();
             bgImg.onload = () => {
               ctx.drawImage(bgImg, 0, 0, width, height);
-              this.drawPosterOverlayLayers(ctx, width, height);
+              this.drawTemplateSlotsOverlay(ctx, width, height, true);
+            };
+            bgImg.onerror = () => {
+              this.drawKazyon24hOfficialTemplate(ctx, width, height);
+              this.drawTemplateSlotsOverlay(ctx, width, height, false);
             };
             bgImg.src = this.smartOfferTemplateImage;
           } else {
-            this.drawDefaultKazyonTemplate(ctx, width, height);
-            this.drawPosterOverlayLayers(ctx, width, height);
+            this.drawKazyon24hOfficialTemplate(ctx, width, height);
+            this.drawTemplateSlotsOverlay(ctx, width, height, false);
           }
         },
 
-        // Draw Official Kazyon "24 ساعة عرض اليوم الواحد" Graphic Template
-        drawDefaultKazyonTemplate(ctx, w, h) {
-          // Premium Dark Slate & Kazyon Orange Radial Gradient Canvas
-          const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-          bgGrad.addColorStop(0, '#0F172A');
-          bgGrad.addColorStop(0.5, '#030712');
-          bgGrad.addColorStop(1, '#1A0B02');
-          ctx.fillStyle = bgGrad;
+        // High-Fidelity Procedural Kazyon "عرض اليوم الواحد 24 ساعة" Template Graphic
+        drawKazyon24hOfficialTemplate(ctx, w, h) {
+          // 1. Sunny Sky Background Gradient
+          const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+          skyGrad.addColorStop(0, '#539BE6');
+          skyGrad.addColorStop(0.35, '#85BEF1');
+          skyGrad.addColorStop(0.7, '#BFE0FA');
+          skyGrad.addColorStop(1, '#EBF5FD');
+          ctx.fillStyle = skyGrad;
           ctx.fillRect(0, 0, w, h);
 
-          // Diagonal energetic orange accents in background
+          // 2. Soft Realistic Cloud Puffs in the sky
+          const drawCloud = (cx, cy, scale) => {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 45 * scale, 0, Math.PI * 2);
+            ctx.arc(cx + 35 * scale, cy - 10 * scale, 35 * scale, 0, Math.PI * 2);
+            ctx.arc(cx - 30 * scale, cy + 5 * scale, 30 * scale, 0, Math.PI * 2);
+            ctx.arc(cx + 65 * scale, cy + 10 * scale, 25 * scale, 0, Math.PI * 2);
+            ctx.arc(cx - 55 * scale, cy + 12 * scale, 22 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          };
+          drawCloud(w * 0.75, h * 0.08, 1.2);
+          drawCloud(w * 0.90, h * 0.35, 1.0);
+          drawCloud(w * 0.60, h * 0.72, 1.3);
+          drawCloud(w * 0.85, h * 0.82, 1.1);
+
+          // 3. Top Right "24 ساعة" Circular Emblem
+          const emblemCX = w * 0.78;
+          const emblemCY = h * 0.16;
+          const emblemR = w * 0.135;
+
           ctx.save();
-          ctx.fillStyle = 'rgba(255, 85, 0, 0.08)';
+          // White circular arrow ring
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 14;
+          ctx.lineCap = 'round';
           ctx.beginPath();
-          ctx.moveTo(-100, 300);
-          ctx.lineTo(w + 100, 100);
-          ctx.lineTo(w + 100, 500);
-          ctx.lineTo(-100, 700);
+          ctx.arc(emblemCX, emblemCY, emblemR, -Math.PI * 0.35, Math.PI * 1.55);
+          ctx.stroke();
+
+          // Arrow head pointing clockwise
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.moveTo(emblemCX - emblemR * 0.55, emblemCY - emblemR * 0.85);
+          ctx.lineTo(emblemCX - emblemR * 0.85, emblemCY - emblemR * 0.50);
+          ctx.lineTo(emblemCX - emblemR * 0.25, emblemCY - emblemR * 0.55);
+          ctx.closePath();
+          ctx.fill();
+
+          // Giant bold orange "24"
+          ctx.fillStyle = '#FF5500';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '900 120px "Cairo", "Arial Black", sans-serif';
+          ctx.fillText('24', emblemCX, emblemCY - 5);
+
+          // Dark blue badge with "ساعة" under the 4
+          ctx.fillStyle = '#0F2C59';
+          this.roundRect(ctx, emblemCX + 15, emblemCY + 22, 70, 32, 6);
+          ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '900 20px "Cairo", sans-serif';
+          ctx.fillText('ساعة', emblemCX + 50, emblemCY + 38);
+          ctx.restore();
+
+          // 4. Left Side Tall Orange Pillar with Chevron Point
+          const pillarX = w * 0.055;
+          const pillarW = w * 0.49;
+          const pillarBottom = h * 0.83;
+          const chevronTipY = h * 0.875;
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+          ctx.shadowBlur = 18;
+          ctx.shadowOffsetX = 6;
+          ctx.fillStyle = '#FF5500';
+          ctx.beginPath();
+          ctx.moveTo(pillarX, 0);
+          ctx.lineTo(pillarX + pillarW, 0);
+          ctx.lineTo(pillarX + pillarW, pillarBottom);
+          ctx.lineTo(pillarX + pillarW / 2, chevronTipY);
+          ctx.lineTo(pillarX, pillarBottom);
           ctx.closePath();
           ctx.fill();
           ctx.restore();
 
-          // Top Header Banner (Kazyon Brand identity)
-          const headerGrad = ctx.createLinearGradient(0, 0, w, 0);
-          headerGrad.addColorStop(0, '#FF5500');
-          headerGrad.addColorStop(0.5, '#FFAA00');
-          headerGrad.addColorStop(1, '#FF5500');
-          ctx.fillStyle = headerGrad;
-          ctx.fillRect(0, 0, w, 190);
+          // 5. Kazyon Logo on Orange Pillar
+          const logoCX = pillarX + pillarW / 2;
 
-          // Subtle shadow below header
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-          ctx.fillRect(0, 190, w, 12);
-
-          // Top Header Text: Brand & Tagline
-          ctx.fillStyle = '#FFFFFF';
-          ctx.textAlign = 'right';
-          ctx.font = '900 68px "Cairo", sans-serif';
-          ctx.fillText('كازيون ماركت', w - 70, 115);
-
-          ctx.textAlign = 'left';
-          ctx.font = '900 64px "Cairo", sans-serif';
-          ctx.fillText('KAZYON', 70, 115);
-
-          ctx.font = '700 24px "Cairo", sans-serif';
-          ctx.fillStyle = '#FFE5D9';
-          ctx.textAlign = 'right';
-          ctx.fillText('توفير كل يوم لأهل بلدنا', w - 70, 160);
-
-          ctx.textAlign = 'left';
-          ctx.fillText('BEST SAVINGS EVERY DAY', 70, 160);
-
-          // Prominent "24 ساعة - عرض اليوم الواحد" Hero Ribbon
-          const ribbonGrad = ctx.createLinearGradient(100, 220, w - 100, 220);
-          ribbonGrad.addColorStop(0, '#DC2626');
-          ribbonGrad.addColorStop(0.5, '#FF5500');
-          ribbonGrad.addColorStop(1, '#DC2626');
-          ctx.fillStyle = ribbonGrad;
-
-          this.roundRect(ctx, 80, 220, w - 160, 95, 26);
-          ctx.fill();
-          ctx.strokeStyle = '#FEF08A';
-          ctx.lineWidth = 4;
-          ctx.stroke();
-
-          // Ribbon Text
+          // Cart & Stylized Arabic Text
+          ctx.save();
           ctx.fillStyle = '#FFFFFF';
           ctx.textAlign = 'center';
-          ctx.font = '900 48px "Cairo", sans-serif';
-          const title = this.smartOfferData.offerTitle || 'عرض الـ 24 ساعة اليوم الواحد';
-          ctx.fillText('⚡ ' + title + ' ⚡', w / 2, 285);
+          ctx.font = '900 50px "Cairo", sans-serif';
+          ctx.fillText('كازيون', logoCX, 72);
+          ctx.font = '800 16px "Cairo", sans-serif';
+          ctx.fillText('- MARKET -', logoCX, 102);
 
-          // Dedicated Product Showcase Stage (Circular / Rounded Neon Box)
-          ctx.fillStyle = '#111827';
-          this.roundRect(ctx, 100, 345, w - 200, 520, 36);
+          // 6. Bold 3D Headline: "عرض" & "اليوم الواحد" & "ONEDAY OFFER"
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+          ctx.font = '900 95px "Cairo", sans-serif';
+          ctx.fillText('عرض', logoCX + 3, 233);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText('عرض', logoCX, 230);
+
+          ctx.font = '900 56px "Cairo", sans-serif';
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 10;
+          ctx.lineJoin = 'round';
+          ctx.strokeText('اليوم الواحد', logoCX, 305);
+          ctx.fillStyle = '#FFD200';
+          ctx.fillText('اليوم الواحد', logoCX, 305);
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '900 36px "Cairo", "Arial Black", sans-serif';
+          ctx.fillText('ONEDAY', logoCX, 360);
+          ctx.fillText('OFFER', logoCX, 400);
+          ctx.restore();
+
+          // 7. Base Graphic Sticker on Orange Pillar
+          const badgeX = pillarX + 25;
+          const badgeW = pillarW - 50;
+          const badgeY = h * 0.485;
+          const badgeH = h * 0.22;
+
+          // Upper Dark Blue Shape
+          ctx.fillStyle = '#1E5373';
+          this.roundRect(ctx, badgeX, badgeY, badgeW, badgeH * 0.42, 28);
           ctx.fill();
-          ctx.strokeStyle = '#1F2937';
-          ctx.lineWidth = 3;
-          ctx.stroke();
 
-          // Stage subtle radial spotlight
-          const spotGrad = ctx.createRadialGradient(w / 2, 605, 50, w / 2, 605, 260);
-          spotGrad.addColorStop(0, 'rgba(255, 85, 0, 0.22)');
-          spotGrad.addColorStop(0.8, 'rgba(17, 24, 39, 0.8)');
-          spotGrad.addColorStop(1, '#111827');
-          ctx.fillStyle = spotGrad;
-          this.roundRect(ctx, 102, 347, w - 204, 516, 34);
+          // Yellow pill on right side
+          ctx.fillStyle = '#FFD200';
+          this.roundRect(ctx, badgeX + badgeW * 0.52, badgeY + 16, badgeW * 0.42, 38, 19);
           ctx.fill();
 
-          // Bottom Price Bar Card
-          ctx.fillStyle = '#161F30';
-          this.roundRect(ctx, 80, 990, w - 160, 260, 32);
+          // White Lower Price Card
+          ctx.fillStyle = '#FFFFFF';
+          this.roundRect(ctx, badgeX, badgeY + badgeH * 0.32, badgeW, badgeH * 0.68, 28);
           ctx.fill();
-          ctx.strokeStyle = '#FF5500';
-          ctx.lineWidth = 4;
-          ctx.stroke();
 
-          // Bottom Footer Bar (Barcode, branches, disclaimer)
-          ctx.fillStyle = '#0B0F19';
-          ctx.fillRect(0, 1270, w, 80);
+          // 8. Bottom Full-Width Horizontal Dark Navy Bar
+          const footerH = h * 0.08;
+          const footerY = h - footerH;
 
-          ctx.fillStyle = '#94A3B8';
-          ctx.textAlign = 'center';
-          ctx.font = '600 24px "Cairo", sans-serif';
-          ctx.fillText('العرض ساري بجميع فروع كازيون حتى نفاد الكمية • الأسعار شاملة ضريبة القيمة المضافة', w / 2, 1320);
+          ctx.fillStyle = '#0D1B2A';
+          ctx.fillRect(0, footerY, w, footerH);
+
+          // Right Slogan: أوفرلك.. أقربلك..
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'right';
+          ctx.font = '900 36px "Cairo", sans-serif';
+          ctx.fillText('أوفرلك.. أقربلك..', w - 40, footerY + 52);
+
+          // Left Dynamic Date
+          const daysArabic = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+          const now = new Date();
+          const dayName = daysArabic[now.getDay()];
+          const dateStr = now.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+          ctx.textAlign = 'left';
+          ctx.font = '700 16px "Cairo", sans-serif';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(`التعامل ساري يوم ${dayName} [${dateStr}]`, 40, footerY + 34);
+          ctx.fillStyle = '#FFD200';
+          ctx.fillText('فقط وحتي نفاذ الكمية', 40, footerY + 58);
         },
 
-        // Draw Product Image, Price Calculations, Discount Badge, and Typography
-        drawPosterOverlayLayers(ctx, w, h) {
-          const name = this.smartOfferData.productName || 'اسم المنتج هنا';
-          const regPrice = Number(this.smartOfferData.regularPrice) || 0;
-          const promoPrice = Number(this.smartOfferData.promoPrice) || 0;
-          const discount = this.calcSmartOfferDiscountPercent();
-          const savings = this.calcSmartOfferSavings();
+        // Dynamic Slot Mapping (دمج وتفريغ المعطيات بدقة داخل القالب)
+        drawTemplateSlotsOverlay(ctx, w, h, isUploadedBase) {
+          // Slot 1: Product Image Area (Right half open white/sky area)
+          const slotX = w * 0.535;
+          const slotY = h * 0.25;
+          const slotW = w * 0.42;
+          const slotH = h * 0.62;
 
-          // 1. Draw Product Image (In the central showcase area)
+          // Draw clean frosted backdrop and circular/rounded frame
+          ctx.save();
+          const spot = ctx.createRadialGradient(slotX + slotW / 2, slotY + slotH / 2 - 20, 40, slotX + slotW / 2, slotY + slotH / 2 - 20, slotW * 0.65);
+          spot.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+          spot.addColorStop(0.75, 'rgba(255, 255, 255, 0.45)');
+          spot.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = spot;
+          ctx.fillRect(slotX - 10, slotY - 10, slotW + 20, slotH + 20);
+
+          // Rounded frame with subtle border
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+          this.roundRect(ctx, slotX, slotY + 20, slotW, slotH - 40, 32);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.restore();
+
+          // Render Product Image inside the right-half slot
           if (this.smartOfferProductImage) {
             const pImg = new Image();
             pImg.onload = () => {
-              const maxW = 460;
-              const maxH = 460;
+              const maxW = slotW - 30;
+              const maxH = slotH - 120;
               let iw = pImg.naturalWidth || pImg.width;
               let ih = pImg.naturalHeight || pImg.height;
               const ratio = Math.min(maxW / iw, maxH / ih);
               const drawW = iw * ratio;
               const drawH = ih * ratio;
-              const drawX = (w - drawW) / 2;
-              const drawY = 375 + (460 - drawH) / 2;
+              const drawX = slotX + (slotW - drawW) / 2;
+              const drawY = slotY + 30 + (maxH - drawH) / 2;
 
+              ctx.save();
+              ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+              ctx.shadowBlur = 24;
+              ctx.shadowOffsetY = 10;
               ctx.drawImage(pImg, drawX, drawY, drawW, drawH);
-              this.drawPosterTextElements(ctx, w, h, name, regPrice, promoPrice, discount, savings);
+              ctx.restore();
+
+              this.drawOverlayTextElements(ctx, w, h, slotX, slotY, slotW, slotH, isUploadedBase);
             };
             pImg.src = this.smartOfferProductImage;
           } else {
-            // Placeholder Icon & Text if no product image uploaded yet
+            // Elegant placeholder icon & guidance
+            ctx.save();
             ctx.fillStyle = '#475569';
             ctx.textAlign = 'center';
-            ctx.font = '900 120px "Font Awesome 6 Free"';
-            ctx.fillText('📦', w / 2, 590);
+            ctx.font = '900 85px "Cairo", sans-serif';
+            ctx.fillText('📦', slotX + slotW / 2, slotY + slotH / 2 - 30);
 
-            ctx.font = '700 32px "Cairo", sans-serif';
-            ctx.fillStyle = '#94A3B8';
-            ctx.fillText('صورة المنتج ستظهر هنا', w / 2, 670);
-            ctx.font = '500 24px "Cairo", sans-serif';
-            ctx.fillText('(التقط بالكاميرا أو اختر من المعرض)', w / 2, 715);
+            ctx.font = '700 24px "Cairo", sans-serif';
+            ctx.fillStyle = '#1E3A8A';
+            ctx.fillText('صورة المنتج ستظهر هنا', slotX + slotW / 2, slotY + slotH / 2 + 35);
+            ctx.font = '600 16px "Cairo", sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText('(التقط بالكاميرا أو ارفع من المعرض)', slotX + slotW / 2, slotY + slotH / 2 + 65);
+            ctx.restore();
 
-            this.drawPosterTextElements(ctx, w, h, name, regPrice, promoPrice, discount, savings);
+            this.drawOverlayTextElements(ctx, w, h, slotX, slotY, slotW, slotH, isUploadedBase);
           }
         },
 
-        // Render Discount Badges, Product Title, Prices & Savings
-        drawPosterTextElements(ctx, w, h, name, regPrice, promoPrice, discount, savings) {
-          // 1. Discount Percentage Badge (-XX% in glowing red/amber ribbon at top-right of product stage)
-          if (discount > 0) {
-            ctx.save();
-            ctx.fillStyle = '#EF4444';
-            ctx.beginPath();
-            ctx.arc(w - 180, 425, 78, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#FEF08A';
-            ctx.lineWidth = 6;
-            ctx.stroke();
+        // Render Prices, Discount Percentage (-XX%), Product Title and Date Overlay
+        drawOverlayTextElements(ctx, w, h, slotX, slotY, slotW, slotH, isUploadedBase) {
+          const regPrice = Number(this.smartOfferData.regularPrice) || 0;
+          const promoPrice = Number(this.smartOfferData.promoPrice) || 0;
+          const discount = this.calcSmartOfferDiscountPercent();
+          const savings = this.calcSmartOfferSavings();
+          const name = this.smartOfferData.productName || 'اسم المنتج هنا';
 
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textAlign = 'center';
-            ctx.font = '900 44px "Cairo", sans-serif';
-            ctx.fillText(`-${discount}%`, w - 180, 425);
-            ctx.font = '800 22px "Cairo", sans-serif';
-            ctx.fillText('خصم كاش', w - 180, 462);
-            ctx.restore();
-          }
-
-          // 2. Savings Tag at top-left of stage
-          if (Number(savings) > 0) {
-            ctx.save();
-            ctx.fillStyle = '#10B981';
-            this.roundRect(ctx, 125, 375, 200, 60, 18);
-            ctx.fill();
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textAlign = 'center';
-            ctx.font = '900 26px "Cairo", sans-serif';
-            ctx.fillText(`وفر ${savings} ج.م`, 225, 416);
-            ctx.restore();
-          }
-
-          // 3. Product Name Banner (Above Price Box)
-          ctx.fillStyle = '#FFFFFF';
-          ctx.textAlign = 'center';
-          ctx.font = '900 52px "Cairo", sans-serif';
-          let displayName = name;
-          if (displayName.length > 34) {
-            displayName = displayName.substring(0, 32) + '...';
-          }
-          ctx.fillText(displayName, w / 2, 920);
-
-          // Sub-code & Barcode indicator
-          ctx.font = '700 24px "JetBrains Mono", monospace';
-          ctx.fillStyle = '#22D3EE';
-          const subInfo = (this.smartOfferData.subCode ? `كود: ${this.smartOfferData.subCode}` : '') +
-                          (this.smartOfferData.barcode ? ` • باركود: ${this.smartOfferData.barcode}` : '');
-          if (subInfo) {
-            ctx.fillText(subInfo, w / 2, 960);
-          }
-
-          // 4. Inside Price Box (990 -> 1250)
-          // Old Regular Price (Crossed Out on Right side)
-          ctx.textAlign = 'right';
-          ctx.fillStyle = '#94A3B8';
-          ctx.font = '700 28px "Cairo", sans-serif';
-          ctx.fillText('بدلاً من السعر الأصلي:', w - 130, 1060);
-
-          ctx.font = '900 56px "Cairo", sans-serif';
-          ctx.fillStyle = '#EF4444';
-          const regText = `${regPrice.toFixed(2)} ج.م`;
-          ctx.fillText(regText, w - 130, 1140);
-
-          // Strike-through line on regular price
-          const regMetrics = ctx.measureText(regText);
-          ctx.strokeStyle = '#EF4444';
-          ctx.lineWidth = 6;
-          ctx.beginPath();
-          ctx.moveTo(w - 120, 1115);
-          ctx.lineTo(w - 120 - regMetrics.width - 20, 1115);
+          // 1. Sleek Product Name Tag on right side
+          ctx.save();
+          ctx.fillStyle = '#0D1B2A';
+          this.roundRect(ctx, slotX + 10, slotY + slotH - 85, slotW - 20, 60, 18);
+          ctx.fill();
+          ctx.strokeStyle = '#FF5500';
+          ctx.lineWidth = 2;
           ctx.stroke();
 
-          // New Bold Promo Price (Prominent on Left side)
-          ctx.textAlign = 'left';
-          ctx.fillStyle = '#FBBF24';
-          ctx.font = '900 32px "Cairo", sans-serif';
-          ctx.fillText('سعر العرض المميز:', 130, 1055);
-
-          ctx.font = '900 110px "Cairo", sans-serif';
-          ctx.fillStyle = '#FF5500';
-          const pText = promoPrice.toFixed(2);
-          ctx.fillText(pText, 130, 1175);
-
-          const pMetrics = ctx.measureText(pText);
-          ctx.font = '900 36px "Cairo", sans-serif';
           ctx.fillStyle = '#FFFFFF';
-          ctx.fillText('جنيه', 140 + pMetrics.width, 1155);
-
-          // Savings Note under price box
           ctx.textAlign = 'center';
-          ctx.font = '700 26px "Cairo", sans-serif';
-          ctx.fillStyle = '#10B981';
-          ctx.fillText(`✨ إجمالي توفيرك الفعلي للقطعة: ${savings} جنيه مصري بالتمام والكمال ✨`, w / 2, 1230);
+          ctx.font = '900 22px "Cairo", sans-serif';
+          let displayName = name;
+          if (displayName.length > 24) displayName = displayName.substring(0, 22) + '..';
+          ctx.fillText(displayName, slotX + slotW / 2, slotY + slotH - 58);
+
+          const subStr = (this.smartOfferData.subCode || '') + (this.smartOfferData.barcode ? ` • ${this.smartOfferData.barcode}` : '');
+          if (subStr) {
+            ctx.fillStyle = '#22D3EE';
+            ctx.font = '700 13px "JetBrains Mono", monospace';
+            ctx.fillText(subStr, slotX + slotW / 2, slotY + slotH - 36);
+          }
+          ctx.restore();
+
+          // 2. Discount Percentage Badge (-XX% inside the dark blue upper shape)
+          ctx.save();
+          // If custom uploaded image is used, cover the placeholder -XX% slot cleanly
+          if (isUploadedBase) {
+            ctx.fillStyle = '#1E5373';
+            this.roundRect(ctx, w * 0.105, h * 0.49, w * 0.22, h * 0.075, 22);
+            ctx.fill();
+          }
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.font = '900 48px "Cairo", "Arial Black", sans-serif';
+          const discText = discount > 0 ? `-${discount}%` : `-25%`;
+          ctx.fillText(discText, w * 0.215, h * 0.548);
+          ctx.restore();
+
+          // 3. Old Regular Price Slot (Crossed Out with Red Strikethrough)
+          ctx.save();
+          if (isUploadedBase) {
+            // Cover the placeholder --.-- EGP on the white card
+            ctx.fillStyle = '#FFFFFF';
+            this.roundRect(ctx, w * 0.13, h * 0.585, w * 0.20, h * 0.045, 8);
+            ctx.fill();
+          }
+
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#DC2626';
+          ctx.font = '900 28px "Cairo", sans-serif';
+          const oldPriceText = `${regPrice > 0 ? regPrice.toFixed(2) : '45.00'} EGP`;
+          ctx.fillText(oldPriceText, w * 0.14, h * 0.62);
+
+          // Strikethrough line
+          const oldMetrics = ctx.measureText(oldPriceText);
+          ctx.strokeStyle = '#DC2626';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.moveTo(w * 0.135, h * 0.612);
+          ctx.lineTo(w * 0.14 + oldMetrics.width + 4, h * 0.612);
+          ctx.stroke();
+          ctx.restore();
+
+          // 4. Bold New Promo Price Slot (Heavy Kazyon Orange with EGP)
+          ctx.save();
+          if (isUploadedBase) {
+            // Cover the placeholder --.-- EGP on the white card
+            ctx.fillStyle = '#FFFFFF';
+            this.roundRect(ctx, w * 0.125, h * 0.635, w * 0.36, h * 0.07, 12);
+            ctx.fill();
+          }
+
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#FF5500';
+          ctx.font = '900 52px "Cairo", sans-serif';
+          const promoNumText = promoPrice > 0 ? promoPrice.toFixed(2) : '32.50';
+          ctx.fillText(promoNumText, w * 0.14, h * 0.685);
+
+          const pMetrics = ctx.measureText(promoNumText);
+          ctx.fillStyle = '#0D1B2A';
+          ctx.font = '900 30px "Cairo", sans-serif';
+          ctx.fillText('EGP', w * 0.155 + pMetrics.width, h * 0.68);
+          ctx.restore();
+
+          // 5. Update Dynamic Date on Footer Bar if uploaded custom template
+          if (isUploadedBase) {
+            ctx.save();
+            ctx.fillStyle = '#0D1B2A';
+            ctx.fillRect(w * 0.03, h * 0.93, w * 0.45, h * 0.07);
+
+            const daysArabic = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const now = new Date();
+            const dayName = daysArabic[now.getDay()];
+            const dateStr = now.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            ctx.textAlign = 'left';
+            ctx.font = '700 16px "Cairo", sans-serif';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(`التعامل ساري يوم ${dayName} [${dateStr}]`, 40, h - 38);
+            ctx.fillStyle = '#FFD200';
+            ctx.fillText('فقط وحتي نفاذ الكمية', 40, h - 16);
+            ctx.restore();
+          }
         },
 
         // Helper: Canvas rounded rectangle drawing
