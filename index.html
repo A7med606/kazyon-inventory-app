@@ -100,6 +100,9 @@
 
   <!-- HTML5 QR / Barcode Scanner CDN -->
   <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- Tesseract.js OCR CDN for Smart Price/Promo Tag Recognition -->
+  <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 
   <!-- Canvas Confetti CDN -->
   <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -112,39 +115,48 @@
       -webkit-tap-highlight-color: transparent;
       box-sizing: border-box;
     }
-    html, body {
+    html {
+      box-sizing: border-box;
       width: 100%;
-      min-width: 100%;
-      min-height: 100vh;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    body {
+      width: 100%;
+      min-height: 100%;
       margin: 0;
       padding: 0;
       overflow-x: hidden;
       overflow-y: auto;
-      font-family: 'Cairo', sans-serif;
-      background-color: #030712;
-      color: #F8FAFC;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: none;
+      overscroll-behavior-y: auto;
       touch-action: pan-y;
+      background-color: #030712;
+      color: #F3F4F6;
+      font-family: Cairo, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       scroll-behavior: auto;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* Ultimate Smooth Scroll & Fluid Momentum Touch Optimization */
+    /* Ultimate Mobile Momentum Scroll Architecture */
+    .scroll-container,
+    .dashboard-view,
+    .card-list,
     .scrollable-area,
     .scroll-touch,
     .overflow-y-auto,
     .overflow-y-scroll,
     [data-scrollable="true"] {
-      -webkit-overflow-scrolling: touch !important;
       overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      transform: translateZ(0);
+      will-change: scroll-position !important;
       overscroll-behavior-y: contain !important;
       touch-action: pan-y !important;
-      will-change: transform, scroll-position !important;
-      transform: translateZ(0);
       backface-visibility: hidden;
-      perspective: 1000px;
     }
 
     .overflow-x-auto {
@@ -298,7 +310,7 @@
   </style>
 </head>
 
-<body x-data="kazyonApp()" class="w-screen min-w-full min-h-screen max-w-none bg-dark-900 text-stone-100 flex flex-col justify-between select-none antialiased overflow-x-hidden">
+<body x-data="kazyonApp()" class="w-full min-w-full min-h-full max-w-none bg-dark-900 text-stone-100 flex flex-col justify-between antialiased overflow-x-hidden">
 
   <!-- ============================================================= -->
   <!-- 1. STREAMLINED AUTHENTICATION SCREEN (Minimalist Focus Form)   -->
@@ -628,7 +640,7 @@
     <!-- ============================================================= -->
     <!-- TAB 1: GRAPHICAL INVENTORY HUB (0ms Real-Time LocalStorage)    -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'inventory'" class="p-2 sm:p-3.5 space-y-3.5 w-full max-w-none">
+    <div x-show="activeTab === 'inventory'" class="dashboard-view p-2 sm:p-3.5 space-y-3.5 w-full max-w-none">
       
       <!-- ============================================================= -->
       <!-- TOP STATUS KPI STRIP (4 High-Contrast Compact Glass Cards)     -->
@@ -787,6 +799,28 @@
             </div>
             <div class="w-10 h-10 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center text-stone-300 group-hover:text-[#FBBF24] shrink-0">
               <i :class="isNotificationPanelOpen ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs"></i>
+            </div>
+          </div>
+
+          <!-- CARD: 🎯 صانع عروض الأسعار الذكي (Smart Promo Offer Generator) -->
+          <div
+            @click="openSmartOfferModal()"
+            class="relative p-4 rounded-3xl bg-[#111827]/90 backdrop-blur-md border border-kazyon/40 hover:border-kazyon flex items-center justify-between gap-3 shadow-[0_8px_25px_rgba(255,85,0,0.2)] cursor-pointer touch-btn group transition-all"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-kazyon/30 via-amber-500/20 to-transparent border border-kazyon/50 text-kazyon flex items-center justify-center text-xl sm:text-2xl shadow-[0_0_20px_rgba(255,85,0,0.3)] shrink-0 group-hover:scale-105 transition-transform">
+                <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-white">صانع عروض الأسعار الذكي</h3>
+                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-kazyon/20 text-kazyon border border-kazyon/30 animate-pulse">AI جديد</span>
+                </div>
+                <p class="text-[11px] text-stone-400 mt-0.5">تصميم بوستر العرض آلياً مع نص إعلاني بالعامية</p>
+              </div>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-dark-800 border border-dark-700 flex items-center justify-center text-kazyon group-hover:bg-kazyon group-hover:text-white shrink-0 transition-colors">
+              <i class="fa-solid fa-arrow-left text-xs"></i>
             </div>
           </div>
 
@@ -1870,7 +1904,7 @@
       </div>
 
       <!-- 4. GRAPHICAL MINIMALIST CARDS (NO DENSE TABLES, 1-TAP INSTANT QUANTITY ADJUSTMENTS) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="card-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         <template x-for="item in filteredItems()" :key="item.id">
           <div 
             :id="'card-' + item.id"
@@ -2190,7 +2224,7 @@
     <!-- ============================================================= -->
     <!-- TAB 2: INSTANT PRICE CHECKER (كاشف الأسعار والعروض)           -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'price-checker'" class="p-2 sm:p-4 space-y-4 w-full max-w-none">
+    <div x-show="activeTab === 'price-checker'" class="dashboard-view p-2 sm:p-4 space-y-4 w-full max-w-none">
       
       <div class="text-center space-y-1">
         <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-kazyon/20 border border-kazyon/40 text-kazyon text-xs font-bold">
@@ -2371,7 +2405,7 @@
     <!-- ============================================================= -->
     <!-- TAB: PROMOTIONAL PRICE TAGS MANAGEMENT (أوراق أسعار العروض)   -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'promo-tags'" class="p-2 sm:p-3.5 space-y-4 w-full max-w-none">
+    <div x-show="activeTab === 'promo-tags'" class="dashboard-view p-2 sm:p-3.5 space-y-4 w-full max-w-none">
       
       <!-- Top Title & Fast Action Banner -->
       <div class="bg-gradient-to-r from-kazyon via-amber-500 to-kazyon rounded-3xl p-4 shadow-[0_8px_30px_rgba(255,102,0,0.3)] text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -2390,15 +2424,25 @@
 
         <!-- Create, Scan & Batch Print Action Buttons -->
         <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-          <!-- Direct Barcode Camera Scan Trigger -->
+          <!-- Direct Smart Offer Generator Button -->
+          <button
+            type="button"
+            @click="openSmartOfferModal()"
+            class="flex-1 sm:flex-initial min-h-[55px] h-14 px-4.5 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 touch-btn shadow-[0_4px_25px_rgba(255,85,0,0.5)] border-2 border-amber-300/60 active:scale-95 transition-all"
+            title="فتح مولد تصميم ونصوص عروض الأسعار الذكية"
+          >
+            <i class="fa-solid fa-wand-magic-sparkles text-base animate-pulse"></i>
+            <span>🎯 صانع عروض الأسعار الذكي</span>
+          </button>
+          <!-- Direct OCR / Barcode Camera Scan Trigger -->
           <button 
             type="button" 
-            @click="openPromoModal(); startCameraScanner('promoModal')"
+            @click="openPromoModal(); scannerMode = 'ocr-promo'; startCameraScanner('promoModal')"
             class="flex-1 sm:flex-initial min-h-[55px] h-14 px-4 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 touch-btn shadow-[0_4px_20px_rgba(255,85,0,0.4)] border border-amber-300/40"
-            title="مسح باركود السلعة بالكاميرا وملء اليافطة فوراً"
+            title="مسح ورقة العرض بالكاميرا وقراءة كود الساب (OCR) والباركود وتعبئة الصنف فورياً"
           >
-            <i class="fa-solid fa-camera text-base"></i>
-            <span>مسح باركود اليافطة</span>
+            <i class="fa-solid fa-camera-viewfinder text-base"></i>
+            <span>مسح ورقة العرض (OCR)</span>
           </button>
 
           <button 
@@ -2540,15 +2584,15 @@
                 placeholder="امسح الباركود بالكاميرا أو اكتب الكود..."
                 class="flex-1 min-h-[52px] h-13 bg-dark-950 border border-dark-700 rounded-2xl px-3.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
               >
-              <!-- Dedicated High-Contrast Prominent Camera Scan Button -->
+              <!-- Dedicated High-Contrast Prominent Camera Scan & Smart OCR Button -->
               <button 
                 type="button" 
-                @click="scannerMode = 'barcode'; startCameraScanner('promoModal')"
-                class="min-h-[52px] h-13 px-4.5 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl text-xs font-black touch-btn flex items-center gap-2 shadow-[0_0_20px_rgba(255,85,0,0.35)] shrink-0 active:scale-95 transition-all border border-amber-400/40"
-                title="فتح الكاميرا لمسح باركود السلعة وملء بيانات اليافطة تلقائياً"
+                @click="scannerMode = 'ocr-promo'; startCameraScanner('promoModal')"
+                class="min-h-[52px] h-13 px-4 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl text-xs font-black touch-btn flex items-center gap-2 shadow-[0_0_20px_rgba(255,85,0,0.35)] shrink-0 active:scale-95 transition-all border border-amber-400/40"
+                title="مسح ورقة العرض أو الباركود بالكاميرا (OCR) والتعرف التلقائي الفوري على الساب كود والصنف"
               >
-                <i class="fa-solid fa-camera text-base text-white"></i>
-                <span class="font-bold">مسح بالكاميرا</span>
+                <i class="fa-solid fa-camera-viewfinder text-base text-white"></i>
+                <span class="font-bold">مسح الورقة / الباركود</span>
               </button>
             </div>
             <!-- Hint to pick existing inventory item -->
@@ -2812,6 +2856,408 @@
         </div>
       </div>
 
+      <!-- ============================================================= -->
+      <!-- 3. SMART PROMO OFFER GENERATOR (مولد تصميم ونصوص العروض الذكية)  -->
+      <!-- ============================================================= -->
+      <div
+        x-show="isSmartOfferModalOpen"
+        x-cloak
+        x-collapse
+        id="inline-smart-offer-section"
+        class="bg-dark-900 border-2 border-kazyon rounded-3xl p-4 sm:p-6 text-stone-100 space-y-6 shadow-[0_15px_45px_rgba(255,85,0,0.25)] transition-all relative overflow-hidden"
+      >
+        <!-- Background Ambient Glow -->
+        <div class="absolute -top-24 -left-24 w-72 h-72 bg-kazyon/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Section Header -->
+        <div class="flex items-center justify-between pb-3.5 border-b border-dark-750 relative z-10">
+          <div class="flex items-center gap-2.5">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-kazyon via-amber-500 to-kazyon text-white flex items-center justify-center text-lg shadow-[0_0_20px_rgba(255,85,0,0.4)]">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm sm:text-base font-black text-white">🎯 صانع عروض الأسعار الذكي وتصميم البوسترات</h3>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-kazyon/20 border border-kazyon/40 text-kazyon animate-pulse">عرض الـ 24 ساعة</span>
+              </div>
+              <p class="text-[11px] text-stone-400 mt-0.5">
+                دمج صورة المنتج وتكت السعر على قالب كازيون الرسمي وتوليد صيغة إعلانية بالعامية المصرية الصايعة
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="isSmartOfferModalOpen = false"
+            class="min-h-[44px] px-3.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-stone-300 hover:text-white flex items-center gap-1.5 text-xs font-bold border border-dark-700 touch-btn"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إغلاق المولد</span>
+          </button>
+        </div>
+
+        <!-- Grid Layout: Left Inputs (3 Inputs) / Right Live Visual Poster Preview -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 relative z-10">
+
+          <!-- Left Column: The 3 Core Inputs (7 Cols on desktop) -->
+          <div class="lg:col-span-6 space-y-4">
+
+            <!-- 1. Quick Inventory Auto-Fill Picker (اختيار صنف جاهز للاختبار السريع) -->
+            <div class="p-3 bg-dark-850 rounded-2xl border border-dark-750 space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-bold text-stone-300 flex items-center gap-1.5">
+                  <i class="fa-solid fa-bolt text-amber-400"></i>
+                  <span>تعبئة سريعة من أصناف كازيون المخزنة (اختياري):</span>
+                </label>
+                <span class="text-[10px] text-stone-400 font-mono">1-TAP FILL</span>
+              </div>
+              <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <template x-for="item in items.slice(0, 5)" :key="item.barcode">
+                  <button
+                    type="button"
+                    @click="fillSmartOfferFromItem(item)"
+                    class="px-2.5 py-1.5 bg-dark-900 hover:bg-dark-800 border border-dark-700 rounded-xl text-[11px] font-mono text-stone-300 whitespace-nowrap touch-btn flex items-center gap-1.5 shrink-0"
+                  >
+                    <span class="text-kazyon font-bold" x-text="item.subCode || item.barcode"></span>
+                    <span class="text-stone-300 font-sans truncate max-w-[90px]" x-text="item.itemName"></span>
+                  </button>
+                </template>
+              </div>
+            </div>
+
+            <!-- INPUT 1: صورة المنتج (Product Image) -->
+            <div class="p-3.5 bg-dark-950 rounded-2xl border border-dark-750 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-black text-white flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-lg bg-kazyon/20 border border-kazyon/40 text-kazyon flex items-center justify-center text-[10px]">1</span>
+                  <span>صورة المنتج (Product Image) *</span>
+                </label>
+                <template x-if="smartOfferProductImage">
+                  <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check"></i> تم تحميل الصورة
+                  </span>
+                </template>
+              </div>
+
+              <!-- Product Image Picker Controls -->
+              <div class="flex items-center gap-2">
+                <!-- Camera Button -->
+                <button
+                  type="button"
+                  @click="captureSmartOfferProductCamera()"
+                  class="flex-1 min-h-[48px] h-12 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 touch-btn hover:border-kazyon"
+                >
+                  <i class="fa-solid fa-camera text-kazyon text-sm"></i>
+                  <span>التقاط بالكاميرا</span>
+                </button>
+
+                <!-- File/Gallery Upload Button -->
+                <label class="flex-1 min-h-[48px] h-12 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 touch-btn cursor-pointer hover:border-kazyon">
+                  <i class="fa-solid fa-image text-amber-400 text-sm"></i>
+                  <span>اختيار من المعرض</span>
+                  <input type="file" accept="image/*" class="hidden" @change="handleSmartOfferProductUpload($event)">
+                </label>
+
+                <!-- Remove Image button if present -->
+                <template x-if="smartOfferProductImage">
+                  <button
+                    type="button"
+                    @click="smartOfferProductImage = null; updatePosterCanvas()"
+                    class="h-12 w-12 rounded-xl bg-red-950/60 border border-red-500/40 text-red-400 flex items-center justify-center touch-btn"
+                    title="حذف صورة المنتج"
+                  >
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                  </button>
+                </template>
+              </div>
+
+              <!-- Thumbnail & Status preview -->
+              <template x-if="smartOfferProductImage">
+                <div class="flex items-center gap-2.5 p-2 bg-dark-900 rounded-xl border border-dark-800">
+                  <img :src="smartOfferProductImage" class="w-12 h-12 object-contain rounded-lg bg-black/40 border border-dark-700 p-0.5">
+                  <div class="text-[11px] text-stone-300 flex-1 truncate">
+                    <span class="text-emerald-400 font-bold block">جاهزة للدمج التلقائي في القالب</span>
+                    <span class="text-stone-400 text-[10px]">تتوسط القالب الرسومي بدقة</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- INPUT 2: صورة ورقة / تكت السعر (Price Tag Image / OCR) -->
+            <div class="p-3.5 bg-dark-950 rounded-2xl border border-dark-750 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-black text-white flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-[10px]">2</span>
+                  <span>صورة ورقة / تكت السعر (Price Tag Image / OCR) *</span>
+                </label>
+                <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-bolt"></i> قراءة OCR واستخراج آلي
+                </span>
+              </div>
+
+              <!-- Price Tag Actions -->
+              <div class="flex items-center gap-2">
+                <!-- Camera OCR Button -->
+                <button
+                  type="button"
+                  @click="scannerMode = 'ocr-promo'; startCameraScanner('smartOffer')"
+                  class="flex-1 min-h-[48px] h-12 bg-gradient-to-r from-kazyon/20 via-amber-500/20 to-kazyon/20 hover:from-kazyon/30 hover:to-amber-500/30 border border-amber-400/50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 touch-btn"
+                >
+                  <i class="fa-solid fa-camera-viewfinder text-amber-400 text-sm"></i>
+                  <span>مسح الورقة بالكاميرا (OCR)</span>
+                </button>
+
+                <!-- Gallery Upload OCR -->
+                <label class="flex-1 min-h-[48px] h-12 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 touch-btn cursor-pointer hover:border-amber-400">
+                  <i class="fa-solid fa-file-invoice text-cyan-400 text-sm"></i>
+                  <span>رفع صورة التكت</span>
+                  <input type="file" accept="image/*" class="hidden" @change="handleSmartOfferPriceTagUpload($event)">
+                </label>
+              </div>
+
+              <!-- Parsed Inputs (Auto-populated by OCR or editable) -->
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <div class="col-span-2">
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">اسم المنتج المستخرج *</label>
+                  <input
+                    type="text"
+                    x-model="smartOfferData.productName"
+                    @input="updatePosterCanvas(); generateSmartOfferCopy()"
+                    placeholder="مثال: حليب المراعي كامل الدسم 1 لتر"
+                    class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
+                  >
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">السعر القديم السابق (ج.م) *</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    x-model.number="smartOfferData.regularPrice"
+                    @input="updatePosterCanvas(); generateSmartOfferCopy()"
+                    placeholder="0.00"
+                    class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-stone-300 focus:outline-none focus:border-kazyon"
+                  >
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-kazyon mb-1">سعر العرض الجديد (ج.م) *</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    x-model.number="smartOfferData.promoPrice"
+                    @input="updatePosterCanvas(); generateSmartOfferCopy()"
+                    placeholder="0.00"
+                    class="w-full min-h-[44px] h-11 bg-dark-900 border-2 border-kazyon rounded-xl px-3 text-xs font-mono font-black text-kazyon focus:outline-none focus:ring-1 focus:ring-kazyon"
+                  >
+                </div>
+              </div>
+
+              <!-- Instant Automated Price Math Ribbon -->
+              <div class="p-2.5 rounded-xl bg-dark-900 border border-dark-800 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-stone-400 text-[11px]">نسبة الخصم:</span>
+                  <span class="px-2 py-0.5 rounded-md bg-red-600/20 text-red-400 font-mono font-black text-xs border border-red-500/30" x-text="calcSmartOfferDiscountPercent() + '%-'"></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-stone-400 text-[11px]">قيمة التوفير:</span>
+                  <span class="text-emerald-400 font-mono font-black text-xs" x-text="calcSmartOfferSavings() + ' ج.م'"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- INPUT 3: قالب العرض المعتمد (Template Upload / Selection) -->
+            <div class="p-3.5 bg-dark-950 rounded-2xl border border-dark-750 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-black text-white flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-[10px]">3</span>
+                  <span>قالب العرض المعتمد (Kazyon Approved Template) *</span>
+                </label>
+                <span class="text-[10px] text-amber-300 font-bold">24 ساعة عرض اليوم الواحد</span>
+              </div>
+
+              <!-- Template Preset Radios -->
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  @click="smartOfferSelectedTemplate = '24hours'; smartOfferData.offerTitle = 'عرض الـ 24 ساعة اليوم الواحد'; updatePosterCanvas(); generateSmartOfferCopy()"
+                  :class="smartOfferSelectedTemplate === '24hours' ? 'border-kazyon bg-kazyon/15 text-white shadow-[0_0_15px_rgba(255,85,0,0.3)]' : 'border-dark-750 bg-dark-850 text-stone-400'"
+                  class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 text-center touch-btn transition-all"
+                >
+                  <i class="fa-solid fa-clock text-kazyon text-sm"></i>
+                  <span class="text-[11px] font-bold">عرض 24 ساعة</span>
+                  <span class="text-[9px] text-stone-400">اليوم الواحد</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="smartOfferSelectedTemplate = 'super-saver'; smartOfferData.offerTitle = 'توفير كازيون السوبر'; updatePosterCanvas(); generateSmartOfferCopy()"
+                  :class="smartOfferSelectedTemplate === 'super-saver' ? 'border-emerald-500 bg-emerald-500/15 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'border-dark-750 bg-dark-850 text-stone-400'"
+                  class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 text-center touch-btn transition-all"
+                >
+                  <i class="fa-solid fa-piggy-bank text-emerald-400 text-sm"></i>
+                  <span class="text-[11px] font-bold">سوبر توفير</span>
+                  <span class="text-[9px] text-stone-400">سعر الجملة</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="smartOfferSelectedTemplate = 'flash-deal'; smartOfferData.offerTitle = 'عرض فلاش محدود الكمية'; updatePosterCanvas(); generateSmartOfferCopy()"
+                  :class="smartOfferSelectedTemplate === 'flash-deal' ? 'border-amber-500 bg-amber-500/15 text-white shadow-[0_0_15px_rgba(245,158,11,0.3)]' : 'border-dark-750 bg-dark-850 text-stone-400'"
+                  class="p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 text-center touch-btn transition-all"
+                >
+                  <i class="fa-solid fa-bolt text-amber-400 text-sm"></i>
+                  <span class="text-[11px] font-bold">فلاش ديل</span>
+                  <span class="text-[9px] text-stone-400">حتى نفاد الكمية</span>
+                </button>
+              </div>
+
+              <!-- Upload Custom Background Template Option -->
+              <div class="flex items-center gap-2 pt-1">
+                <label class="flex-1 min-h-[42px] h-10 px-3 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 touch-btn cursor-pointer">
+                  <i class="fa-solid fa-file-arrow-up text-xs text-stone-400"></i>
+                  <span>رفع صورة قالب مخصص (Custom Template)</span>
+                  <input type="file" accept="image/*" class="hidden" @change="handleSmartOfferCustomTemplateUpload($event)">
+                </label>
+                <template x-if="smartOfferTemplateImage">
+                  <button
+                    type="button"
+                    @click="smartOfferTemplateImage = null; updatePosterCanvas()"
+                    class="h-10 px-2.5 rounded-xl bg-dark-800 text-stone-400 hover:text-red-400 border border-dark-700 text-xs font-bold touch-btn"
+                    title="استعادة قالب كازيون الافتراضي"
+                  >
+                    افتراضي
+                  </button>
+                </template>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Live Visual Poster Canvas & Catchy Copywriting (5 Cols on desktop) -->
+          <div class="lg:col-span-6 space-y-4">
+
+            <!-- 1. LIVE RENDERED POSTER CANVAS (التصميم الرسومي المولد آلياً) -->
+            <div class="bg-dark-950 p-4 rounded-3xl border border-dark-750 space-y-3 flex flex-col items-center shadow-inner">
+              <div class="w-full flex items-center justify-between">
+                <span class="text-xs font-black text-white flex items-center gap-1.5">
+                  <i class="fa-solid fa-palette text-kazyon"></i>
+                  <span>معاينة بوستر العرض المولد (Live Poster)</span>
+                </span>
+                <span class="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                  1080x1350 HD
+                </span>
+              </div>
+
+              <!-- Canvas Container with Aspect Ratio 4:5 (Standard Instagram / WhatsApp Promo Poster) -->
+              <div class="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-2 border-dark-700 bg-black flex items-center justify-center">
+                <canvas
+                  id="smartOfferPosterCanvas"
+                  width="1080"
+                  height="1350"
+                  class="w-full h-full object-contain"
+                ></canvas>
+              </div>
+
+              <!-- Poster Download & Share Buttons -->
+              <div class="flex items-center gap-2 w-full max-w-[380px]">
+                <button
+                  type="button"
+                  @click="downloadPosterImage()"
+                  class="flex-1 min-h-[48px] h-12 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95"
+                >
+                  <i class="fa-solid fa-download text-sm"></i>
+                  <span>تحميل البوستر صورة (HD)</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="sharePosterImage()"
+                  class="min-h-[48px] h-12 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95 shrink-0"
+                  title="مشاركة البوستر على واتساب"
+                >
+                  <i class="fa-brands fa-whatsapp text-base"></i>
+                  <span class="hidden sm:inline">واتساب</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. CATCHY EGYPTIAN SLANG COPYWRITING (الإعلان النصي بالعامية "الصايعة") -->
+            <div class="bg-dark-950 p-4 rounded-3xl border border-dark-750 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
+                    <i class="fa-solid fa-bullhorn animate-wiggle"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-black text-white">صيغة الإعلان بالعامية "الصايعة"</h4>
+                    <span class="text-[10px] text-amber-300 font-medium">نص تسويقي جاهز للجروبات والواتساب ⚡</span>
+                  </div>
+                </div>
+
+                <!-- Tone Swapper -->
+                <button
+                  type="button"
+                  @click="rotateSmartOfferCopyTone()"
+                  class="h-8 px-2.5 rounded-lg bg-dark-850 hover:bg-dark-800 text-stone-300 hover:text-white border border-dark-700 text-[10px] font-bold flex items-center gap-1 touch-btn"
+                  title="تغيير صياغة النص الإعلاني إلى صياغة أخرى"
+                >
+                  <i class="fa-solid fa-shuffle text-kazyon text-[10px]"></i>
+                  <span>صياغة بديلة</span>
+                </button>
+              </div>
+
+              <!-- Generated Text Box with Monospace / Clean Arabic Readability -->
+              <div class="relative bg-dark-900 rounded-2xl p-3.5 border border-dark-750 text-right">
+                <p
+                  class="text-xs text-stone-200 font-semibold leading-relaxed whitespace-pre-wrap selection:bg-kazyon selection:text-white"
+                  x-text="smartOfferGeneratedCopy"
+                ></p>
+              </div>
+
+              <!-- Copy Text & WhatsApp Direct Actions -->
+              <div class="flex items-center gap-2">
+                <!-- Copy Text Button -->
+                <button
+                  type="button"
+                  @click="copySmartOfferText()"
+                  class="flex-1 min-h-[46px] h-12 bg-white hover:bg-stone-100 active:bg-stone-200 text-dark-950 rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95"
+                >
+                  <i class="fa-solid fa-copy text-sm text-kazyon"></i>
+                  <span>📋 نسخ النص التسويقي</span>
+                </button>
+
+                <!-- Share on WhatsApp with Full Offer Details -->
+                <button
+                  type="button"
+                  @click="shareSmartOfferWhatsApp()"
+                  class="flex-1 min-h-[46px] h-12 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 touch-btn shadow-md active:scale-95"
+                >
+                  <i class="fa-brands fa-whatsapp text-base"></i>
+                  <span>إرسال للجروبات 🚀</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Section Footer Controls -->
+        <div class="flex items-center justify-between pt-3 border-t border-dark-750 relative z-10">
+          <div class="text-[11px] text-stone-400">
+            <span>ملاحظة: يتم تحديث البوستر والنص الإعلاني تلقائياً فور كتابة أو تعديل الأسعار والصور.</span>
+          </div>
+          <button
+            type="button"
+            @click="isSmartOfferModalOpen = false"
+            class="min-h-[44px] px-5 bg-dark-800 hover:bg-dark-750 border border-dark-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold touch-btn"
+          >
+            تم وإنهاء
+          </button>
+        </div>
+      </div>
+
       <!-- Search & Category Filters -->
       <div class="bg-dark-850 border border-dark-750 rounded-2xl p-3 space-y-2.5">
         <div class="flex flex-col sm:flex-row gap-2">
@@ -2840,7 +3286,7 @@
       </div>
 
       <!-- PROMOTIONAL PRICE TAGS GRID -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div class="card-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         <template x-for="tag in filteredPromoTags()" :key="tag.id">
           <!-- Shelf Tag Card (Styled with Cyber-Teal Slate Theme & Retail Shelf Tag aesthetics) -->
           <div 
@@ -3001,7 +3447,7 @@
     <!-- ============================================================= -->
     <!-- TAB 3: SECURITY & ACTIVITY LOG DASHBOARD (General Only)       -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'security-logs' && currentUser.role === 'admin'" class="p-2 sm:p-3.5 space-y-3.5 w-full max-w-none">
+    <div x-show="activeTab === 'security-logs' && currentUser.role === 'admin'" class="dashboard-view p-2 sm:p-3.5 space-y-3.5 w-full max-w-none">
       
       <!-- Top Header & Real-time Sync Status -->
       <div class="bg-dark-850 border border-dark-750 rounded-3xl p-4 shadow-xl space-y-3">
@@ -3204,7 +3650,7 @@
     <!-- ============================================================= -->
     <!-- TAB 4: BULK FILE IMPORTER (.xlsx / .csv / .pdf) (Admin Only)  -->
     <!-- ============================================================= -->
-    <div x-show="activeTab === 'importer' && currentUser.role === 'admin'" class="p-2 sm:p-4 space-y-4 w-full max-w-none">
+    <div x-show="activeTab === 'importer' && currentUser.role === 'admin'" class="dashboard-view p-2 sm:p-4 space-y-4 w-full max-w-none">
       
       <div class="text-center space-y-1">
         <span class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
@@ -3425,51 +3871,75 @@
     </button>
   </nav>
   <!-- 6.5 DEDICATED FULL-SCREEN CAMERA OVERLAY MODAL (z-index: 9999) -->
-  <!-- Zero-Overlap, No Misalignment, Instant Form Return            -->
+  <!-- Zero-Overlap, No Misalignment, Instant Form Return & Smart OCR  -->
   <!-- ============================================================= -->
-  <div 
-    x-show="isScannerOpen" 
-    x-cloak 
+  <div
+    x-show="isScannerOpen"
+    x-cloak
     class="camera-fullscreen-overlay fixed inset-0 flex flex-col justify-between overflow-hidden select-none animate-in fade-in duration-150"
     style="z-index: 9999;"
   >
-    <!-- Header: Focused Title, Torch & Clear Cancel Button -->
-    <div class="p-3 sm:p-4 flex items-center justify-between bg-dark-950/95 backdrop-blur-md border-b border-dark-800 z-20 shrink-0">
-      <div class="flex items-center gap-2 sm:gap-2.5">
-        <div class="w-10 h-10 rounded-2xl border bg-kazyon/20 border-kazyon/50 text-kazyon flex items-center justify-center text-base shadow-sm">
-          <i class="fa-solid fa-barcode"></i>
+    <!-- Header: Mode Switcher, Focused Title, Torch & Clear Cancel Button -->
+    <div class="p-3 sm:p-4 flex flex-col gap-2.5 bg-dark-950/95 backdrop-blur-md border-b border-dark-800 z-20 shrink-0">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 sm:gap-2.5">
+          <div class="w-10 h-10 rounded-2xl border bg-kazyon/20 border-kazyon/50 text-kazyon flex items-center justify-center text-base shadow-sm">
+            <i :class="scannerMode === 'ocr-promo' ? 'fa-solid fa-file-invoice' : 'fa-solid fa-barcode'"></i>
+          </div>
+          <div>
+            <h3 class="text-xs sm:text-sm font-black text-white" x-text="scannerMode === 'ocr-promo' ? '📷 قارئ ورق العروض الميداني الذكي (OCR)' : '📷 ماسح باركود كازيون الميداني'"></h3>
+            <p class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-bolt text-[9px]"></i>
+              <span x-text="scannerMode === 'ocr-promo' ? 'مسح ورقة السعر وكشف الساب كود (Sub-Code) والربط التلقائي' : 'جلب اسم المنتج وبياناته تلقائياً فور المسح'"></span>
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 class="text-xs sm:text-sm font-black text-white">📷 ماسح باركود كازيون الميداني</h3>
-          <p class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-            <i class="fa-solid fa-bolt text-[9px]"></i>
-            <span>جلب اسم المنتج وبياناته تلقائياً فور المسح</span>
-          </p>
+
+        <!-- Flash & Clear Prominent Cancel Button -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <!-- Torch Flash Toggle Button -->
+          <button
+            type="button"
+            @click="toggleTorch()"
+            :class="torchOn ? 'bg-amber-500 text-dark-950 font-black shadow-lg shadow-amber-500/30' : 'bg-dark-850 border border-dark-700 text-stone-300'"
+            class="w-9 sm:w-10 h-9 sm:h-10 rounded-xl flex items-center justify-center text-xs touch-btn transition-colors"
+            title="تشغيل / إيقاف الفلاش"
+          >
+            <i class="fa-solid fa-bolt" :class="torchOn ? 'text-dark-950' : 'text-amber-400'"></i>
+          </button>
+
+          <!-- Clear, Prominent Cancel Button (إلغاء والعودة فوراً للنموذج) -->
+          <button
+            type="button"
+            @click="closeScanner()"
+            class="h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 active:bg-red-600/40 border border-red-500/50 text-red-300 hover:text-white text-xs font-bold flex items-center gap-1.5 touch-btn transition-all shadow-sm"
+            title="إلغاء والعودة للنموذج"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+            <span>إلغاء</span>
+          </button>
         </div>
       </div>
 
-      <!-- Flash & Clear Prominent Cancel Button -->
-      <div class="flex items-center gap-1.5 sm:gap-2">
-        <!-- Torch Flash Toggle Button -->
-        <button 
-          type="button" 
-          @click="toggleTorch()"
-          :class="torchOn ? 'bg-amber-500 text-dark-950 font-black shadow-lg shadow-amber-500/30' : 'bg-dark-850 border border-dark-700 text-stone-300'"
-          class="w-9 sm:w-10 h-9 sm:h-10 rounded-xl flex items-center justify-center text-xs touch-btn transition-colors"
-          title="تشغيل / إيقاف الفلاش"
+      <!-- Mode Selector Tabs (Barcode vs Promo Tag OCR) -->
+      <div class="flex items-center gap-1 bg-dark-900/90 p-1 rounded-xl border border-dark-750">
+        <button
+          type="button"
+          @click="scannerMode = 'barcode'"
+          :class="scannerMode === 'barcode' ? 'bg-kazyon text-white font-black shadow-md' : 'text-stone-400 hover:text-stone-200'"
+          class="flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all touch-btn"
         >
-          <i class="fa-solid fa-bolt" :class="torchOn ? 'text-dark-950' : 'text-amber-400'"></i>
+          <i class="fa-solid fa-barcode text-xs"></i>
+          <span>مسح الباركود المباشر</span>
         </button>
-
-        <!-- Clear, Prominent Cancel Button (إلغاء والعودة فوراً للنموذج) -->
-        <button 
-          type="button" 
-          @click="closeScanner()"
-          class="h-9 sm:h-10 px-3 sm:px-3.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 active:bg-red-600/40 border border-red-500/50 text-red-300 hover:text-white text-xs font-bold flex items-center gap-1.5 touch-btn transition-all shadow-sm"
-          title="إلغاء والعودة للنموذج"
+        <button
+          type="button"
+          @click="scannerMode = 'ocr-promo'"
+          :class="scannerMode === 'ocr-promo' ? 'bg-gradient-to-r from-kazyon to-amber-500 text-white font-black shadow-md' : 'text-stone-400 hover:text-stone-200'"
+          class="flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all touch-btn"
         >
-          <i class="fa-solid fa-xmark text-sm"></i>
-          <span>إلغاء</span>
+          <i class="fa-solid fa-camera-viewfinder text-xs"></i>
+          <span>مسح ورقة العرض بالـ OCR ⚡</span>
         </button>
       </div>
     </div>
@@ -3479,32 +3949,63 @@
       <!-- HTML5 Video Container (Locked via CSS) -->
       <div id="camera-scanner-viewport" class="w-full h-full absolute inset-0"></div>
 
-      <!-- Barcode Laser Targeting Frame -->
+      <!-- Live OCR Processing Indicator Banner -->
+      <div
+        x-show="isProcessingOcr"
+        x-cloak
+        class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center space-y-3"
+      >
+        <div class="w-14 h-14 rounded-2xl bg-kazyon/20 border-2 border-kazyon text-kazyon flex items-center justify-center text-2xl animate-spin">
+          <i class="fa-solid fa-spinner"></i>
+        </div>
+        <h4 class="text-sm font-black text-white">جاري تحليل ورقة العرض ضوئياً (OCR)...</h4>
+        <p class="text-xs text-amber-300 font-mono" x-text="ocrStatusText || 'استخراج الساب كود (Sub-Code) والبيانات...'"></p>
+        <span class="text-[10px] text-stone-400">يرجى تثبيت الكاميرا باتجاه الورقة</span>
+      </div>
+
+      <!-- Barcode / Document Targeting Frame -->
       <div
         class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-4 z-10"
       >
-        <div class="relative w-72 max-w-[85vw] h-48 sm:h-52 border-2 border-kazyon/90 rounded-2xl shadow-[0_0_30px_rgba(255,102,0,0.5)] overflow-hidden bg-black/10">
+        <!-- Targeting Frame Box (Wider for Promo Sheets) -->
+        <div
+          class="relative border-2 rounded-2xl shadow-[0_0_30px_rgba(255,102,0,0.5)] overflow-hidden bg-black/10 transition-all duration-300"
+          :class="scannerMode === 'ocr-promo' ? 'w-[88vw] max-w-sm h-64 border-amber-400' : 'w-72 max-w-[85vw] h-48 sm:h-52 border-kazyon/90'"
+        >
           <!-- 4 Glowing Corner Accents -->
-          <div class="absolute top-0 left-0 w-5 h-5 border-t-4 border-l-4 border-kazyon"></div>
-          <div class="absolute top-0 right-0 w-5 h-5 border-t-4 border-r-4 border-kazyon"></div>
-          <div class="absolute bottom-0 left-0 w-5 h-5 border-b-4 border-l-4 border-kazyon"></div>
-          <div class="absolute bottom-0 right-0 w-5 h-5 border-b-4 border-r-4 border-kazyon"></div>
+          <div class="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4" :class="scannerMode === 'ocr-promo' ? 'border-amber-400' : 'border-kazyon'"></div>
+          <div class="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4" :class="scannerMode === 'ocr-promo' ? 'border-amber-400' : 'border-kazyon'"></div>
+          <div class="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4" :class="scannerMode === 'ocr-promo' ? 'border-amber-400' : 'border-kazyon'"></div>
+          <div class="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4" :class="scannerMode === 'ocr-promo' ? 'border-amber-400' : 'border-kazyon'"></div>
 
           <!-- Animated Red/Orange Laser Sweep -->
           <div class="absolute inset-x-0 h-0.5 bg-kazyon shadow-[0_0_15px_#FF6600] laser-line"></div>
 
-          <div class="absolute top-2 left-2.5 text-[9px] font-mono text-kazyon font-black tracking-wider bg-dark-950/70 px-1.5 py-0.5 rounded">
-            KAZYON FAST SCAN
-          </div>
+          <!-- Top Badge -->
+          <div
+            class="absolute top-2 left-2.5 text-[9px] font-mono font-black tracking-wider px-2 py-0.5 rounded backdrop-blur-md"
+            :class="scannerMode === 'ocr-promo' ? 'bg-amber-950/80 text-amber-300 border border-amber-500/40' : 'bg-dark-950/70 text-kazyon'"
+            x-text="scannerMode === 'ocr-promo' ? 'KAZYON PROMO OCR & SUB-CODE' : 'KAZYON FAST SCAN'"
+          ></div>
+
+          <!-- Guide text inside frame for Promo OCR -->
+          <template x-if="scannerMode === 'ocr-promo'">
+            <div class="absolute inset-x-0 bottom-2 text-center">
+              <span class="text-[10px] text-stone-200 bg-dark-950/80 px-2.5 py-1 rounded-full border border-dark-700 font-bold">
+                اجعل ورقة العرض وكود الساب داخل هذا الإطار
+              </span>
+            </div>
+          </template>
         </div>
 
         <div class="mt-4 flex flex-col items-center justify-center gap-1.5">
-          <p class="text-xs text-stone-100 bg-dark-950/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-dark-700 text-center font-bold shadow-lg">
-            وجّه الكاميرا نحو باركود المنتج للمسح وجلب الاسم آلياً ⚡
-          </p>
-          <span 
-            x-show="isLowLightDetected && autoTorchEnabled" 
-            x-cloak 
+          <p
+            class="text-xs text-stone-100 bg-dark-950/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-dark-700 text-center font-bold shadow-lg"
+            x-text="scannerMode === 'ocr-promo' ? 'وجّه الكاميرا نحو ورقة العرض واضغط زر قراءة الورقة بالأسفل 📷' : 'وجّه الكاميرا نحو باركود المنتج للمسح وجلب الاسم آلياً ⚡'"
+          ></p>
+          <span
+            x-show="isLowLightDetected && autoTorchEnabled"
+            x-cloak
             class="text-[10px] text-amber-300 bg-amber-500/20 border border-amber-500/40 px-3 py-1 rounded-full flex items-center gap-1 font-bold animate-pulse"
           >
             <i class="fa-solid fa-bolt text-amber-400"></i> تم تفعيل الإضاءة المساندة تلقائياً
@@ -3520,15 +4021,15 @@
         <h4 class="text-base font-black text-white">إذن تشغيل الكاميرا مطلوب</h4>
         <p class="text-xs text-stone-300 max-w-xs leading-relaxed" x-text="cameraError"></p>
         <div class="flex items-center gap-2.5 pt-2">
-          <button 
-            type="button" 
+          <button
+            type="button"
             @click="startCameraScanner(scannerTarget)"
             class="min-h-[55px] h-14 px-6 bg-kazyon hover:bg-kazyon-hover text-white rounded-2xl text-xs font-bold touch-btn shadow-lg"
           >
             <i class="fa-solid fa-rotate-right ml-1"></i> إعادة طلب الإذن
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             @click="closeScanner()"
             class="min-h-[55px] h-14 px-6 bg-dark-800 border border-dark-700 text-stone-300 hover:text-white rounded-2xl text-xs font-bold touch-btn"
           >
@@ -3540,26 +4041,58 @@
 
     <!-- Scanner Bottom Action Bar -->
     <div class="p-3 sm:p-4 bg-dark-950/95 backdrop-blur-md border-t border-dark-800 space-y-2.5 z-20 shrink-0">
+      <!-- OCR Shutter Action Button when in OCR Mode -->
+      <template x-if="scannerMode === 'ocr-promo'">
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <!-- Capture Live Frame Shutter Button -->
+            <button
+              type="button"
+              @click="captureAndProcessPromoTagOcr()"
+              :disabled="isProcessingOcr"
+              class="flex-1 min-h-[55px] h-14 px-5 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 touch-btn shadow-[0_0_25px_rgba(255,85,0,0.5)] border border-amber-300/40 disabled:opacity-50"
+            >
+              <i class="fa-solid fa-camera-viewfinder text-lg"></i>
+              <span>التقاط وقراءة ورقة العرض ضوئياً (OCR)</span>
+            </button>
+
+            <!-- Upload Photo from Gallery -->
+            <label
+              class="min-h-[55px] h-14 px-4 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-300 hover:text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 touch-btn cursor-pointer shrink-0"
+              title="رفع صورة ورقة العرض من المعرض"
+            >
+              <i class="fa-solid fa-image text-cyan-400 text-base"></i>
+              <span class="hidden xs:inline">صورة</span>
+              <input type="file" accept="image/*" class="hidden" @change="handlePromoOcrFileUpload($event)">
+            </label>
+          </div>
+          <p class="text-[10px] text-stone-400 text-center">
+            يقوم النظام بقراءة الساب كود (KZ-100x)، الباركود، والاسم والسعر وتعبئة النموذج وتحديث الصنف فورياً ⚡
+          </p>
+        </div>
+      </template>
+
+      <!-- Instant Simulation Chips (Sub-Codes & Barcodes) -->
       <div class="space-y-2">
         <div class="flex items-center justify-between text-[11px] text-stone-400">
-          <span>محاكاة قراءة سريعة بنقرة واحدة (أكواد تجريبية):</span>
+          <span x-text="scannerMode === 'ocr-promo' ? 'محاكاة قراءة ورقة العرض (أكواد ساب تجريبية):' : 'محاكاة قراءة سريعة بنقرة واحدة (أكواد تجريبية):'"></span>
         </div>
         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <template x-for="item in items.slice(0, 5)" :key="item.barcode">
-            <button 
-              type="button" 
-              @click="handleScannedBarcode(item.barcode)"
+            <button
+              type="button"
+              @click="scannerMode === 'ocr-promo' ? resolveItemAndPopulate(item) : handleScannedBarcode(item.barcode)"
               class="px-2.5 py-1.5 bg-dark-850 hover:bg-dark-800 border border-dark-750 rounded-xl text-[11px] font-mono text-stone-300 whitespace-nowrap touch-btn flex items-center gap-1.5 shrink-0"
             >
-              <span class="text-kazyon font-bold" x-text="item.barcode"></span>
+              <span class="text-cyan-400 font-bold" x-text="item.subCode || (KZ- + item.barcode.slice(-4))"></span>
               <span class="text-stone-400 font-sans truncate max-w-[90px]" x-text="item.itemName"></span>
             </button>
           </template>
         </div>
 
         <!-- Full-Width Bottom Cancel Button -->
-        <button 
-          type="button" 
+        <button
+          type="button"
           @click="closeScanner()"
           class="w-full min-h-[48px] h-12 bg-dark-850 hover:bg-dark-800 border border-dark-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 touch-btn"
         >
@@ -3569,9 +4102,7 @@
       </div>
     </div>
   </div>
-
-
-  <!-- ============================================================= -->
+<!-- ============================================================= -->
   <!-- 7. COMPLETE ALPINE.JS HIGH-PERFORMANCE LOGIC                   -->
   <!-- ============================================================= -->
   <script>
@@ -3633,11 +4164,13 @@
         isParsing: false,
         stagedItems: [],
 
-        // Native Camera Scanner & Auto-Torch
+        // Native Camera Scanner & Auto-Torch & Smart OCR
         isScannerOpen: false,
         scannerTarget: 'inventory', // 'inventory' | 'price-checker' | 'modalItem' | 'promoModal'
-        scannerMode: 'barcode', // 'barcode' | 'ai-product'
+        scannerMode: 'barcode', // 'barcode' | 'ocr-promo' | 'ai-product'
         isRecognizingAiImage: false,
+        isProcessingOcr: false,
+        ocrStatusText: '',
         html5QrCode: null,
         cameraError: '',
         torchOn: false,
@@ -3659,6 +4192,26 @@
         // Promotional Price Tags Management (العروض والتخفيضات ويافطات الرف)
         promoPriceTags: [],
         isPromoModalOpen: false,
+
+        // Smart Promo Offer Generator (مولد تصميم ونصوص عروض الأسعار الذكية)
+        isSmartOfferModalOpen: false,
+        smartOfferProductImage: null,
+        smartOfferPriceTagImage: null,
+        smartOfferTemplateImage: null,
+        smartOfferSelectedTemplate: '24hours', // '24hours' | 'super-saver' | 'flash-deal'
+        smartOfferData: {
+          productName: '',
+          barcode: '',
+          subCode: '',
+          regularPrice: 0,
+          promoPrice: 0,
+          expiryDate: '',
+          category: 'بقالة جافة وبقوليات',
+          offerTitle: 'عرض الـ 24 ساعة اليوم الواحد',
+          customNote: 'الكمية محدودة بالفرع'
+        },
+        smartOfferGeneratedCopy: '',
+        smartOfferCopyToneIndex: 0,
         promoModalItem: {
           id: null,
           barcode: '',
@@ -4791,6 +5344,13 @@
           this.cameraError = '';
           this.isScannerOpen = true;
           this.isLowLightDetected = false;
+          this.isProcessingOcr = false;
+          this.ocrStatusText = '';
+
+          // If target is promoModal and mode not yet set, default to smart OCR mode
+          if (target === 'promoModal' && !this.scannerMode) {
+            this.scannerMode = 'ocr-promo';
+          }
 
           await this.$nextTick();
 
@@ -4813,7 +5373,7 @@
               fps: 20,
               qrbox: (viewfinderWidth, viewfinderHeight) => {
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const boxW = Math.max(Math.floor(minEdge * 0.75), 220);
+                const boxW = Math.max(Math.floor(minEdge * 0.8), 220);
                 const boxH = Math.max(Math.floor(boxW * 0.65), 140);
                 return { width: boxW, height: boxH };
               },
@@ -4888,24 +5448,19 @@
             const count = data.length / 4;
 
             for (let i = 0; i < data.length; i += 4) {
-              // Standard perceived luminance: ITU-R BT.601
               totalLuminance += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
             }
 
             const avgLuminance = Math.round(totalLuminance / count);
             this.ambientLuminance = avgLuminance;
 
-            // Low-light threshold in warehouse / aisles (typical dark setting < 65 out of 255)
             const isDark = avgLuminance < 65;
             this.isLowLightDetected = isDark;
 
-            // Auto-trigger torch in low-light if enabled and not already turned on
             if (this.autoTorchEnabled && isDark && !this.torchOn) {
               this.setTorch(true, true);
             }
-          } catch (e) {
-            // Non-blocking frame check
-          }
+          } catch (e) {}
         },
 
         // Apply Torch / Flashlight Constraints to Active Video Track
@@ -4959,7 +5514,6 @@
             this.lightCheckInterval = null;
           }
 
-          // Safely shut off torch if it was active
           if (this.torchOn) {
             try {
               const video = document.querySelector('#camera-scanner-viewport video');
@@ -4986,22 +5540,339 @@
           this.torchOn = false;
           this.isLowLightDetected = false;
           this.isRecognizingAiImage = false;
+          this.isProcessingOcr = false;
+          this.ocrStatusText = '';
           this.scannerMode = 'barcode';
         },
 
+        // Helper: Match and resolve product from local database state by code or text
+        findMatchingItemByCodeOrText(codeOrText) {
+          if (!codeOrText) return null;
+          const clean = String(codeOrText).trim();
+          const cleanLower = clean.toLowerCase();
+
+          // 1. Direct Barcode or Sub-Code Match
+          let found = this.items.find(i =>
+            (i.barcode && i.barcode.trim() === clean) ||
+            (i.subCode && i.subCode.trim().toLowerCase() === cleanLower)
+          );
+          if (found) return found;
+
+          // 2. Sub-Code with prefix normalized (e.g. "1001" matches "KZ-1001")
+          const numMatch = clean.match(/\d{3,6}/);
+          if (numMatch) {
+            const numStr = numMatch[0];
+            found = this.items.find(i =>
+              (i.subCode && i.subCode.toLowerCase().includes(numStr)) ||
+              (i.barcode && i.barcode.endsWith(numStr))
+            );
+            if (found) return found;
+          }
+
+          // 3. Name or Title Keyword Match
+          found = this.items.find(i => {
+            const words = i.itemName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+            return words.some(w => cleanLower.includes(w));
+          });
+          return found || null;
+        },
+
+        // Auto-populate & update form fields instantly when item is matched
+        resolveItemAndPopulate(foundItem, detectedPrice = null, target = null) {
+          const activeTarget = target || this.scannerTarget;
+          this.closeScanner();
+          this.playBeep('success');
+          if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+
+          if (activeTarget === 'promoModal') {
+            this.isPromoModalOpen = true;
+            this.activeTab = 'promo-tags';
+
+            // Check if promo tag already exists for this item
+            const existingTag = this.promoPriceTags.find(t =>
+              t.barcode === foundItem.barcode ||
+              (t.subCode && foundItem.subCode && t.subCode.toLowerCase() === foundItem.subCode.toLowerCase())
+            );
+
+            if (existingTag) {
+              this.promoModalItem = JSON.parse(JSON.stringify(existingTag));
+              this.showToast(`✨ تم العثور على يافطة العرض الحالية وتحديثها للصنف: ${foundItem.itemName}`, 'success');
+              this.logActivity('PROMO_OCR', `تحديد وتحديث يافطة مسجلة عبر OCR: ${foundItem.itemName}`);
+            } else {
+              this.selectItemForPromo(foundItem);
+              if (detectedPrice && detectedPrice > 0 && detectedPrice < foundItem.regularPrice) {
+                this.promoModalItem.promoPrice = Number(detectedPrice);
+              }
+              this.showToast(`✨ تم التعرف التلقائي الذكي على الساب كود (${foundItem.subCode || foundItem.barcode}) وملء بيانات اليافطة!`, 'success');
+              this.logActivity('PROMO_OCR', `تعرف ضوئي OCR على ورقة عرض وتعبئة: ${foundItem.itemName}`);
+            }
+
+            this.$nextTick(() => {
+              const el = document.getElementById('inline-promo-editor-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
+          } else if (activeTarget === 'smartOffer') {
+            this.isSmartOfferModalOpen = true;
+            this.smartOfferData.productName = foundItem.itemName || '';
+            this.smartOfferData.barcode = foundItem.barcode || '';
+            this.smartOfferData.subCode = foundItem.subCode || ('KZ-' + foundItem.barcode.slice(-4));
+            this.smartOfferData.regularPrice = Number(foundItem.regularPrice) || 0;
+            if (detectedPrice && detectedPrice > 0 && detectedPrice < foundItem.regularPrice) {
+              this.smartOfferData.promoPrice = Number(detectedPrice);
+            } else {
+              this.smartOfferData.promoPrice = foundItem.promoPrice || Math.round((Number(foundItem.regularPrice) || 10) * 0.88);
+            }
+            this.generateSmartOfferCopy();
+            this.updatePosterCanvas();
+            this.showToast(`✨ تم استخراج بيانات التكت بنجاح: ${foundItem.itemName}`, 'success');
+            this.logActivity('PROMO_OCR', `استخراج بيانات تكت لمولد العروض: ${foundItem.itemName}`);
+            this.$nextTick(() => {
+              const el = document.getElementById('inline-smart-offer-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
+          } else if (activeTarget === 'smartOfferProductCam') {
+            this.isSmartOfferModalOpen = true;
+            this.fillSmartOfferFromItem(foundItem);
+            this.showToast(`✨ تم التعرف على المنتج وإدراجه بالبوستر: ${foundItem.itemName}`, 'success');
+
+          } else if (activeTarget === 'modalItem') {
+            this.modalItem.barcode = foundItem.barcode;
+            this.modalItem.subCode = foundItem.subCode || ('KZ-' + foundItem.barcode.slice(-4));
+            this.modalItem.itemName = foundItem.itemName;
+            this.modalItem.category = foundItem.category;
+            this.modalItem.regularPrice = foundItem.regularPrice;
+            this.modalItem.promoPrice = foundItem.promoPrice;
+            this.modalItem.shelfLocation = foundItem.shelfLocation;
+            this.showToast(`✨ تم جلب وتحديث بيانات الصنف: ${foundItem.itemName}`, 'success');
+            this.logActivity('BARCODE_SCAN', `تعبئة بيانات الصنف عبر المسح: ${foundItem.itemName}`);
+
+          } else if (activeTarget === 'price-checker') {
+            this.priceSearchQuery = foundItem.subCode || foundItem.barcode;
+            this.checkPrice(foundItem.barcode);
+
+          } else {
+            this.fastBarcodeInput = foundItem.barcode;
+            this.searchQuery = foundItem.barcode;
+            this.openDetailModal(foundItem);
+            this.showToast(`✨ تم التعرف على الصنف: ${foundItem.itemName}`, 'success');
+          }
+        },
+
+        // Smart OCR Engine: Capture live camera snapshot and parse promo price tag text
+        async captureAndProcessPromoTagOcr() {
+          if (this.isProcessingOcr) return;
+          this.isProcessingOcr = true;
+          this.ocrStatusText = 'جاري التقاط الإطار من الكاميرا...';
+
+          try {
+            const video = document.querySelector('#camera-scanner-viewport video');
+            if (!video || !video.videoWidth) {
+              this.showToast('الكاميرا غير جاهزة بعد، يرجى الانتظار ثانية واحدة', 'info');
+              this.isProcessingOcr = false;
+              return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            await this.runOcrTextAnalysis(canvas);
+          } catch (err) {
+            console.warn('OCR capture error', err);
+            this.showToast('تعذر معالجة لقطة الكاميرا، يرجى إعادة المحاولة', 'error');
+            this.isProcessingOcr = false;
+          }
+        },
+
+        // Smart OCR Handler for Uploaded Photo (Gallery / File picker)
+        async handlePromoOcrFileUpload(event) {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+
+          this.isProcessingOcr = true;
+          this.ocrStatusText = 'جاري تحميل وقراءة الصورة المرفوعة...';
+
+          try {
+            const img = new Image();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                await this.runOcrTextAnalysis(canvas);
+              };
+              img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          } catch (err) {
+            console.warn('File OCR error', err);
+            this.showToast('تعذر قراءة الصورة المرفوعة', 'error');
+            this.isProcessingOcr = false;
+          }
+        },
+
+        // Comprehensive OCR & Vision pipeline for Price/Promo Tags
+        async runOcrTextAnalysis(canvas) {
+          this.ocrStatusText = 'فحص الباركود والرموز الضوئية في ورقة العرض...';
+
+          // 1. First Pass: Check BarcodeDetector API for printed barcode on promo sheet
+          if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+            try {
+              const detector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] });
+              const barcodes = await detector.detect(canvas);
+              if (barcodes && barcodes.length > 0) {
+                const detectedBarcode = barcodes[0].rawValue.trim();
+                const matched = this.findMatchingItemByCodeOrText(detectedBarcode);
+                if (matched) {
+                  this.resolveItemAndPopulate(matched);
+                  return;
+                }
+              }
+            } catch (e) {}
+          }
+
+          // 2. Second Pass: Native TextDetector API if supported by modern Android Chrome
+          let extractedText = '';
+          if (typeof window !== 'undefined' && 'TextDetector' in window) {
+            try {
+              this.ocrStatusText = 'قراءة النصوص والأرقام عبر وحدة الرؤية المباشرة...';
+              const textDetector = new window.TextDetector();
+              const detectedBlocks = await textDetector.detect(canvas);
+              if (detectedBlocks && detectedBlocks.length > 0) {
+                extractedText = detectedBlocks.map(b => b.rawValue).join('\n');
+              }
+            } catch (e) {}
+          }
+
+          // 3. Third Pass: Tesseract.js OCR Engine (Deep text recognition for Arabic / English & Sub-Codes)
+          if (!extractedText && typeof Tesseract !== 'undefined') {
+            try {
+              this.ocrStatusText = 'معالجة نصوص ورقة العرض بدقة (Tesseract OCR)...';
+              const ocrResult = await Tesseract.recognize(canvas, 'eng+ara', {
+                logger: (m) => {
+                  if (m.status === 'recognizing text') {
+                    this.ocrStatusText = `تحليل النص (${Math.round((m.progress || 0) * 100)}%)...`;
+                  }
+                }
+              });
+              if (ocrResult && ocrResult.data && ocrResult.data.text) {
+                extractedText = ocrResult.data.text;
+              }
+            } catch (tessErr) {
+              console.warn('Tesseract OCR error:', tessErr);
+            }
+          }
+
+          // Fallback if no full text could be extracted
+          if (!extractedText || !extractedText.trim()) {
+            this.isProcessingOcr = false;
+            this.showToast('لم يتم العثور على نص أو كود واضح على الورقة. قرّب الكاميرا نحو كود الساب أو الباركود.', 'info');
+            return;
+          }
+
+          this.ocrStatusText = 'مطابقة كود الساب (Sub-Code) مع قاعدة بيانات المخزون...';
+          const fullText = extractedText;
+
+          // 4. Extract Sub-Codes (e.g., KZ-1001, KZ 1002, KZ1003, or Sub: 1001)
+          let detectedSubCode = null;
+          const kzMatches = fullText.match(/(?:KZ|kz|Kz)[-_\s]?(\d{3,6})/i);
+          if (kzMatches) {
+            detectedSubCode = 'KZ-' + kzMatches[1];
+          }
+
+          if (!detectedSubCode) {
+            const subWordMatch = fullText.match(/(?:sub|code|ساب|كود)[-_:\s]*([A-Za-z0-9_-]{3,10})/i);
+            if (subWordMatch) {
+              detectedSubCode = subWordMatch[1].trim();
+            }
+          }
+
+          // Check if any numbers in text directly match a known item subCode
+          if (!detectedSubCode) {
+            for (const item of this.items) {
+              if (item.subCode && fullText.toLowerCase().includes(item.subCode.toLowerCase())) {
+                detectedSubCode = item.subCode;
+                break;
+              }
+            }
+          }
+
+          // Check if barcode (8-14 digits) appears in text
+          let detectedBarcode = null;
+          const barcodeMatch = fullText.match(/\b(\d{8,14})\b/);
+          if (barcodeMatch) {
+            detectedBarcode = barcodeMatch[1];
+          }
+
+          // Extract potential price on promo tag (e.g., 38.50 or 109.00)
+          let detectedPrice = null;
+          const priceMatches = fullText.match(/\b(\d{1,4}(?:\.\d{1,2})?)\s*(?:ج\.م|LE|EGP|جنيه)?/gi);
+          if (priceMatches && priceMatches.length > 0) {
+            const parsedPrices = priceMatches
+              .map(p => parseFloat(p.replace(/[^0-9.]/g, '')))
+              .filter(p => !isNaN(p) && p > 0 && p < 10000);
+            if (parsedPrices.length > 0) {
+              detectedPrice = Math.min(...parsedPrices); // Offer prices are typically lower
+            }
+          }
+
+          // 5. Query Local Inventory / State for Exact Match
+          let matchedItem = null;
+          if (detectedSubCode) {
+            matchedItem = this.findMatchingItemByCodeOrText(detectedSubCode);
+          }
+          if (!matchedItem && detectedBarcode) {
+            matchedItem = this.findMatchingItemByCodeOrText(detectedBarcode);
+          }
+          if (!matchedItem) {
+            matchedItem = this.findMatchingItemByCodeOrText(fullText);
+          }
+
+          // 6. Item Found in Store Inventory: Auto-populate & update record immediately!
+          if (matchedItem) {
+            this.isProcessingOcr = false;
+            this.resolveItemAndPopulate(matchedItem, detectedPrice);
+            return;
+          }
+
+          // 7. Not Found Locally: Attempt Global Open Food Facts if barcode was parsed
+          if (detectedBarcode) {
+            this.isProcessingOcr = false;
+            this.closeScanner();
+            this.promoModalItem.barcode = detectedBarcode;
+            this.promoModalItem.subCode = detectedSubCode || ('KZ-' + detectedBarcode.slice(-4));
+            if (detectedPrice) this.promoModalItem.promoPrice = detectedPrice;
+            this.showToast(`تم اكتشاف باركود (${detectedBarcode}) - جاري جلب الاسم تلقائياً...`, 'info');
+            await this.fetchOpenFoodFacts(detectedBarcode, 'promoModal');
+            return;
+          }
+
+          // 8. OCR Read text but no registered item matched
+          this.isProcessingOcr = false;
+          this.showToast('تمت قراءة الورقة ضوئياً ولكن الكود غير مسجل في المخزون. تم فتح النموذج للكتابة اليدوية.', 'info');
+          if (detectedSubCode) this.promoModalItem.subCode = detectedSubCode;
+          if (detectedPrice) this.promoModalItem.promoPrice = detectedPrice;
+          this.closeScanner();
+        },
+
+        // Fast Barcode handling in Camera Mode
         handleScannedBarcode(barcode) {
           const clean = barcode.trim();
           this.closeScanner();
 
           // Audio beep & vibration feedback
-          this.playBeep();
+          this.playBeep('success');
           if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
 
           // 1. Instant check against local store inventory first
-          const foundLocal = this.items.find(i => 
-            i.barcode === clean || 
-            (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase())
-          );
+          const foundLocal = this.findMatchingItemByCodeOrText(clean);
 
           if (this.scannerTarget === 'modalItem') {
             this.modalItem.barcode = clean;
@@ -5030,7 +5901,7 @@
             this.logActivity('BARCODE_SCAN', `مسح باركود يافطة عرض: ${clean}`);
 
             if (foundLocal) {
-              this.selectItemForPromo(foundLocal);
+              this.resolveItemAndPopulate(foundLocal);
             } else {
               if (!this.promoModalItem.subCode) {
                 this.promoModalItem.subCode = 'KZ-' + clean.slice(-4);
@@ -5057,15 +5928,15 @@
             } else {
               this.showToast(`باركود جديد (${clean}) - جاري فتح النموذج وجلب الاسم تلقائياً...`, 'info');
               this.logActivity('BARCODE_SCAN', `مسح باركود جديد غير مسجل: ${clean}`);
-              this.openItemModal({ 
-                barcode: clean, 
+              this.openItemModal({
+                barcode: clean,
                 subCode: 'KZ-' + clean.slice(-4),
-                itemName: '', 
-                regularPrice: 0, 
-                promoPrice: 0, 
-                shopQty: 0, 
+                itemName: '',
+                regularPrice: 0,
+                promoPrice: 0,
+                shopQty: 0,
                 warehouseQty: 0,
-                shelfLocation: 'رف A-01' 
+                shelfLocation: 'رف A-01'
               });
               this.fetchOpenFoodFacts(clean, 'itemModal');
             }
@@ -5076,7 +5947,7 @@
         async handleModalBarcodeChange(barcode) {
           if (!barcode || !barcode.trim()) return;
           const clean = barcode.trim();
-          const found = this.items.find(i => i.barcode === clean || (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase()));
+          const found = this.findMatchingItemByCodeOrText(clean);
           if (found) {
             this.modalItem.itemName = found.itemName;
             this.modalItem.category = found.category;
@@ -5094,33 +5965,13 @@
         async handleScannedBarcodeInAiMode(barcode) {
           const clean = barcode.trim();
           this.closeScanner();
-          this.playBeep();
+          this.playBeep('success');
           if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
 
-          const foundLocal = this.items.find(i => 
-            i.barcode === clean || 
-            (i.subCode && i.subCode.toLowerCase() === clean.toLowerCase())
-          );
+          const foundLocal = this.findMatchingItemByCodeOrText(clean);
 
           if (foundLocal) {
-            if (this.scannerTarget === 'modalItem') {
-              this.modalItem.barcode = foundLocal.barcode;
-              this.modalItem.itemName = foundLocal.itemName;
-              this.modalItem.category = foundLocal.category;
-              this.modalItem.regularPrice = foundLocal.regularPrice;
-              this.modalItem.promoPrice = foundLocal.promoPrice;
-              this.modalItem.shelfLocation = foundLocal.shelfLocation;
-              this.modalItem.subCode = foundLocal.subCode || ('KZ-' + clean.slice(-4));
-            } else if (this.scannerTarget === 'promoModal') {
-              this.promoModalItem.barcode = foundLocal.barcode;
-              this.promoModalItem.itemName = foundLocal.itemName;
-              this.promoModalItem.category = foundLocal.category;
-              this.promoModalItem.regularPrice = foundLocal.regularPrice;
-              this.promoModalItem.promoPrice = foundLocal.promoPrice;
-              this.promoModalItem.shelfLocation = foundLocal.shelfLocation;
-              this.promoModalItem.subCode = foundLocal.subCode || '';
-            }
-            this.showToast(`✨ تم التعرف الفوري من المخزون: ${foundLocal.itemName}`, 'success');
+            this.resolveItemAndPopulate(foundLocal);
             return;
           }
 
@@ -5159,7 +6010,7 @@
             }
 
             if (navigator.vibrate) navigator.vibrate([40, 80, 40]);
-            this.playBeep();
+            this.playBeep('success');
 
             await this.processProductImageRecognition(canvas);
           } catch (err) {
@@ -5231,10 +6082,7 @@
           // 3. Priority 1: Check local store inventory for exact match
           if (detectedBarcode) {
             const cleanCode = detectedBarcode.trim();
-            const foundLocal = this.items.find(i => 
-              i.barcode === cleanCode || 
-              (i.subCode && i.subCode.toLowerCase() === cleanCode.toLowerCase())
-            );
+            const foundLocal = this.findMatchingItemByCodeOrText(cleanCode);
             if (foundLocal) {
               recognizedName = foundLocal.itemName;
               recognizedCategory = foundLocal.category;
@@ -5265,7 +6113,7 @@
                   const qty = prod.quantity ? ` ${prod.quantity}` : '';
                   if (pName) {
                     recognizedName = (pName + qty + (!pName.includes(prod.brands || '') ? brand : '')).trim();
-                    recognizedCategory = this.mapCategoryFromText(prod.categories || (prod.categories_tags || []).join(' '));
+                    recognizedCategory = prod.categories || 'بقالة جافة وبقوليات';
                   }
                 }
               }
@@ -5294,7 +6142,7 @@
             } catch (e) {}
           }
 
-          // 6. If no confident match found: NEVER invent or pick random hallucinated products!
+          // 6. If no confident match found:
           if (!recognizedName) {
             this.showToast('لم نتمكن من قراءة باركود أو اسم واضح في الصورة. يرجى توجيه الكاميرا إلى باركود المنتج أو كتابة الاسم يدوياً.', 'info');
             await this.closeScanner();
@@ -5324,7 +6172,6 @@
           this.logActivity('AI_IMAGE_RECOGNITION', `تعرف ذكي بالصورة وتسمية المنتج: ${recognizedName}`);
           await this.closeScanner();
         },
-
         // 1. Open Detailed Product Card Modal
         openDetailModal(item) {
           if (!item) return;
@@ -6375,7 +7222,513 @@
           }
         },
 
-        deletePromoTag(tag) {
+                // =============================================================
+        // SMART PROMO OFFER GENERATOR (مولد وتصميم عروض الأسعار الذكية)
+        // =============================================================
+        openSmartOfferModal(initialItem = null) {
+          this.isSmartOfferModalOpen = true;
+          this.activeTab = 'promo-tags';
+          this.isPromoModalOpen = false;
+          this.isPrintTagModalOpen = false;
+
+          if (initialItem) {
+            this.fillSmartOfferFromItem(initialItem);
+          } else if (!this.smartOfferData.productName) {
+            // Default sample offer if empty
+            const sample = this.items[0] || {
+              itemName: 'حليب المراعي كامل الدسم 1 لتر',
+              barcode: '6281007010115',
+              subCode: 'KZ-1001',
+              regularPrice: 42.0,
+              promoPrice: 38.5,
+              category: 'ألبان وأجبان'
+            };
+            this.fillSmartOfferFromItem(sample);
+          } else {
+            this.updatePosterCanvas();
+            this.generateSmartOfferCopy();
+          }
+
+          this.$nextTick(() => {
+            const el = document.getElementById('inline-smart-offer-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => this.updatePosterCanvas(), 100);
+          });
+        },
+
+        fillSmartOfferFromItem(item) {
+          if (!item) return;
+          this.smartOfferData.productName = item.itemName || '';
+          this.smartOfferData.barcode = item.barcode || '';
+          this.smartOfferData.subCode = item.subCode || ('KZ-' + (item.barcode ? item.barcode.slice(-4) : '1001'));
+          this.smartOfferData.regularPrice = Number(item.regularPrice) || 0;
+          this.smartOfferData.promoPrice = (item.promoPrice && item.promoPrice < item.regularPrice) ? Number(item.promoPrice) : Math.round((Number(item.regularPrice) || 10) * 0.88);
+          this.smartOfferData.category = item.category || 'بقالة جافة وبقوليات';
+          this.generateSmartOfferCopy();
+          this.updatePosterCanvas();
+          this.showToast(`✨ تم إدراج صنف (${item.itemName}) في صانع العروض الذكي`, 'success');
+        },
+
+        calcSmartOfferDiscountPercent() {
+          const reg = Number(this.smartOfferData.regularPrice) || 0;
+          const promo = Number(this.smartOfferData.promoPrice) || 0;
+          if (reg <= 0 || promo <= 0 || promo >= reg) return 0;
+          return Math.round(((reg - promo) / reg) * 100);
+        },
+
+        calcSmartOfferSavings() {
+          const reg = Number(this.smartOfferData.regularPrice) || 0;
+          const promo = Number(this.smartOfferData.promoPrice) || 0;
+          if (reg <= 0 || promo <= 0 || promo >= reg) return '0.00';
+          return (reg - promo).toFixed(2);
+        },
+
+        // Upload Product Image (Input 1)
+        handleSmartOfferProductUpload(event) {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.smartOfferProductImage = e.target.result;
+            this.updatePosterCanvas();
+            this.showToast('✨ تم تحميل صورة المنتج ودمجها بالقالب', 'success');
+          };
+          reader.readAsDataURL(file);
+        },
+
+        // Capture Product Image via Camera (Input 1 Camera Trigger)
+        captureSmartOfferProductCamera() {
+          this.scannerMode = 'barcode';
+          this.startCameraScanner('smartOfferProductCam');
+        },
+
+        // Upload Price Tag Image (Input 2 OCR Upload)
+        handleSmartOfferPriceTagUpload(event) {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+          this.smartOfferPriceTagImage = true;
+          this.handlePromoOcrFileUpload(event);
+        },
+
+        // Upload Custom Poster Background Template (Input 3)
+        handleSmartOfferCustomTemplateUpload(event) {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.smartOfferTemplateImage = e.target.result;
+            this.updatePosterCanvas();
+            this.showToast('✨ تم اعتماد القالب المخصص للبوستر', 'success');
+          };
+          reader.readAsDataURL(file);
+        },
+
+        // Catchy Egyptian Slang Copywriting Engine (الإعلان النصي بالعامية "الصايعة")
+        generateSmartOfferCopy() {
+          const name = this.smartOfferData.productName || 'المنتج ده';
+          const reg = Number(this.smartOfferData.regularPrice) || 0;
+          const promo = Number(this.smartOfferData.promoPrice) || 0;
+          const discount = this.calcSmartOfferDiscountPercent();
+          const savings = this.calcSmartOfferSavings();
+          const tone = this.smartOfferCopyToneIndex % 4;
+
+          const copyVariants = [
+            // Style 1: حماسي فكاهي صايع
+            `🔥 يا بلاش الحق العرض! الجودة عالية والسعر في التراما..\n` +
+            `علشان حبايب كازيون، بنقدملكم أقوى تخفيض على: [ ${name} ] ✨\n` +
+            `❌ بدل ما تدفع: ${reg} جنيه\n` +
+            `✅ النهاردة وبس بـ: ${promo} جنيه بسسس! (وفرت في جيبك ${savings} جنيه يعني خصم ${discount}% كاش 💰)\n\n` +
+            `مش هتعوضها تاني اليومين دول! لحق مكانك في فرعنا والكمية محدودة جداً قبل ما تخلص! 🏃‍♂️💨🛒`,
+
+            // Style 2: التوفير والضربة القاضية
+            `💥 ضربة قاضية للغلاء من كازيون ماركت!\n` +
+            `سعر مش هيتكرر تاني خالص على: [ ${name} ] 🛍️\n` +
+            `سيبك من الأسعار برة.. هنا هتاخدها بـ ${promo} ج.م بدلاً من ${reg} ج.م!\n` +
+            `وفرت كام؟ بالظبط ${savings} جنيه على القطعة الواحدة! 🤑\n\n` +
+            `عرض الـ 24 ساعة اليوم الواحد، متفوتش الفرصة وتعالى الفرع حالاً! ⚡⚡`,
+
+            // Style 3: إعلان جروبات وعائلات شعبي فخم
+            `📣 اسمع من كازيون وماتلفش كتير!\n` +
+            `خصم ${discount}% نازل طازة على [ ${name} ]..\n` +
+            `سعر الفرع دلوقتي: ${promo} جنيه بس (بدل ${reg} جنيه)! 💥\n` +
+            `وفر ${savings} جنيه في جيبك وهات لكل البيت.. العرض ده معمول مخصوص علشانك!\n\n` +
+            `مستنينكم في أقرب فرع كازيون ماركت - العرض ساري حتى نفاد الكمية! 🛒🤝`,
+
+            // Style 4: لهجة سريعة وشياكة
+            `🚨 كازيون بيولع الأسعار! عرض الـ 24 ساعة نار 🔥\n` +
+            `النهاردة عملنا الصح في [ ${name} ]..\n` +
+            `اشتري بـ ${promo} ج.م بسس ووفر ${savings} ج.م في ثانية!\n` +
+            `سعر زمان رجع تاني.. متفكرش كتير، الحجز والأسبقية للي يلحق الأول! 🏃‍♂️✨`
+          ];
+
+          this.smartOfferGeneratedCopy = copyVariants[tone];
+        },
+
+        rotateSmartOfferCopyTone() {
+          this.smartOfferCopyToneIndex = (this.smartOfferCopyToneIndex + 1) % 4;
+          this.generateSmartOfferCopy();
+          this.showToast('✨ تم تغيير صياغة النص الإعلاني بالعامية', 'info');
+        },
+
+        copySmartOfferText() {
+          if (!this.smartOfferGeneratedCopy) this.generateSmartOfferCopy();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(this.smartOfferGeneratedCopy).then(() => {
+              this.showToast('📋 تم نسخ النص الإعلاني بنجاح! جاهز للصق على واتساب', 'success');
+              if (navigator.vibrate) navigator.vibrate(50);
+            }).catch(() => {
+              this.showToast('تم تحديد النص للنسخ', 'info');
+            });
+          }
+        },
+
+        shareSmartOfferWhatsApp() {
+          if (!this.smartOfferGeneratedCopy) this.generateSmartOfferCopy();
+          const encoded = encodeURIComponent(this.smartOfferGeneratedCopy);
+          const url = `https://wa.me/?text=${encoded}`;
+          window.open(url, '_blank');
+          this.logActivity('PROMO_SHARE', `مشاركة نص عرض بالعامية على واتساب: ${this.smartOfferData.productName}`);
+        },
+
+        // High-Quality Visual Canvas Graphic Automation (Automated Design & Price Math)
+        updatePosterCanvas() {
+          const canvas = document.getElementById('smartOfferPosterCanvas');
+          if (!canvas) return;
+          const ctx = canvas.getContext('2d');
+          const width = 1080;
+          const height = 1350;
+          canvas.width = width;
+          canvas.height = height;
+
+          // 1. Draw Background: Custom Uploaded Template OR Default Kazyon 24-Hours Template
+          if (this.smartOfferTemplateImage) {
+            const bgImg = new Image();
+            bgImg.onload = () => {
+              ctx.drawImage(bgImg, 0, 0, width, height);
+              this.drawPosterOverlayLayers(ctx, width, height);
+            };
+            bgImg.src = this.smartOfferTemplateImage;
+          } else {
+            this.drawDefaultKazyonTemplate(ctx, width, height);
+            this.drawPosterOverlayLayers(ctx, width, height);
+          }
+        },
+
+        // Draw Official Kazyon "24 ساعة عرض اليوم الواحد" Graphic Template
+        drawDefaultKazyonTemplate(ctx, w, h) {
+          // Premium Dark Slate & Kazyon Orange Radial Gradient Canvas
+          const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+          bgGrad.addColorStop(0, '#0F172A');
+          bgGrad.addColorStop(0.5, '#030712');
+          bgGrad.addColorStop(1, '#1A0B02');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, w, h);
+
+          // Diagonal energetic orange accents in background
+          ctx.save();
+          ctx.fillStyle = 'rgba(255, 85, 0, 0.08)';
+          ctx.beginPath();
+          ctx.moveTo(-100, 300);
+          ctx.lineTo(w + 100, 100);
+          ctx.lineTo(w + 100, 500);
+          ctx.lineTo(-100, 700);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // Top Header Banner (Kazyon Brand identity)
+          const headerGrad = ctx.createLinearGradient(0, 0, w, 0);
+          headerGrad.addColorStop(0, '#FF5500');
+          headerGrad.addColorStop(0.5, '#FFAA00');
+          headerGrad.addColorStop(1, '#FF5500');
+          ctx.fillStyle = headerGrad;
+          ctx.fillRect(0, 0, w, 190);
+
+          // Subtle shadow below header
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+          ctx.fillRect(0, 190, w, 12);
+
+          // Top Header Text: Brand & Tagline
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'right';
+          ctx.font = '900 68px "Cairo", sans-serif';
+          ctx.fillText('كازيون ماركت', w - 70, 115);
+
+          ctx.textAlign = 'left';
+          ctx.font = '900 64px "Cairo", sans-serif';
+          ctx.fillText('KAZYON', 70, 115);
+
+          ctx.font = '700 24px "Cairo", sans-serif';
+          ctx.fillStyle = '#FFE5D9';
+          ctx.textAlign = 'right';
+          ctx.fillText('توفير كل يوم لأهل بلدنا', w - 70, 160);
+
+          ctx.textAlign = 'left';
+          ctx.fillText('BEST SAVINGS EVERY DAY', 70, 160);
+
+          // Prominent "24 ساعة - عرض اليوم الواحد" Hero Ribbon
+          const ribbonGrad = ctx.createLinearGradient(100, 220, w - 100, 220);
+          ribbonGrad.addColorStop(0, '#DC2626');
+          ribbonGrad.addColorStop(0.5, '#FF5500');
+          ribbonGrad.addColorStop(1, '#DC2626');
+          ctx.fillStyle = ribbonGrad;
+
+          this.roundRect(ctx, 80, 220, w - 160, 95, 26);
+          ctx.fill();
+          ctx.strokeStyle = '#FEF08A';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          // Ribbon Text
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.font = '900 48px "Cairo", sans-serif';
+          const title = this.smartOfferData.offerTitle || 'عرض الـ 24 ساعة اليوم الواحد';
+          ctx.fillText('⚡ ' + title + ' ⚡', w / 2, 285);
+
+          // Dedicated Product Showcase Stage (Circular / Rounded Neon Box)
+          ctx.fillStyle = '#111827';
+          this.roundRect(ctx, 100, 345, w - 200, 520, 36);
+          ctx.fill();
+          ctx.strokeStyle = '#1F2937';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          // Stage subtle radial spotlight
+          const spotGrad = ctx.createRadialGradient(w / 2, 605, 50, w / 2, 605, 260);
+          spotGrad.addColorStop(0, 'rgba(255, 85, 0, 0.22)');
+          spotGrad.addColorStop(0.8, 'rgba(17, 24, 39, 0.8)');
+          spotGrad.addColorStop(1, '#111827');
+          ctx.fillStyle = spotGrad;
+          this.roundRect(ctx, 102, 347, w - 204, 516, 34);
+          ctx.fill();
+
+          // Bottom Price Bar Card
+          ctx.fillStyle = '#161F30';
+          this.roundRect(ctx, 80, 990, w - 160, 260, 32);
+          ctx.fill();
+          ctx.strokeStyle = '#FF5500';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+
+          // Bottom Footer Bar (Barcode, branches, disclaimer)
+          ctx.fillStyle = '#0B0F19';
+          ctx.fillRect(0, 1270, w, 80);
+
+          ctx.fillStyle = '#94A3B8';
+          ctx.textAlign = 'center';
+          ctx.font = '600 24px "Cairo", sans-serif';
+          ctx.fillText('العرض ساري بجميع فروع كازيون حتى نفاد الكمية • الأسعار شاملة ضريبة القيمة المضافة', w / 2, 1320);
+        },
+
+        // Draw Product Image, Price Calculations, Discount Badge, and Typography
+        drawPosterOverlayLayers(ctx, w, h) {
+          const name = this.smartOfferData.productName || 'اسم المنتج هنا';
+          const regPrice = Number(this.smartOfferData.regularPrice) || 0;
+          const promoPrice = Number(this.smartOfferData.promoPrice) || 0;
+          const discount = this.calcSmartOfferDiscountPercent();
+          const savings = this.calcSmartOfferSavings();
+
+          // 1. Draw Product Image (In the central showcase area)
+          if (this.smartOfferProductImage) {
+            const pImg = new Image();
+            pImg.onload = () => {
+              const maxW = 460;
+              const maxH = 460;
+              let iw = pImg.naturalWidth || pImg.width;
+              let ih = pImg.naturalHeight || pImg.height;
+              const ratio = Math.min(maxW / iw, maxH / ih);
+              const drawW = iw * ratio;
+              const drawH = ih * ratio;
+              const drawX = (w - drawW) / 2;
+              const drawY = 375 + (460 - drawH) / 2;
+
+              ctx.drawImage(pImg, drawX, drawY, drawW, drawH);
+              this.drawPosterTextElements(ctx, w, h, name, regPrice, promoPrice, discount, savings);
+            };
+            pImg.src = this.smartOfferProductImage;
+          } else {
+            // Placeholder Icon & Text if no product image uploaded yet
+            ctx.fillStyle = '#475569';
+            ctx.textAlign = 'center';
+            ctx.font = '900 120px "Font Awesome 6 Free"';
+            ctx.fillText('📦', w / 2, 590);
+
+            ctx.font = '700 32px "Cairo", sans-serif';
+            ctx.fillStyle = '#94A3B8';
+            ctx.fillText('صورة المنتج ستظهر هنا', w / 2, 670);
+            ctx.font = '500 24px "Cairo", sans-serif';
+            ctx.fillText('(التقط بالكاميرا أو اختر من المعرض)', w / 2, 715);
+
+            this.drawPosterTextElements(ctx, w, h, name, regPrice, promoPrice, discount, savings);
+          }
+        },
+
+        // Render Discount Badges, Product Title, Prices & Savings
+        drawPosterTextElements(ctx, w, h, name, regPrice, promoPrice, discount, savings) {
+          // 1. Discount Percentage Badge (-XX% in glowing red/amber ribbon at top-right of product stage)
+          if (discount > 0) {
+            ctx.save();
+            ctx.fillStyle = '#EF4444';
+            ctx.beginPath();
+            ctx.arc(w - 180, 425, 78, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#FEF08A';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.font = '900 44px "Cairo", sans-serif';
+            ctx.fillText(`-${discount}%`, w - 180, 425);
+            ctx.font = '800 22px "Cairo", sans-serif';
+            ctx.fillText('خصم كاش', w - 180, 462);
+            ctx.restore();
+          }
+
+          // 2. Savings Tag at top-left of stage
+          if (Number(savings) > 0) {
+            ctx.save();
+            ctx.fillStyle = '#10B981';
+            this.roundRect(ctx, 125, 375, 200, 60, 18);
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.font = '900 26px "Cairo", sans-serif';
+            ctx.fillText(`وفر ${savings} ج.م`, 225, 416);
+            ctx.restore();
+          }
+
+          // 3. Product Name Banner (Above Price Box)
+          ctx.fillStyle = '#FFFFFF';
+          ctx.textAlign = 'center';
+          ctx.font = '900 52px "Cairo", sans-serif';
+          let displayName = name;
+          if (displayName.length > 34) {
+            displayName = displayName.substring(0, 32) + '...';
+          }
+          ctx.fillText(displayName, w / 2, 920);
+
+          // Sub-code & Barcode indicator
+          ctx.font = '700 24px "JetBrains Mono", monospace';
+          ctx.fillStyle = '#22D3EE';
+          const subInfo = (this.smartOfferData.subCode ? `كود: ${this.smartOfferData.subCode}` : '') +
+                          (this.smartOfferData.barcode ? ` • باركود: ${this.smartOfferData.barcode}` : '');
+          if (subInfo) {
+            ctx.fillText(subInfo, w / 2, 960);
+          }
+
+          // 4. Inside Price Box (990 -> 1250)
+          // Old Regular Price (Crossed Out on Right side)
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#94A3B8';
+          ctx.font = '700 28px "Cairo", sans-serif';
+          ctx.fillText('بدلاً من السعر الأصلي:', w - 130, 1060);
+
+          ctx.font = '900 56px "Cairo", sans-serif';
+          ctx.fillStyle = '#EF4444';
+          const regText = `${regPrice.toFixed(2)} ج.م`;
+          ctx.fillText(regText, w - 130, 1140);
+
+          // Strike-through line on regular price
+          const regMetrics = ctx.measureText(regText);
+          ctx.strokeStyle = '#EF4444';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(w - 120, 1115);
+          ctx.lineTo(w - 120 - regMetrics.width - 20, 1115);
+          ctx.stroke();
+
+          // New Bold Promo Price (Prominent on Left side)
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#FBBF24';
+          ctx.font = '900 32px "Cairo", sans-serif';
+          ctx.fillText('سعر العرض المميز:', 130, 1055);
+
+          ctx.font = '900 110px "Cairo", sans-serif';
+          ctx.fillStyle = '#FF5500';
+          const pText = promoPrice.toFixed(2);
+          ctx.fillText(pText, 130, 1175);
+
+          const pMetrics = ctx.measureText(pText);
+          ctx.font = '900 36px "Cairo", sans-serif';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText('جنيه', 140 + pMetrics.width, 1155);
+
+          // Savings Note under price box
+          ctx.textAlign = 'center';
+          ctx.font = '700 26px "Cairo", sans-serif';
+          ctx.fillStyle = '#10B981';
+          ctx.fillText(`✨ إجمالي توفيرك الفعلي للقطعة: ${savings} جنيه مصري بالتمام والكمال ✨`, w / 2, 1230);
+        },
+
+        // Helper: Canvas rounded rectangle drawing
+        roundRect(ctx, x, y, width, height, radius) {
+          ctx.beginPath();
+          ctx.moveTo(x + radius, y);
+          ctx.lineTo(x + width - radius, y);
+          ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+          ctx.lineTo(x + width, y + height - radius);
+          ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+          ctx.lineTo(x + radius, y + height);
+          ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+          ctx.lineTo(x, y + radius);
+          ctx.quadraticCurveTo(x, y, x + radius, y);
+          ctx.closePath();
+        },
+
+        // Download Generated Poster as High-Res PNG
+        downloadPosterImage() {
+          const canvas = document.getElementById('smartOfferPosterCanvas');
+          if (!canvas) return;
+          const nameClean = (this.smartOfferData.productName || 'kazyon_offer').replace(/\s+/g, '_');
+          const filename = `kazyon_offer_${nameClean}_${Date.now()}.png`;
+
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = canvas.toDataURL('image/png', 0.95);
+          link.click();
+
+          this.showToast('✨ تم بدء تحميل بوستر العرض بجودة عالية (HD)', 'success');
+          this.logActivity('PROMO_DOWNLOAD', `تحميل بوستر عرض سعر: ${this.smartOfferData.productName}`);
+          if (window.confetti) window.confetti({ particleCount: 30, spread: 50 });
+        },
+
+        // Share Poster via Web Share API
+        async sharePosterImage() {
+          const canvas = document.getElementById('smartOfferPosterCanvas');
+          if (!canvas) return;
+
+          try {
+            canvas.toBlob(async (blob) => {
+              if (blob && navigator.share && navigator.canShare) {
+                const file = new File([blob], 'kazyon_smart_offer.png', { type: 'image/png' });
+                if (navigator.canShare({ files: [file] })) {
+                  await navigator.share({
+                    files: [file],
+                    title: `عرض كازيون: ${this.smartOfferData.productName}`,
+                    text: this.smartOfferGeneratedCopy
+                  });
+                  this.showToast('تمت مشاركة البوستر بنجاح!', 'success');
+                  return;
+                }
+              }
+              // Fallback to downloading image and copying text
+              this.downloadPosterImage();
+              this.copySmartOfferText();
+              this.showToast('تم تحميل الصورة ونسخ النص! يمكنك الآن إرسالهما على واتساب', 'info');
+            }, 'image/png', 0.95);
+          } catch (e) {
+            console.warn('Share error', e);
+            this.downloadPosterImage();
+          }
+        },
+
+deletePromoTag(tag) {
           if (confirm(`هل أنت متأكد من حذف يافطة عرض (${tag.itemName}) وإلغاء التخفيض؟`)) {
             this.promoPriceTags = this.promoPriceTags.filter(t => t.id !== tag.id);
             this.savePromoTagsStorage(true);
