@@ -113,38 +113,48 @@
       box-sizing: border-box;
     }
     html, body {
-      width: 100vw;
+      width: 100%;
       min-width: 100%;
-      min-height: 100vh;
+      min-height: 100%;
       margin: 0;
       padding: 0;
       overflow-x: hidden;
       font-family: 'Cairo', sans-serif;
       background-color: #030712;
       color: #F8FAFC;
-      touch-action: manipulation;
+      touch-action: pan-y pinch-zoom;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: none;
-      scroll-behavior: auto;
+      overscroll-behavior-y: auto;
+      scroll-behavior: smooth;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* High-Performance Instant Touch Scrolling on Android Viewports */
+    /* Ultimate Smooth Scroll & Fluid Momentum Touch Optimization */
     .scroll-touch, 
     .overflow-y-auto, 
     .overflow-y-scroll,
     [data-scrollable="true"] {
       -webkit-overflow-scrolling: touch !important;
+      overflow-y: auto !important;
+      overscroll-behavior-y: contain !important;
       touch-action: pan-y !important;
-      overscroll-behavior-y: contain;
-      scroll-behavior: auto !important;
+      will-change: transform, scroll-position !important;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000px;
     }
 
     .overflow-x-auto {
       -webkit-overflow-scrolling: touch !important;
       touch-action: pan-x !important;
-      overscroll-behavior-x: contain;
+      overscroll-behavior-x: contain !important;
+      will-change: scroll-position;
+    }
+
+    /* Prevent Mobile Keyboard Layout Lock & Touch Traps */
+    input, select, textarea, button {
+      touch-action: manipulation;
     }
 
     /* GPU & Layout/Paint Containment: Zero-Lag 60/120Hz Fast Scrolling */
@@ -154,11 +164,13 @@
       contain: layout style paint;
       transform: translateZ(0);
       backface-visibility: hidden;
+      will-change: transform;
     }
 
     .batch-subcard-optimized {
       contain: content;
       transform: translateZ(0);
+      will-change: transform;
     }
 
     /* Dedicated Full-Screen Camera Scanner Overlay (z-index: 9999) */
@@ -431,7 +443,7 @@
   <!-- ============================================================= -->
   <!-- 2. MAIN APPLICATION CONTENT (AUTHENTICATED)                  -->
   <!-- ============================================================= -->
-  <div x-show="isAuth" x-cloak class="w-screen min-w-full max-w-none min-h-screen flex-1 flex flex-col pb-36 overflow-x-hidden">
+  <div x-show="isAuth" x-cloak class="w-full min-w-full max-w-none min-h-screen flex-1 flex flex-col pb-36 overflow-x-hidden">
     
     <!-- Top Android Floor Header Bar -->
     <header class="sticky top-0 z-30 bg-dark-950/95 backdrop-blur-md border-b border-dark-750 px-3.5 py-2.5 flex items-center justify-between">
@@ -2374,12 +2386,23 @@
           </p>
         </div>
 
-        <!-- Create & Batch Print Action Buttons -->
+        <!-- Create, Scan & Batch Print Action Buttons -->
         <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <!-- Direct Barcode Camera Scan Trigger -->
+          <button 
+            type="button" 
+            @click="openPromoModal(); startCameraScanner('promoModal')"
+            class="flex-1 sm:flex-initial min-h-[55px] h-14 px-4 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 touch-btn shadow-[0_4px_20px_rgba(255,85,0,0.4)] border border-amber-300/40"
+            title="مسح باركود السلعة بالكاميرا وملء اليافطة فوراً"
+          >
+            <i class="fa-solid fa-camera text-base"></i>
+            <span>مسح باركود اليافطة</span>
+          </button>
+
           <button 
             type="button" 
             @click="openPromoModal()"
-            class="flex-1 sm:flex-initial min-h-[55px] h-14 px-5 bg-dark-950 hover:bg-dark-900 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 touch-btn shadow-lg border border-white/20"
+            class="flex-1 sm:flex-initial min-h-[55px] h-14 px-4 bg-dark-950 hover:bg-dark-900 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 touch-btn shadow-lg border border-white/20"
           >
             <i class="fa-solid fa-plus text-kazyon text-sm"></i>
             <span>يافطة عرض جديدة</span>
@@ -2497,26 +2520,33 @@
 
         <!-- Promo Tag Form Inputs -->
         <div class="space-y-3">
-          <!-- Barcode with Auto-Complete from items & Camera Scanner -->
+          <!-- Barcode with Auto-Complete from items & Dedicated Camera Scanner -->
           <div>
-            <label class="block text-[11px] font-bold text-stone-300 mb-1">باركود المنتج (Barcode) *</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-stone-300">كود / باركود المنتج (Barcode / Code) *</label>
+              <span class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-bolt text-[9px]"></i>
+                <span>مسح بالكاميرا للتعبئة التلقائية</span>
+              </span>
+            </div>
             <div class="flex items-center gap-2">
               <input 
                 type="text" 
                 x-model="promoModalItem.barcode" 
                 @input="handlePromoBarcodeChange($event.target.value)"
-                placeholder="مثال: 6281007010115"
-                class="flex-1 min-h-[50px] h-12 bg-dark-950 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
+                @change="handlePromoBarcodeChange($event.target.value)"
+                placeholder="امسح الباركود بالكاميرا أو اكتب الكود..."
+                class="flex-1 min-h-[52px] h-13 bg-dark-950 border border-dark-700 rounded-2xl px-3.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-kazyon"
               >
-              <!-- Unified Barcode Camera Button -->
+              <!-- Dedicated High-Contrast Prominent Camera Scan Button -->
               <button 
                 type="button" 
                 @click="scannerMode = 'barcode'; startCameraScanner('promoModal')"
-                class="min-h-[50px] h-12 px-4 bg-kazyon hover:bg-kazyon-hover text-white rounded-xl text-xs font-bold touch-btn flex items-center gap-1.5 shadow-md shrink-0 active:scale-95 transition-all"
-                title="مسح باركود العرض بالكاميرا فوراً"
+                class="min-h-[52px] h-13 px-4.5 bg-gradient-to-r from-kazyon via-amber-500 to-kazyon hover:from-kazyon-hover hover:to-amber-600 text-white rounded-2xl text-xs font-black touch-btn flex items-center gap-2 shadow-[0_0_20px_rgba(255,85,0,0.35)] shrink-0 active:scale-95 transition-all border border-amber-400/40"
+                title="فتح الكاميرا لمسح باركود السلعة وملء بيانات اليافطة تلقائياً"
               >
-                <i class="fa-solid fa-camera text-sm"></i>
-                <span>مسح بالكاميرا</span>
+                <i class="fa-solid fa-camera text-base text-white"></i>
+                <span class="font-bold">مسح بالكاميرا</span>
               </button>
             </div>
             <!-- Hint to pick existing inventory item -->
@@ -4992,25 +5022,26 @@
               this.fetchOpenFoodFacts(clean, 'itemModal');
             }
           } else if (this.scannerTarget === 'promoModal') {
+            this.isPromoModalOpen = true;
+            this.activeTab = 'promo-tags';
             this.promoModalItem.barcode = clean;
             this.logActivity('BARCODE_SCAN', `مسح باركود يافطة عرض: ${clean}`);
 
             if (foundLocal) {
-              this.promoModalItem.itemName = foundLocal.itemName;
-              this.promoModalItem.category = foundLocal.category;
-              this.promoModalItem.regularPrice = foundLocal.regularPrice;
-              this.promoModalItem.promoPrice = foundLocal.promoPrice;
-              this.promoModalItem.shelfLocation = foundLocal.shelfLocation;
-              this.promoModalItem.subCode = foundLocal.subCode || ('KZ-' + clean.slice(-4));
-              this.showToast(`✨ تم ملء اسم وبيانات العرض فورياً: ${foundLocal.itemName}`, 'success');
+              this.selectItemForPromo(foundLocal);
             } else {
               if (!this.promoModalItem.subCode) {
                 this.promoModalItem.subCode = 'KZ-' + clean.slice(-4);
               }
               this.promoModalItem.itemName = '';
-              this.showToast(`تم مسح الباركود (${clean}) - جاري جلب اسم السلعة...`, 'info');
+              this.showToast(`تم مسح الباركود (${clean}) - جاري جلب اسم السلعة وبياناتها...`, 'info');
               this.fetchOpenFoodFacts(clean, 'promoModal');
             }
+
+            this.$nextTick(() => {
+              const el = document.getElementById('inline-promo-editor-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
           } else if (this.scannerTarget === 'price-checker') {
             this.priceSearchQuery = clean;
             this.checkPrice(clean);
@@ -6263,12 +6294,14 @@
           );
           if (found) {
             this.selectItemForPromo(found);
+          } else if (clean.length >= 8 && (!this.promoModalItem.itemName || this.promoModalItem.itemName.trim() === '')) {
+            this.fetchOpenFoodFacts(clean, 'promoModal');
           }
         },
 
         selectItemForPromo(item) {
           this.promoModalItem.barcode = item.barcode;
-          this.promoModalItem.subCode = item.subCode || '';
+          this.promoModalItem.subCode = item.subCode || ('KZ-' + item.barcode.slice(-4));
           this.promoModalItem.itemName = item.itemName;
           this.promoModalItem.category = item.category || 'بقالة جافة وبقوليات';
           this.promoModalItem.regularPrice = item.regularPrice || 0;
@@ -6278,7 +6311,7 @@
           if (item.shelfLocation) {
             this.promoModalItem.shelfLocation = item.shelfLocation;
           }
-          this.showToast(`تم ربط السلعة (${item.itemName}) بيافطة العرض`, 'info');
+          this.showToast(`✨ تم ربط السلعة (${item.itemName}) وتعبئة بيانات اليافطة`, 'success');
         },
 
         savePromoTag() {
