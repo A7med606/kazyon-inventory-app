@@ -295,11 +295,12 @@
       body * {
         visibility: hidden;
       }
-      .shelf-tag-printable, .shelf-tag-printable * {
+      .shelf-tag-printable, .shelf-tag-printable *,
+      .batch-print-sheet, .batch-print-sheet * {
         visibility: visible;
       }
-      .shelf-tag-printable {
-        position: fixed;
+      .shelf-tag-printable, .batch-print-sheet {
+        position: absolute;
         left: 0;
         top: 0;
         width: 100%;
@@ -307,6 +308,15 @@
         padding: 10px;
         background: white !important;
         color: black !important;
+      }
+      .batch-print-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      .batch-print-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
       .no-print {
         display: none !important;
@@ -2976,13 +2986,37 @@
                 </template>
               </div>
 
+              <!-- Studio Cutout & Background Isolation Actions -->
+              <div class="flex items-center gap-2 flex-wrap pt-1">
+                <button
+                  type="button"
+                  @click="isolateProductStudioBackground()"
+                  :disabled="!smartOfferProductImage"
+                  class="flex-1 min-h-[40px] px-3 bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 disabled:opacity-40 disabled:pointer-events-none rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 touch-btn"
+                  title="عزل الخلفية تلقائياً من صور كاميرا الهاتف وتحسين الإضاءة"
+                >
+                  <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                  <span>✨ عزل الخلفية وإضاءة الاستوديو</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="loadHalwaniBurgerSample()"
+                  class="min-h-[40px] px-3 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/40 text-amber-300 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 touch-btn"
+                  title="تعبئة بيانات العرض التجريبي: حلواني برجر 160 -> 130 ج.م"
+                >
+                  <i class="fa-solid fa-burger text-xs"></i>
+                  <span>🍔 نموذج برجر حلواني</span>
+                </button>
+              </div>
+
               <!-- Thumbnail & Status preview -->
               <template x-if="smartOfferProductImage">
                 <div class="flex items-center gap-2.5 p-2 bg-dark-900 rounded-xl border border-dark-800">
                   <img :src="smartOfferProductImage" class="w-12 h-12 object-contain rounded-lg bg-black/40 border border-dark-700 p-0.5">
                   <div class="text-[11px] text-stone-300 flex-1 truncate">
-                    <span class="text-emerald-400 font-bold block">جاهزة للدمج التلقائي في القالب</span>
-                    <span class="text-stone-400 text-[10px]">تتوسط القالب الرسومي بدقة</span>
+                    <span class="text-emerald-400 font-bold block">جاهزة للدمج التلقائي مع ظل واقعي</span>
+                    <span class="text-stone-400 text-[10px]">تتوسط الجانب الأيمن (السماء) دون تغطية رمز 24 ساعة</span>
                   </div>
                 </div>
               </template>
@@ -2993,7 +3027,7 @@
               <div class="flex items-center justify-between">
                 <label class="text-xs font-black text-white flex items-center gap-1.5">
                   <span class="w-5 h-5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-[10px]">2</span>
-                  <span>صورة ورقة / تكت السعر (Price Tag Image / OCR) *</span>
+                  <span>بيانات المنتج والأسعار (Product Data & Price Tag) *</span>
                 </label>
                 <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
                   <i class="fa-solid fa-bolt"></i> قراءة OCR واستخراج آلي
@@ -3023,37 +3057,70 @@
               <!-- Parsed Inputs (Auto-populated by OCR or editable) -->
               <div class="grid grid-cols-2 gap-2 pt-1">
                 <div class="col-span-2">
-                  <label class="block text-[10px] font-bold text-stone-400 mb-1">اسم المنتج المستخرج *</label>
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">اسم المنتج الرئيسي (في أسفل البانر البرتقالي) *</label>
                   <input
                     type="text"
                     x-model="smartOfferData.productName"
-                    @input="updatePosterCanvas(); generateSmartOfferCopy()"
-                    placeholder="مثال: حليب المراعي كامل الدسم 1 لتر"
+                    @input="debouncedSmartOfferUpdate()"
+                    placeholder="مثال: حلواني برجر بقري"
+                    class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
+                  >
+                </div>
+
+                <div class="col-span-2">
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">الوصف والوزن وعدد القطع *</label>
+                  <input
+                    type="text"
+                    x-model="smartOfferData.productDescriptor"
+                    @input="debouncedSmartOfferUpdate()"
+                    placeholder="مثال: البرجر الأصلي 400 جم / (8 قطع)"
                     class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
                   >
                 </div>
 
                 <div>
-                  <label class="block text-[10px] font-bold text-stone-400 mb-1">السعر القديم السابق (ج.م) *</label>
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">السعر الأصلي (داخل الكبسولة الصفراء) *</label>
                   <input
                     type="number"
                     step="0.25"
                     x-model.number="smartOfferData.regularPrice"
-                    @input="updatePosterCanvas(); generateSmartOfferCopy()"
+                    @input="debouncedSmartOfferUpdate()"
                     placeholder="0.00"
                     class="w-full min-h-[44px] h-11 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs font-mono font-bold text-stone-300 focus:outline-none focus:border-kazyon"
                   >
                 </div>
 
                 <div>
-                  <label class="block text-[10px] font-bold text-kazyon mb-1">سعر العرض الجديد (ج.م) *</label>
+                  <label class="block text-[10px] font-bold text-kazyon mb-1">سعر العرض الجديد (EGP بخط عريض) *</label>
                   <input
                     type="number"
                     step="0.25"
                     x-model.number="smartOfferData.promoPrice"
-                    @input="updatePosterCanvas(); generateSmartOfferCopy()"
+                    @input="debouncedSmartOfferUpdate()"
                     placeholder="0.00"
                     class="w-full min-h-[44px] h-11 bg-dark-900 border-2 border-kazyon rounded-xl px-3 text-xs font-mono font-black text-kazyon focus:outline-none focus:ring-1 focus:ring-kazyon"
+                  >
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">يوم السريان (بالشريط السفلي)</label>
+                  <input
+                    type="text"
+                    x-model="smartOfferData.validityDay"
+                    @input="debouncedSmartOfferUpdate()"
+                    placeholder="الإثنين"
+                    class="w-full min-h-[40px] h-10 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
+                  >
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-bold text-stone-400 mb-1">تاريخ السريان [التاريخ]</label>
+                  <input
+                    type="text"
+                    x-model="smartOfferData.validityDate"
+                    @input="debouncedSmartOfferUpdate()"
+                    placeholder="15/10/2026"
+                    class="w-full min-h-[40px] h-10 bg-dark-900 border border-dark-700 rounded-xl px-3 text-xs text-white focus:outline-none focus:border-kazyon"
                   >
                 </div>
               </div>
@@ -3061,12 +3128,12 @@
               <!-- Instant Automated Price Math Ribbon -->
               <div class="p-2.5 rounded-xl bg-dark-900 border border-dark-800 flex items-center justify-between text-xs">
                 <div class="flex items-center gap-1.5">
-                  <span class="text-stone-400 text-[11px]">نسبة الخصم:</span>
-                  <span class="px-2 py-0.5 rounded-md bg-red-600/20 text-red-400 font-mono font-black text-xs border border-red-500/30" x-text="calcSmartOfferDiscountPercent() + '%-'"></span>
+                  <span class="text-stone-400 text-[11px]">نسبة الخصم (-XX%):</span>
+                  <span class="px-2 py-0.5 rounded-md bg-red-600/20 text-red-400 font-mono font-black text-xs border border-red-500/30" x-text="'-' + calcSmartOfferDiscountPercent() + '%'"></span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-stone-400 text-[11px]">قيمة التوفير:</span>
-                  <span class="text-emerald-400 font-mono font-black text-xs" x-text="calcSmartOfferSavings() + ' ج.م'"></span>
+                  <span class="text-stone-400 text-[11px]">قيمة التوفير (وفرت X EGP):</span>
+                  <span class="text-emerald-400 font-mono font-black text-xs" x-text="'وفرت ' + calcSmartOfferSavings() + ' EGP'"></span>
                 </div>
               </div>
             </div>
@@ -3291,7 +3358,8 @@
           <div class="relative flex-1">
             <input 
               type="text" 
-              x-model="promoSearchQuery" 
+              x-model="promoSearchInput" 
+              @input="handlePromoSearchInput($event.target.value)"
               placeholder="ابحث باسم السلعة، الباركود، أو مكان الرف..."
               class="w-full min-h-[50px] h-12 bg-dark-900 border border-dark-700 rounded-xl px-3 pl-10 text-xs text-white focus:outline-none focus:border-kazyon"
             >
@@ -4132,6 +4200,19 @@
   <!-- 7. COMPLETE ALPINE.JS HIGH-PERFORMANCE LOGIC                   -->
   <!-- ============================================================= -->
   <script>
+    // High-Performance Zero-Lag Debounce Engine (250-300ms delay)
+    function debounce(func, wait = 280) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
     function kazyonApp() {
       return {
         // Multi-User Auth State & RBAC
@@ -4226,15 +4307,22 @@
         smartOfferTemplateImage: null,
         smartOfferSelectedTemplate: '24hours', // '24hours' | 'super-saver' | 'flash-deal'
         smartOfferData: {
-          productName: '',
-          barcode: '',
-          subCode: '',
-          regularPrice: 0,
-          promoPrice: 0,
+          productName: 'حلواني برجر بقري',
+          productDescriptor: 'البرجر الأصلي 400 جم / (8 قطع)',
+          barcode: '6221008000421',
+          subCode: 'KZ-1002',
+          regularPrice: 160.0,
+          promoPrice: 130.0,
+          validityDay: 'الإثنين',
+          validityDate: '15/10/2026',
           expiryDate: '',
-          category: 'بقالة جافة وبقوليات',
+          category: 'مجمدات ولحوم',
           offerTitle: 'عرض الـ 24 ساعة اليوم الواحد',
-          customNote: 'الكمية محدودة بالفرع'
+          customNote: 'الكمية محدودة بالفرع',
+          enableShadow: true,
+          autoCutout: true,
+          productScale: 1.0,
+          productOffsetY: 0
         },
         smartOfferGeneratedCopy: '',
         smartOfferCopyToneIndex: 0,
@@ -4287,6 +4375,25 @@
         searchDebounceTimer: null,
         isPriceSearching: false,
         priceDebounceTimer: null,
+        promoSearchInput: '',
+        isPromoSearching: false,
+        promoSearchDebounceTimer: null,
+
+        // High-Performance Render Caching & Memoization Flags
+        _filterDirty: true,
+        _cachedFilteredItems: null,
+        _promoFilterDirty: true,
+        _cachedFilteredPromoTags: null,
+        _todayCacheMs: 0,
+        _todayCacheDate: null,
+        _cachedBgImg: null,
+        _cachedProductImg: null,
+        _renderPosterRaf: null,
+        _smartOfferDebounceTimer: null,
+        _saveStorageTimer: null,
+        _savePromoTimer: null,
+        _saveLogsTimer: null,
+        _heartbeatInterval: null,
 
         // 1. OFFLINE-FIRST CACHING & INITIALIZATION
         init() {
@@ -4413,12 +4520,42 @@
             window.addEventListener(evt, warmUpAudio, { once: true, passive: true });
           });
 
+          // Lifecycle cleanup listeners to prevent memory leaks on tab close / backgrounding
+          window.addEventListener('beforeunload', () => {
+            this.cleanupResources();
+          });
+          window.addEventListener('pagehide', () => {
+            this.cleanupResources();
+          });
+
           // Heartbeat interval for active sessions (keep-alive)
-          setInterval(() => {
+          if (this._heartbeatInterval) clearInterval(this._heartbeatInterval);
+          this._heartbeatInterval = setInterval(() => {
             if (this.isAuth) {
               this.heartbeatSession();
             }
           }, 15000);
+        },
+
+        // Master Resource & Memory Cleanup Engine
+        cleanupResources() {
+          if (this._heartbeatInterval) {
+            clearInterval(this._heartbeatInterval);
+            this._heartbeatInterval = null;
+          }
+          if (this.lightCheckInterval) {
+            clearInterval(this.lightCheckInterval);
+            this.lightCheckInterval = null;
+          }
+          if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+          if (this.priceDebounceTimer) clearTimeout(this.priceDebounceTimer);
+          if (this.promoSearchDebounceTimer) clearTimeout(this.promoSearchDebounceTimer);
+          if (this._smartOfferDebounceTimer) clearTimeout(this._smartOfferDebounceTimer);
+          if (this._saveStorageTimer) clearTimeout(this._saveStorageTimer);
+          if (this._savePromoTimer) clearTimeout(this._savePromoTimer);
+          if (this._saveLogsTimer) clearTimeout(this._saveLogsTimer);
+          if (this._renderPosterRaf) cancelAnimationFrame(this._renderPosterRaf);
+          this.closeScanner();
         },
 
         // Device Fingerprinting: Extract actual device brand and model from userAgent
@@ -4759,20 +4896,58 @@
           this.saveLogsToStorage();
         },
 
-        // Persist Inventory to localStorage
-        saveToStorage() {
-          try {
-            localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
-          } catch (e) {
-            console.error('LocalStorage save error', e);
+        // Helper: Non-blocking asynchronous task execution
+        runAsyncNonBlocking(task) {
+          if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(() => {
+              try { task(); } catch (e) { console.warn('Async task err:', e); }
+            }, { timeout: 120 });
+          } else {
+            setTimeout(() => {
+              try { task(); } catch (e) { console.warn('Async task err:', e); }
+            }, 0);
           }
         },
 
-        // Persist Logs to localStorage
+        // Persist Inventory to localStorage (Non-Blocking & Debounced)
+        saveToStorage(immediate = false) {
+          this._filterDirty = true;
+          if (immediate) {
+            try {
+              localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
+            } catch (e) {
+              console.error('LocalStorage save error', e);
+            }
+            return;
+          }
+
+          if (this._saveStorageTimer) clearTimeout(this._saveStorageTimer);
+          this._saveStorageTimer = setTimeout(() => {
+            this._saveStorageTimer = null;
+            this.runAsyncNonBlocking(() => {
+              try {
+                localStorage.setItem('kazyon_inventory_v2', JSON.stringify(this.items));
+              } catch (e) {
+                console.error('LocalStorage save error', e);
+              }
+            });
+          }, 80);
+        },
+
+        // Persist Logs to localStorage (Non-Blocking & Capped)
         saveLogsToStorage() {
-          try {
-            localStorage.setItem('kazyon_activity_logs_v2', JSON.stringify(this.activityLogs));
-          } catch (e) {}
+          if (this._saveLogsTimer) clearTimeout(this._saveLogsTimer);
+          this._saveLogsTimer = setTimeout(() => {
+            this._saveLogsTimer = null;
+            this.runAsyncNonBlocking(() => {
+              try {
+                if (this.activityLogs.length > 200) {
+                  this.activityLogs = this.activityLogs.slice(0, 200);
+                }
+                localStorage.setItem('kazyon_activity_logs_v2', JSON.stringify(this.activityLogs));
+              } catch (e) {}
+            });
+          }, 120);
         },
 
         // REAL-TIME SYNCHRONIZATION (BroadcastChannel + Storage Event Listener)
@@ -5207,24 +5382,33 @@
         calcAlertsCount() {
           return this.items.filter(i => i.status === 'expired' || i.status === 'low_stock' || this.isItemNearExpiry(i)).length;
         },
+        // Helper: Cached Midnight Timestamp to eliminate thousands of Date instantiations
+        getTodayMidnight() {
+          const now = Date.now();
+          if (!this._todayCacheMs || now - this._todayCacheMs > 60000) {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            this._todayCacheMs = now;
+            this._todayCacheDate = d.getTime();
+          }
+          return this._todayCacheDate;
+        },
+
         // Helper: Check if item or any of its batches expires within 45 days
         isItemNearExpiry(item) {
           if (!item) return false;
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
+          const todayMs = this.getTodayMidnight();
+          const ms45Days = 45 * 24 * 3600 * 1000;
+
           if (item.expiryDate) {
-            const exp = new Date(item.expiryDate);
-            exp.setHours(0, 0, 0, 0);
-            const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
-            if (diffDays <= 45) return true;
+            const expMs = new Date(item.expiryDate).getTime();
+            if (!isNaN(expMs) && (expMs - todayMs) <= ms45Days) return true;
           }
           if (Array.isArray(item.batches)) {
             return item.batches.some(b => {
               if (!b.expiryDate) return false;
-              const bExp = new Date(b.expiryDate);
-              bExp.setHours(0, 0, 0, 0);
-              const bDiff = Math.ceil((bExp.getTime() - today.getTime()) / (1000 * 3600 * 24));
-              return bDiff <= 45;
+              const bExpMs = new Date(b.expiryDate).getTime();
+              return !isNaN(bExpMs) && (bExpMs - todayMs) <= ms45Days;
             });
           }
           return false;
@@ -5248,40 +5432,52 @@
         calcExpiredCount() {
           return this.items.filter(i => i.status === 'expired').length;
         },
-        // Real-Time Filtered Items Supporting Smart Quick Chips
+        // Real-Time Filtered Items with Memoization & Ultra-Fast Substring Matching
         filteredItems() {
-          return this.items.filter(item => {
+          if (!this._filterDirty && this._cachedFilteredItems) {
+            return this._cachedFilteredItems;
+          }
+
+          const q = this.searchQuery ? this.searchQuery.toLowerCase().trim() : '';
+          const hasQuery = q.length > 0;
+          const cat = this.selectedCategory;
+          const status = this.statusFilter;
+
+          const res = this.items.filter(item => {
             // 1. Department / Category filter
-            if (this.selectedCategory !== 'all' && item.category !== this.selectedCategory) {
+            if (cat !== 'all' && item.category !== cat) {
               return false;
             }
             // 2. Smart Quick Status Filter
-            if (this.statusFilter === 'near_expiry') {
+            if (status === 'near_expiry') {
               if (!this.isItemNearExpiry(item)) return false;
-            } else if (this.statusFilter === 'promo') {
+            } else if (status === 'promo') {
               if (!item.promoPrice || item.promoPrice >= item.regularPrice) return false;
-            } else if (this.statusFilter === 'low_stock') {
+            } else if (status === 'low_stock') {
               if (item.shopQty > 3 && item.status !== 'low_stock') return false;
-            } else if (this.statusFilter === 'warehouse') {
+            } else if (status === 'warehouse') {
               if (!item.warehouseQty || item.warehouseQty <= 0) return false;
-            } else if (this.statusFilter === 'hall') {
+            } else if (status === 'hall') {
               if (!item.shopQty || item.shopQty <= 0) return false;
-            } else if (this.statusFilter === 'expired') {
+            } else if (status === 'expired') {
               if (item.status !== 'expired') return false;
-            } else if (this.statusFilter === 'alerts') {
+            } else if (status === 'alerts') {
               if (item.status !== 'expired' && item.status !== 'low_stock' && !this.isItemNearExpiry(item)) return false;
             }
             // 3. Search query (Barcode, Sub-Code, or Name)
-            if (this.searchQuery && this.searchQuery.trim()) {
-              const q = this.searchQuery.toLowerCase().trim();
-              const matchName = item.itemName.toLowerCase().includes(q);
-              const matchBarcode = item.barcode.includes(q);
+            if (hasQuery) {
+              const matchName = item.itemName ? item.itemName.toLowerCase().includes(q) : false;
+              const matchBarcode = item.barcode ? item.barcode.includes(q) : false;
               const matchSubCode = item.subCode ? item.subCode.toLowerCase().includes(q) : false;
-              const matchCategory = item.category.toLowerCase().includes(q);
+              const matchCategory = item.category ? item.category.toLowerCase().includes(q) : false;
               return matchName || matchBarcode || matchSubCode || matchCategory;
             }
             return true;
           });
+
+          this._cachedFilteredItems = res;
+          this._filterDirty = false;
+          return res;
         },
         // Quick Price Checker Lookup
         checkPrice(code) {
@@ -5307,7 +5503,7 @@
           }
         },
 
-        // Debounced Search Inputs for Low-Tier Android Handsets
+        // Strict Debounced Search Inputs for Low-Tier Android Handsets (250-300ms delay)
         handleSearchInput(val) {
           this.fastBarcodeInput = val;
           this.isSearching = true;
@@ -5315,13 +5511,15 @@
           this.searchDebounceTimer = setTimeout(() => {
             this.searchQuery = val;
             this.isSearching = false;
-          }, 250);
+            this._filterDirty = true;
+          }, 280);
         },
 
         clearSearch() {
           this.fastBarcodeInput = '';
           this.searchQuery = '';
           this.isSearching = false;
+          this._filterDirty = true;
           if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
         },
 
@@ -5334,10 +5532,21 @@
             if (val && val.trim().length >= 3) {
               this.checkPrice(val);
             }
-          }, 350);
+          }, 300);
         },
 
-        // Offline Queueing & Real-Time Sync Flush
+        handlePromoSearchInput(val) {
+          this.promoSearchInput = val;
+          this.isPromoSearching = true;
+          if (this.promoSearchDebounceTimer) clearTimeout(this.promoSearchDebounceTimer);
+          this.promoSearchDebounceTimer = setTimeout(() => {
+            this.promoSearchQuery = val;
+            this.isPromoSearching = false;
+            this._promoFilterDirty = true;
+          }, 260);
+        },
+
+        // Offline Queueing & Real-Time Sync Flush (Non-Blocking)
         queueOfflineAction(type, payload) {
           const action = {
             id: 'off_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -5346,9 +5555,11 @@
             timestamp: new Date().toISOString()
           };
           this.offlineQueue.push(action);
-          try {
-            localStorage.setItem('kazyon_offline_queue_v2', JSON.stringify(this.offlineQueue));
-          } catch (e) {}
+          this.runAsyncNonBlocking(() => {
+            try {
+              localStorage.setItem('kazyon_offline_queue_v2', JSON.stringify(this.offlineQueue));
+            } catch (e) {}
+          });
         },
 
         flushOfflineQueue() {
@@ -5540,6 +5751,19 @@
             this.lightCheckInterval = null;
           }
 
+          // Explicitly stop all active video stream tracks & detach srcObject to prevent hardware/memory locks
+          try {
+            const videoElements = document.querySelectorAll('#camera-scanner-viewport video');
+            videoElements.forEach(v => {
+              if (v.srcObject && typeof v.srcObject.getTracks === 'function') {
+                v.srcObject.getTracks().forEach(track => {
+                  try { track.stop(); } catch (e) {}
+                });
+              }
+              v.srcObject = null;
+            });
+          } catch (e) {}
+
           if (this.torchOn) {
             try {
               const video = document.querySelector('#camera-scanner-viewport video');
@@ -5562,6 +5786,15 @@
             }
             this.html5QrCode = null;
           }
+
+          // Dispose ambient light analysis canvas
+          if (this._lightCanvas) {
+            this._lightCanvas.width = 0;
+            this._lightCanvas.height = 0;
+            this._lightCanvas = null;
+            this._lightCtx = null;
+          }
+
           this.isScannerOpen = false;
           this.torchOn = false;
           this.isLowLightDetected = false;
@@ -7182,14 +7415,32 @@
           this.savePromoTagsStorage(false);
         },
 
-        savePromoTagsStorage(broadcast = true) {
-          localStorage.setItem('kazyon_promo_tags_v2', JSON.stringify(this.promoPriceTags));
+        savePromoTagsStorage(broadcast = true, immediate = false) {
+          this._promoFilterDirty = true;
+          if (immediate) {
+            try {
+              localStorage.setItem('kazyon_promo_tags_v2', JSON.stringify(this.promoPriceTags));
+            } catch (e) {}
+          } else {
+            if (this._savePromoTimer) clearTimeout(this._savePromoTimer);
+            this._savePromoTimer = setTimeout(() => {
+              this._savePromoTimer = null;
+              this.runAsyncNonBlocking(() => {
+                try {
+                  localStorage.setItem('kazyon_promo_tags_v2', JSON.stringify(this.promoPriceTags));
+                } catch (e) {}
+              });
+            }, 80);
+          }
+
           if (broadcast) {
-            if (this.isOnline) {
-              this.broadcastUpdate('PROMO_CHANGE', { count: this.promoPriceTags.length });
-            } else {
-              this.queueOfflineAction('PROMO_CHANGE', { count: this.promoPriceTags.length });
-            }
+            this.runAsyncNonBlocking(() => {
+              if (this.isOnline) {
+                this.broadcastUpdate('PROMO_CHANGE', { count: this.promoPriceTags.length });
+              } else {
+                this.queueOfflineAction('PROMO_CHANGE', { count: this.promoPriceTags.length });
+              }
+            });
           }
         },
 
@@ -7322,16 +7573,8 @@
           if (initialItem) {
             this.fillSmartOfferFromItem(initialItem);
           } else if (!this.smartOfferData.productName) {
-            // Default sample offer if empty
-            const sample = this.items[0] || {
-              itemName: 'حليب المراعي كامل الدسم 1 لتر',
-              barcode: '6281007010115',
-              subCode: 'KZ-1001',
-              regularPrice: 42.0,
-              promoPrice: 38.5,
-              category: 'ألبان وأجبان'
-            };
-            this.fillSmartOfferFromItem(sample);
+            // Default sample offer if empty: Halwani Burger Offer
+            this.loadHalwaniBurgerSample();
           } else {
             this.updatePosterCanvas();
             this.generateSmartOfferCopy();
@@ -7344,17 +7587,122 @@
           });
         },
 
+        loadHalwaniBurgerSample() {
+          this.smartOfferData.productName = 'حلواني برجر بقري';
+          this.smartOfferData.productDescriptor = 'البرجر الأصلي 400 جم / (8 قطع)';
+          this.smartOfferData.barcode = '6221008000421';
+          this.smartOfferData.subCode = 'KZ-1002';
+          this.smartOfferData.regularPrice = 160.0;
+          this.smartOfferData.promoPrice = 130.0;
+          this.smartOfferData.validityDay = 'الإثنين';
+          this.smartOfferData.validityDate = new Date().toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          this.smartOfferData.category = 'مجمدات ولحوم';
+          this.generateSmartOfferCopy();
+          this.updatePosterCanvas();
+          this.showToast('🍔 تم تعبئة نموذج عرض برجر حلواني (160 ⬅️ 130 ج.م)', 'success');
+        },
+
         fillSmartOfferFromItem(item) {
           if (!item) return;
           this.smartOfferData.productName = item.itemName || '';
+          this.smartOfferData.productDescriptor = item.category ? `${item.category} • جودة ممتازة` : 'المنتج الأصلي كازيون ماركت';
           this.smartOfferData.barcode = item.barcode || '';
           this.smartOfferData.subCode = item.subCode || ('KZ-' + (item.barcode ? item.barcode.slice(-4) : '1001'));
           this.smartOfferData.regularPrice = Number(item.regularPrice) || 0;
           this.smartOfferData.promoPrice = (item.promoPrice && item.promoPrice < item.regularPrice) ? Number(item.promoPrice) : Math.round((Number(item.regularPrice) || 10) * 0.88);
           this.smartOfferData.category = item.category || 'بقالة جافة وبقوليات';
+          const daysArabic = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+          const now = new Date();
+          this.smartOfferData.validityDay = daysArabic[now.getDay()];
+          this.smartOfferData.validityDate = now.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
           this.generateSmartOfferCopy();
           this.updatePosterCanvas();
           this.showToast(`✨ تم إدراج صنف (${item.itemName}) في صانع العروض الذكي`, 'success');
+        },
+
+        // Client-Side Studio Cutout & Background Removal (Chroma/Luma & Studio Contrast)
+        async isolateProductStudioBackground() {
+          if (!this.smartOfferProductImage) {
+            this.showToast('يرجى التقاط أو رفع صورة المنتج أولاً لعزلها', 'info');
+            return;
+          }
+          this.showToast('جاري عزل خلفية صورة المنتج وتحسين إضاءة الاستوديو...', 'info');
+          try {
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = this.smartOfferProductImage;
+            });
+            const canvas = document.createElement('canvas');
+            const w = img.naturalWidth || img.width || 800;
+            const h = img.naturalHeight || img.height || 600;
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0, w, h);
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            // Sample corner background colors (store surfaces, hands, clutter)
+            const sample = (x, y) => {
+              const idx = (y * w + x) * 4;
+              return [data[idx], data[idx + 1], data[idx + 2]];
+            };
+            const corners = [
+              sample(5, 5),
+              sample(w - 6, 5),
+              sample(5, h - 6),
+              sample(w - 6, h - 6),
+              sample(Math.floor(w / 2), 5)
+            ];
+            const avgBg = [
+              Math.round(corners.reduce((acc, c) => acc + c[0], 0) / corners.length),
+              Math.round(corners.reduce((acc, c) => acc + c[1], 0) / corners.length),
+              Math.round(corners.reduce((acc, c) => acc + c[2], 0) / corners.length)
+            ];
+
+            const colorDist = (r, g, b, bg) => {
+              return Math.sqrt((r - bg[0]) ** 2 + (g - bg[1]) ** 2 + (b - bg[2]) ** 2);
+            };
+
+            const threshold = 48;
+            const feather = 24;
+
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              const dist = colorDist(r, g, b, avgBg);
+              const isNearWhite = (r > 220 && g > 220 && b > 220);
+
+              if (dist < threshold || (isNearWhite && dist < threshold + 25)) {
+                data[i + 3] = 0;
+              } else if (dist < threshold + feather) {
+                const alpha = (dist - threshold) / feather;
+                data[i + 3] = Math.round(data[i + 3] * alpha);
+              } else {
+                // Enhance studio contrast & saturation for clean catalog presentation
+                data[i] = Math.min(255, Math.max(0, Math.round((r - 128) * 1.08 + 128 + 4)));
+                data[i + 1] = Math.min(255, Math.max(0, Math.round((g - 128) * 1.08 + 128 + 4)));
+                data[i + 2] = Math.min(255, Math.max(0, Math.round((b - 128) * 1.08 + 128 + 4)));
+              }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            this.smartOfferProductImage = canvas.toDataURL('image/png', 0.95);
+            this._cachedProductImg = null;
+            this.updatePosterCanvas();
+
+            canvas.width = 0;
+            canvas.height = 0;
+            this.showToast('✨ تم عزل خلفية المنتج بنجاح وإضافة إضاءة الاستوديو!', 'success');
+            if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+          } catch (e) {
+            console.warn('Cutout error', e);
+            this.showToast('حدث خطأ أثناء معالجة عزل الخلفية', 'error');
+          }
         },
 
         calcSmartOfferDiscountPercent() {
@@ -7371,17 +7719,77 @@
           return (reg - promo).toFixed(2);
         },
 
-        // Upload Product Image (Input 1)
-        handleSmartOfferProductUpload(event) {
+        // Debounced Smart Offer Live Update (Eliminates typing lag)
+        debouncedSmartOfferUpdate() {
+          if (this._smartOfferDebounceTimer) clearTimeout(this._smartOfferDebounceTimer);
+          this._smartOfferDebounceTimer = setTimeout(() => {
+            this.updatePosterCanvas();
+            this.generateSmartOfferCopy();
+          }, 200);
+        },
+
+        // Non-blocking Asynchronous Image Compression & Resizing Pipeline
+        async compressAndResizeImage(fileOrBlob, maxDimension = 1200, quality = 0.82) {
+          return new Promise((resolve, reject) => {
+            if (!fileOrBlob) return resolve(null);
+            const objectUrl = URL.createObjectURL(fileOrBlob);
+            const img = new Image();
+            img.onload = () => {
+              URL.revokeObjectURL(objectUrl);
+              let { naturalWidth: width, naturalHeight: height } = img;
+              if (!width || !height) {
+                width = img.width || 800;
+                height = img.height || 600;
+              }
+              if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                  height = Math.round((height * maxDimension) / width);
+                  width = maxDimension;
+                } else {
+                  width = Math.round((width * maxDimension) / height);
+                  height = maxDimension;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'high';
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+              // Clean up canvas memory immediately
+              canvas.width = 0;
+              canvas.height = 0;
+              resolve(compressedDataUrl);
+            };
+            img.onerror = (err) => {
+              URL.revokeObjectURL(objectUrl);
+              reject(err);
+            };
+            img.src = objectUrl;
+          });
+        },
+
+        // Upload Product Image (Input 1) with Compression & Downsampling
+        async handleSmartOfferProductUpload(event) {
           const file = event.target.files && event.target.files[0];
           if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            this.smartOfferProductImage = e.target.result;
+          try {
+            this.showToast('جاري ضغط ومعالجة صورة المنتج للذاكرة...', 'info');
+            const compressed = await this.compressAndResizeImage(file, 1000, 0.82);
+            this.smartOfferProductImage = compressed;
+            this._cachedProductImg = null;
             this.updatePosterCanvas();
-            this.showToast('✨ تم تحميل صورة المنتج ودمجها بالقالب', 'success');
-          };
-          reader.readAsDataURL(file);
+            this.showToast('✨ تم ضغط صورة المنتج ودمجها بالقالب بأعلى كفاءة', 'success');
+          } catch (err) {
+            console.error('Image compression error', err);
+            this.showToast('حدث خطأ أثناء معالجة الصورة', 'error');
+          } finally {
+            event.target.value = '';
+          }
         },
 
         // Capture Product Image via Camera (Input 1 Camera Trigger)
@@ -7398,53 +7806,62 @@
           this.handlePromoOcrFileUpload(event);
         },
 
-        // Upload Custom Poster Background Template (Input 3)
-        handleSmartOfferCustomTemplateUpload(event) {
+        // Upload Custom Poster Background Template (Input 3) with Compression
+        async handleSmartOfferCustomTemplateUpload(event) {
           const file = event.target.files && event.target.files[0];
           if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            this.smartOfferTemplateImage = e.target.result;
+          try {
+            this.showToast('جاري ضغط قالب العرض المخصص...', 'info');
+            const compressed = await this.compressAndResizeImage(file, 1200, 0.85);
+            this.smartOfferTemplateImage = compressed;
+            this._cachedBgImg = null;
             this.updatePosterCanvas();
-            this.showToast('✨ تم اعتماد القالب المخصص للبوستر', 'success');
-          };
-          reader.readAsDataURL(file);
+            this.showToast('✨ تم اعتماد وضغط القالب المخصص للبوستر', 'success');
+          } catch (err) {
+            console.error('Template compression error', err);
+            this.showToast('حدث خطأ أثناء معالجة القالب', 'error');
+          } finally {
+            event.target.value = '';
+          }
         },
 
         // Catchy Egyptian Slang Copywriting Engine (الإعلان النصي بالعامية "الصايعة")
         generateSmartOfferCopy() {
           const name = this.smartOfferData.productName || 'المنتج ده';
+          const descriptor = this.smartOfferData.productDescriptor ? ` - ${this.smartOfferData.productDescriptor}` : '';
+          const fullProductTitle = `${name}${descriptor}`;
           const reg = Number(this.smartOfferData.regularPrice) || 0;
           const promo = Number(this.smartOfferData.promoPrice) || 0;
           const discount = this.calcSmartOfferDiscountPercent();
           const savings = this.calcSmartOfferSavings();
+          const dayName = this.smartOfferData.validityDay || 'اليوم';
           const tone = this.smartOfferCopyToneIndex % 4;
 
           const copyVariants = [
             // Style 1: حماسي فكاهي صايع
             `🔥 يا بلاش الحق العرض! الجودة عالية والسعر في التراما..\n` +
-            `علشان حبايب كازيون، بنقدملكم أقوى تخفيض على: [ ${name} ] ✨\n` +
+            `علشان حبايب كازيون، بنقدملكم أقوى تخفيض على: [ ${fullProductTitle} ] ✨\n` +
             `❌ بدل ما تدفع: ${reg} جنيه\n` +
             `✅ النهاردة وبس بـ: ${promo} جنيه بسسس! (وفرت في جيبك ${savings} جنيه يعني خصم ${discount}% كاش 💰)\n\n` +
-            `مش هتعوضها تاني اليومين دول! لحق مكانك في فرعنا والكمية محدودة جداً قبل ما تخلص! 🏃‍♂️💨🛒`,
+            `التعامل ساري يوم ${dayName} فقط وحتى نفاذ الكمية! لحق مكانك في فرعنا والكمية محدودة جداً! 🏃‍♂️💨🛒`,
 
             // Style 2: التوفير والضربة القاضية
             `💥 ضربة قاضية للغلاء من كازيون ماركت!\n` +
-            `سعر مش هيتكرر تاني خالص على: [ ${name} ] 🛍️\n` +
+            `سعر مش هيتكرر تاني خالص على: [ ${fullProductTitle} ] 🛍️\n` +
             `سيبك من الأسعار برة.. هنا هتاخدها بـ ${promo} ج.م بدلاً من ${reg} ج.م!\n` +
             `وفرت كام؟ بالظبط ${savings} جنيه على القطعة الواحدة! 🤑\n\n` +
             `عرض الـ 24 ساعة اليوم الواحد، متفوتش الفرصة وتعالى الفرع حالاً! ⚡⚡`,
 
             // Style 3: إعلان جروبات وعائلات شعبي فخم
             `📣 اسمع من كازيون وماتلفش كتير!\n` +
-            `خصم ${discount}% نازل طازة على [ ${name} ]..\n` +
+            `خصم ${discount}% نازل طازة على [ ${fullProductTitle} ]..\n` +
             `سعر الفرع دلوقتي: ${promo} جنيه بس (بدل ${reg} جنيه)! 💥\n` +
             `وفر ${savings} جنيه في جيبك وهات لكل البيت.. العرض ده معمول مخصوص علشانك!\n\n` +
-            `مستنينكم في أقرب فرع كازيون ماركت - العرض ساري حتى نفاد الكمية! 🛒🤝`,
+            `مستنينكم في أقرب فرع كازيون ماركت - العرض ساري يوم ${dayName} حتى نفاد الكمية! 🛒🤝`,
 
             // Style 4: لهجة سريعة وشياكة
             `🚨 كازيون بيولع الأسعار! عرض الـ 24 ساعة نار 🔥\n` +
-            `النهاردة عملنا الصح في [ ${name} ]..\n` +
+            `النهاردة عملنا الصح في [ ${fullProductTitle} ]..\n` +
             `اشتري بـ ${promo} ج.م بسس ووفر ${savings} ج.م في ثانية!\n` +
             `سعر زمان رجع تاني.. متفكرش كتير، الحجز والأسبقية للي يلحق الأول! 🏃‍♂️✨`
           ];
@@ -7527,26 +7944,42 @@
 
         // Clean Programmatic Image Compositing Engine (Kazyon 24-Hour Offer Template)
         updatePosterCanvas() {
+          if (this._renderPosterRaf) cancelAnimationFrame(this._renderPosterRaf);
+          this._renderPosterRaf = requestAnimationFrame(() => {
+            this._renderPosterRaf = null;
+            this.renderPosterCanvasInternal();
+          });
+        },
+
+        renderPosterCanvasInternal() {
           const canvas = document.getElementById('smartOfferPosterCanvas');
           if (!canvas) return;
           const ctx = canvas.getContext('2d');
           const width = 900;
           const height = 1200;
-          canvas.width = width;
-          canvas.height = height;
+          if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
+          }
 
           // 1. Draw Base Background: Uploaded Kazyon Template OR Procedural 24h Official Template
           if (this.smartOfferTemplateImage) {
-            const bgImg = new Image();
-            bgImg.onload = () => {
-              ctx.drawImage(bgImg, 0, 0, width, height);
+            if (this._cachedBgImg && this._cachedBgImg.src === this.smartOfferTemplateImage && this._cachedBgImg.complete) {
+              ctx.drawImage(this._cachedBgImg, 0, 0, width, height);
               this.drawTemplateSlotsOverlay(ctx, width, height, true);
-            };
-            bgImg.onerror = () => {
-              this.drawKazyon24hOfficialTemplate(ctx, width, height);
-              this.drawTemplateSlotsOverlay(ctx, width, height, false);
-            };
-            bgImg.src = this.smartOfferTemplateImage;
+            } else {
+              const bgImg = new Image();
+              bgImg.onload = () => {
+                this._cachedBgImg = bgImg;
+                ctx.drawImage(bgImg, 0, 0, width, height);
+                this.drawTemplateSlotsOverlay(ctx, width, height, true);
+              };
+              bgImg.onerror = () => {
+                this.drawKazyon24hOfficialTemplate(ctx, width, height);
+                this.drawTemplateSlotsOverlay(ctx, width, height, false);
+              };
+              bgImg.src = this.smartOfferTemplateImage;
+            }
           } else {
             this.drawKazyon24hOfficialTemplate(ctx, width, height);
             this.drawTemplateSlotsOverlay(ctx, width, height, false);
@@ -7723,189 +8156,284 @@
           ctx.fillText('فقط وحتي نفاذ الكمية', 40, footerY + 58);
         },
 
-        // Dynamic Slot Mapping (دمج وتفريغ المعطيات بدقة داخل القالب)
+        // Dynamic Slot Mapping (دمج وتفريغ المعطيات بدقة داخل القالب - معايير كازيون المعتمدة)
         drawTemplateSlotsOverlay(ctx, w, h, isUploadedBase) {
-          // Slot 1: Product Image Area (Right half open white/sky area)
-          const slotX = w * 0.535;
-          const slotY = h * 0.25;
-          const slotW = w * 0.42;
-          const slotH = h * 0.62;
+          // Right Side Product Placement Slot (Exactly where burger box was in image_15.png)
+          // Positioned naturally on the sky-blue background, without covering the '24 ساعة' emblem
+          const productCenterX = w * 0.73;
+          const productCenterY = h * 0.55 + (Number(this.smartOfferData.productOffsetY) || 0);
+          const maxProductW = w * 0.44 * (Number(this.smartOfferData.productScale) || 1.0);
+          const maxProductH = h * 0.43 * (Number(this.smartOfferData.productScale) || 1.0);
 
-          // Draw clean frosted backdrop and circular/rounded frame
-          ctx.save();
-          const spot = ctx.createRadialGradient(slotX + slotW / 2, slotY + slotH / 2 - 20, 40, slotX + slotW / 2, slotY + slotH / 2 - 20, slotW * 0.65);
-          spot.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-          spot.addColorStop(0.75, 'rgba(255, 255, 255, 0.45)');
-          spot.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = spot;
-          ctx.fillRect(slotX - 10, slotY - 10, slotW + 20, slotH + 20);
-
-          // Rounded frame with subtle border
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-          this.roundRect(ctx, slotX, slotY + 20, slotW, slotH - 40, 32);
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-          ctx.restore();
-
-          // Render Product Image inside the right-half slot
+          // Render Product Image with Contact Drop Shadow onto the Sky Background
           if (this.smartOfferProductImage) {
-            const pImg = new Image();
-            pImg.onload = () => {
-              const maxW = slotW - 30;
-              const maxH = slotH - 120;
-              let iw = pImg.naturalWidth || pImg.width;
-              let ih = pImg.naturalHeight || pImg.height;
-              const ratio = Math.min(maxW / iw, maxH / ih);
+            const drawProduct = (pImg) => {
+              let iw = pImg.naturalWidth || pImg.width || maxProductW;
+              let ih = pImg.naturalHeight || pImg.height || maxProductH;
+              const ratio = Math.min(maxProductW / iw, maxProductH / ih);
               const drawW = iw * ratio;
               const drawH = ih * ratio;
-              const drawX = slotX + (slotW - drawW) / 2;
-              const drawY = slotY + 30 + (maxH - drawH) / 2;
+              const drawX = productCenterX - drawW / 2;
+              const drawY = productCenterY - drawH / 2;
 
+              // Subtle, realistic contact drop shadow beneath the product to ground it on sky-blue background
+              if (this.smartOfferData.enableShadow !== false) {
+                ctx.save();
+                ctx.beginPath();
+                const shadowCenterY = drawY + drawH - 10;
+                const shadowRadiusX = drawW * 0.45;
+                const shadowRadiusY = Math.max(12, drawH * 0.08);
+                const shadowGrad = ctx.createRadialGradient(productCenterX, shadowCenterY, 4, productCenterX, shadowCenterY, shadowRadiusX);
+                shadowGrad.addColorStop(0, 'rgba(15, 35, 65, 0.42)');
+                shadowGrad.addColorStop(0.5, 'rgba(15, 35, 65, 0.18)');
+                shadowGrad.addColorStop(1, 'rgba(15, 35, 65, 0)');
+                ctx.fillStyle = shadowGrad;
+                ctx.ellipse(productCenterX, shadowCenterY, shadowRadiusX, shadowRadiusY, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
+
+              // Draw isolated studio product
               ctx.save();
-              ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-              ctx.shadowBlur = 24;
-              ctx.shadowOffsetY = 10;
               ctx.drawImage(pImg, drawX, drawY, drawW, drawH);
               ctx.restore();
 
-              this.drawOverlayTextElements(ctx, w, h, slotX, slotY, slotW, slotH, isUploadedBase);
+              this.drawOverlayTextElements(ctx, w, h, isUploadedBase);
             };
-            pImg.src = this.smartOfferProductImage;
+
+            if (this._cachedProductImg && this._cachedProductImg.src === this.smartOfferProductImage && this._cachedProductImg.complete) {
+              drawProduct(this._cachedProductImg);
+            } else {
+              const pImg = new Image();
+              pImg.onload = () => {
+                this._cachedProductImg = pImg;
+                drawProduct(pImg);
+              };
+              pImg.src = this.smartOfferProductImage;
+            }
           } else {
-            // Elegant placeholder icon & guidance
-            ctx.save();
-            ctx.fillStyle = '#475569';
-            ctx.textAlign = 'center';
-            ctx.font = '900 85px "Cairo", sans-serif';
-            ctx.fillText('📦', slotX + slotW / 2, slotY + slotH / 2 - 30);
-
-            ctx.font = '700 24px "Cairo", sans-serif';
-            ctx.fillStyle = '#1E3A8A';
-            ctx.fillText('صورة المنتج ستظهر هنا', slotX + slotW / 2, slotY + slotH / 2 + 35);
-            ctx.font = '600 16px "Cairo", sans-serif';
-            ctx.fillStyle = '#475569';
-            ctx.fillText('(التقط بالكاميرا أو ارفع من المعرض)', slotX + slotW / 2, slotY + slotH / 2 + 65);
-            ctx.restore();
-
-            this.drawOverlayTextElements(ctx, w, h, slotX, slotY, slotW, slotH, isUploadedBase);
+            // Elegant Studio Product Box Placeholder (Burger Box like in image_15.png)
+            this.drawDefaultStudioProductIllustration(ctx, productCenterX, productCenterY, maxProductW * 0.88, maxProductH * 0.82);
+            this.drawOverlayTextElements(ctx, w, h, isUploadedBase);
           }
         },
 
         // Render Prices, Discount Percentage (-XX%), Product Title and Date Overlay
-        drawOverlayTextElements(ctx, w, h, slotX, slotY, slotW, slotH, isUploadedBase) {
+        drawOverlayTextElements(ctx, w, h, isUploadedBase) {
           const regPrice = Number(this.smartOfferData.regularPrice) || 0;
           const promoPrice = Number(this.smartOfferData.promoPrice) || 0;
           const discount = this.calcSmartOfferDiscountPercent();
           const savings = this.calcSmartOfferSavings();
-          const name = this.smartOfferData.productName || 'اسم المنتج هنا';
+          const name = this.smartOfferData.productName || 'حلواني برجر بقري';
+          const descriptor = this.smartOfferData.productDescriptor || 'البرجر الأصلي 400 جم / (8 قطع)';
 
-          // 1. Sleek Product Name Tag on right side
+          // 1. Discount Percentage Badge (-XX% inside the dark blue upper shape)
           ctx.save();
-          ctx.fillStyle = '#0D1B2A';
-          this.roundRect(ctx, slotX + 10, slotY + slotH - 85, slotW - 20, 60, 18);
-          ctx.fill();
-          ctx.strokeStyle = '#FF5500';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          ctx.fillStyle = '#FFFFFF';
-          ctx.textAlign = 'center';
-          ctx.font = '900 22px "Cairo", sans-serif';
-          let displayName = name;
-          if (displayName.length > 24) displayName = displayName.substring(0, 22) + '..';
-          ctx.fillText(displayName, slotX + slotW / 2, slotY + slotH - 58);
-
-          const subStr = (this.smartOfferData.subCode || '') + (this.smartOfferData.barcode ? ` • ${this.smartOfferData.barcode}` : '');
-          if (subStr) {
-            ctx.fillStyle = '#22D3EE';
-            ctx.font = '700 13px "JetBrains Mono", monospace';
-            ctx.fillText(subStr, slotX + slotW / 2, slotY + slotH - 36);
-          }
-          ctx.restore();
-
-          // 2. Discount Percentage Badge (-XX% inside the dark blue upper shape)
-          ctx.save();
-          // If custom uploaded image is used, cover the placeholder -XX% slot cleanly
           if (isUploadedBase) {
+            // Cleanly cover the placeholder -XX% badge
             ctx.fillStyle = '#1E5373';
             this.roundRect(ctx, w * 0.105, h * 0.49, w * 0.22, h * 0.075, 22);
             ctx.fill();
           }
-
           ctx.fillStyle = '#FFFFFF';
           ctx.textAlign = 'center';
           ctx.font = '900 48px "Cairo", "Arial Black", sans-serif';
-          const discText = discount > 0 ? `-${discount}%` : `-25%`;
+          const discText = discount > 0 ? `-${discount}%` : `-19%`;
           ctx.fillText(discText, w * 0.215, h * 0.548);
           ctx.restore();
 
-          // 3. Old Regular Price Slot (Crossed Out with Red Strikethrough)
+          // 2. Original Price inside Yellow Pill Container (with solid Red Strikethrough)
           ctx.save();
+          const pillX = w * 0.325;
+          const pillY = h * 0.536;
+          const pillW = w * 0.188;
+          const pillH = h * 0.046;
+
           if (isUploadedBase) {
-            // Cover the placeholder --.-- EGP on the white card
-            ctx.fillStyle = '#FFFFFF';
-            this.roundRect(ctx, w * 0.13, h * 0.585, w * 0.20, h * 0.045, 8);
+            // Refresh yellow pill over placeholder on custom template
+            ctx.fillStyle = '#FFD200';
+            this.roundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
             ctx.fill();
           }
 
-          ctx.textAlign = 'left';
-          ctx.fillStyle = '#DC2626';
-          ctx.font = '900 28px "Cairo", sans-serif';
-          const oldPriceText = `${regPrice > 0 ? regPrice.toFixed(2) : '45.00'} EGP`;
-          ctx.fillText(oldPriceText, w * 0.14, h * 0.62);
+          ctx.fillStyle = '#0D1B2A';
+          ctx.textAlign = 'center';
+          ctx.font = '900 24px "Cairo", "Arial Black", sans-serif';
+          const oldStr = regPrice > 0 ? regPrice.toFixed(2) : '160.00';
+          ctx.fillText(oldStr, pillX + pillW / 2, pillY + pillH * 0.72);
 
-          // Strikethrough line
-          const oldMetrics = ctx.measureText(oldPriceText);
+          // Red horizontal strikethrough line crossing the old price
+          const oldMetrics = ctx.measureText(oldStr);
           ctx.strokeStyle = '#DC2626';
           ctx.lineWidth = 3.5;
           ctx.beginPath();
-          ctx.moveTo(w * 0.135, h * 0.612);
-          ctx.lineTo(w * 0.14 + oldMetrics.width + 4, h * 0.612);
+          ctx.moveTo(pillX + pillW / 2 - oldMetrics.width / 2 - 4, pillY + pillH * 0.5);
+          ctx.lineTo(pillX + pillW / 2 + oldMetrics.width / 2 + 4, pillY + pillH * 0.5);
           ctx.stroke();
           ctx.restore();
 
-          // 4. Bold New Promo Price Slot (Heavy Kazyon Orange with EGP)
+          // 3. Savings Value: Replace placeholder with "وفرت [X] EGP" in bold Red
           ctx.save();
           if (isUploadedBase) {
-            // Cover the placeholder --.-- EGP on the white card
+            // Cleanly cover the placeholder --.-- EGP on the white card
             ctx.fillStyle = '#FFFFFF';
-            this.roundRect(ctx, w * 0.125, h * 0.635, w * 0.36, h * 0.07, 12);
+            this.roundRect(ctx, w * 0.125, h * 0.582, w * 0.20, h * 0.042, 6);
             ctx.fill();
           }
-
+          ctx.fillStyle = '#DC2626';
           ctx.textAlign = 'left';
-          ctx.fillStyle = '#FF5500';
-          ctx.font = '900 52px "Cairo", sans-serif';
-          const promoNumText = promoPrice > 0 ? promoPrice.toFixed(2) : '32.50';
-          ctx.fillText(promoNumText, w * 0.14, h * 0.685);
-
-          const pMetrics = ctx.measureText(promoNumText);
-          ctx.fillStyle = '#0D1B2A';
-          ctx.font = '900 30px "Cairo", sans-serif';
-          ctx.fillText('EGP', w * 0.155 + pMetrics.width, h * 0.68);
+          ctx.font = '900 22px "Cairo", sans-serif';
+          const saveStr = `وفرت ${savings} EGP`;
+          ctx.fillText(saveStr, w * 0.135, h * 0.615);
           ctx.restore();
 
-          // 5. Update Dynamic Date on Footer Bar if uploaded custom template
+          // 4. New Discounted Price: Large, bold, dark blue/black font (e.g. 130.00 EGP)
+          ctx.save();
           if (isUploadedBase) {
-            ctx.save();
-            ctx.fillStyle = '#0D1B2A';
-            ctx.fillRect(w * 0.03, h * 0.93, w * 0.45, h * 0.07);
-
-            const daysArabic = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            const now = new Date();
-            const dayName = daysArabic[now.getDay()];
-            const dateStr = now.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-            ctx.textAlign = 'left';
-            ctx.font = '700 16px "Cairo", sans-serif';
+            // Cleanly cover the lower placeholder --.-- EGP on the white card
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillText(`التعامل ساري يوم ${dayName} [${dateStr}]`, 40, h - 38);
-            ctx.fillStyle = '#FFD200';
-            ctx.fillText('فقط وحتي نفاذ الكمية', 40, h - 16);
-            ctx.restore();
+            this.roundRect(ctx, w * 0.125, h * 0.635, w * 0.36, h * 0.068, 8);
+            ctx.fill();
           }
+          ctx.fillStyle = '#0F2C59'; // Large, bold, dark blue/black
+          ctx.textAlign = 'left';
+          ctx.font = '900 58px "Cairo", "Arial Black", sans-serif';
+          const newNumStr = promoPrice > 0 ? promoPrice.toFixed(2) : '130.00';
+          ctx.fillText(newNumStr, w * 0.135, h * 0.678);
+
+          const numMetrics = ctx.measureText(newNumStr);
+          ctx.font = '900 32px "Cairo", sans-serif';
+          ctx.fillText('EGP', w * 0.145 + numMetrics.width, h * 0.674);
+          ctx.restore();
+
+          // 5. Product Label: White Arabic typeface at the bottom-left on the orange banner
+          ctx.save();
+          const labelCX = w * 0.30; // Center of the orange banner
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#FFFFFF';
+
+          // Line 1: Product Name
+          ctx.font = '900 28px "Cairo", sans-serif';
+          ctx.fillText(name, labelCX, h * 0.765);
+
+          // Line 2: Descriptor / Size / Weight / Piece count
+          ctx.font = '700 20px "Cairo", sans-serif';
+          ctx.fillText(descriptor, labelCX, h * 0.802);
+          ctx.restore();
+
+          // 6. Expiry / Date Info in bottom-left navy banner
+          ctx.save();
+          if (isUploadedBase) {
+            // Cleanly cover the bottom-left navy banner placeholder
+            ctx.fillStyle = '#0D1B2A';
+            ctx.fillRect(w * 0.03, h * 0.925, w * 0.48, h * 0.075);
+          }
+
+          const dayName = this.smartOfferData.validityDay || 'الإثنين';
+          const dateStr = this.smartOfferData.validityDate || new Date().toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+          ctx.textAlign = 'left';
+          ctx.font = '700 17px "Cairo", sans-serif';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(`التعامل ساري يوم ${dayName} [${dateStr}]`, 40, h - 48);
+
+          ctx.fillStyle = '#FFD200';
+          ctx.font = '800 16px "Cairo", sans-serif';
+          ctx.fillText('فقط وحتي نفاذ الكمية', 40, h - 22);
+          ctx.restore();
+        },
+
+        // Helper: Realistic Studio Cutout Illustration of Retail Product Box (e.g. Halwani Burger Box)
+        drawDefaultStudioProductIllustration(ctx, cx, cy, boxW, boxH) {
+          ctx.save();
+
+          // Realistic contact drop shadow on the sky-blue background
+          ctx.beginPath();
+          const shadowY = cy + boxH / 2 - 8;
+          const shadowGrad = ctx.createRadialGradient(cx, shadowY, 6, cx, shadowY, boxW * 0.48);
+          shadowGrad.addColorStop(0, 'rgba(15, 35, 65, 0.42)');
+          shadowGrad.addColorStop(0.5, 'rgba(15, 35, 65, 0.18)');
+          shadowGrad.addColorStop(1, 'rgba(15, 35, 65, 0)');
+          ctx.fillStyle = shadowGrad;
+          ctx.ellipse(cx, shadowY, boxW * 0.48, 16, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 3D Isometric Retail Box (Halwani Brothers Burger Box Style)
+          const bx = cx - boxW / 2;
+          const by = cy - boxH / 2;
+
+          // Box Main Face
+          ctx.fillStyle = '#991B1B'; // Rich Halwani Burgundy Red
+          this.roundRect(ctx, bx, by, boxW, boxH, 18);
+          ctx.fill();
+
+          // Subtle glossy top gradient highlight
+          const gloss = ctx.createLinearGradient(bx, by, bx, by + boxH * 0.4);
+          gloss.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+          gloss.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = gloss;
+          this.roundRect(ctx, bx, by, boxW, boxH * 0.4, 18);
+          ctx.fill();
+
+          // Golden Halwani Brand Crest Ribbon
+          ctx.fillStyle = '#FFD200';
+          this.roundRect(ctx, bx + 16, by + 16, boxW - 32, 42, 10);
+          ctx.fill();
+          ctx.fillStyle = '#7F1D1D';
+          ctx.textAlign = 'center';
+          ctx.font = '900 20px "Cairo", sans-serif';
+          ctx.fillText('★ حلواني إخوان • HALWANI BROS ★', cx, by + 44);
+
+          // Center Delicious Burger Graphic Spotlight
+          ctx.fillStyle = '#FFFFFF';
+          this.roundRect(ctx, bx + 22, by + 70, boxW - 44, boxH - 130, 14);
+          ctx.fill();
+
+          // Inner Burger Disc
+          ctx.fillStyle = '#5A3825';
+          ctx.beginPath();
+          ctx.arc(cx, by + 120, 42, 0, Math.PI * 2);
+          ctx.fill();
+          // Sesame bun top
+          ctx.fillStyle = '#D97706';
+          ctx.beginPath();
+          ctx.arc(cx, by + 105, 40, Math.PI, Math.PI * 2);
+          ctx.fill();
+          // Green lettuce
+          ctx.fillStyle = '#16A34A';
+          ctx.fillRect(cx - 36, by + 106, 72, 8);
+          // Melted cheddar
+          ctx.fillStyle = '#F59E0B';
+          ctx.beginPath();
+          ctx.moveTo(cx - 30, by + 114);
+          ctx.lineTo(cx, by + 128);
+          ctx.lineTo(cx + 30, by + 114);
+          ctx.fill();
+
+          // Bottom Product Label inside the box
+          ctx.fillStyle = '#1E3A8A';
+          ctx.textAlign = 'center';
+          ctx.font = '900 21px "Cairo", sans-serif';
+          ctx.fillText('برجر بقري جامبو', cx, by + 185);
+          ctx.font = '700 14px "Cairo", sans-serif';
+          ctx.fillStyle = '#4B5563';
+          ctx.fillText('400 جم • 8 قطع برجر فاخر', cx, by + 206);
+
+          // Quality Seal badge
+          ctx.fillStyle = '#059669';
+          this.roundRect(ctx, bx + 24, by + boxH - 46, boxW - 48, 30, 8);
+          ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '800 13px "Cairo", sans-serif';
+          ctx.fillText('✓ جودة فاخرة 100% لحم بقري صافي', cx, by + boxH - 26);
+
+          // Outer Box Border
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.lineWidth = 3;
+          this.roundRect(ctx, bx, by, boxW, boxH, 18);
+          ctx.stroke();
+
+          ctx.restore();
         },
 
         // Helper: Canvas rounded rectangle drawing
@@ -8026,6 +8554,10 @@ deletePromoTag(tag) {
         },
 
         filteredPromoTags() {
+          if (!this._promoFilterDirty && this._cachedFilteredPromoTags) {
+            return this._cachedFilteredPromoTags;
+          }
+
           let list = [...this.promoPriceTags];
 
           // Filter by category
@@ -8043,7 +8575,7 @@ deletePromoTag(tag) {
           }
 
           // Filter by search
-          if (this.promoSearchQuery.trim()) {
+          if (this.promoSearchQuery && this.promoSearchQuery.trim()) {
             const q = this.promoSearchQuery.trim().toLowerCase();
             list = list.filter(t => 
               (t.itemName && t.itemName.toLowerCase().includes(q)) ||
@@ -8053,6 +8585,8 @@ deletePromoTag(tag) {
             );
           }
 
+          this._cachedFilteredPromoTags = list;
+          this._promoFilterDirty = false;
           return list;
         },
 
@@ -8087,15 +8621,81 @@ deletePromoTag(tag) {
           window.print();
         },
 
+        // High-Performance Batch Tag Printing using DocumentFragment
         batchPrintPromoTags() {
           const activeTags = this.promoPriceTags.filter(t => this.calcPromoStatus(t) !== 'expired');
           if (activeTags.length === 0) {
             this.showToast('لا توجد يافطات عروض نشطة للطباعة', 'info');
             return;
           }
-          this.printTagItem = activeTags[0];
-          this.isPrintTagModalOpen = true;
-          this.showToast(`تم تجهيز ${activeTags.length} يافطة عروض للطباعة دفعة واحدة`, 'info');
+
+          // Use DocumentFragment for zero layout thrashing & batch DOM insertion
+          let container = document.getElementById('batchPrintContainer');
+          if (!container) {
+            container = document.createElement('div');
+            container.id = 'batchPrintContainer';
+            container.className = 'batch-print-sheet';
+            document.body.appendChild(container);
+          }
+          container.replaceChildren();
+
+          const fragment = document.createDocumentFragment();
+          const grid = document.createElement('div');
+          grid.className = 'batch-print-grid';
+
+          activeTags.forEach(tag => {
+            const card = document.createElement('div');
+            card.className = 'shelf-tag-printable batch-print-card bg-white text-black p-4 rounded-xl border-2 border-dashed border-stone-400 mb-4';
+            const savings = (Number(tag.regularPrice) - Number(tag.promoPrice)).toFixed(1);
+            
+            card.innerHTML = `
+              <div class="bg-[#FF6600] text-white p-2 rounded-t-lg -mx-4 -mt-4 mb-3 flex items-center justify-between" style="background:#FF6600; color:white; padding:8px; margin:-16px -16px 12px; display:flex; justify-content:space-between;">
+                <div style="font-weight:900; font-size:13px;">KAZYON MARKET • كازيون ماركت</div>
+                <div style="font-size:10px; font-weight:bold; background:rgba(0,0,0,0.2); padding:2px 8px; border-radius:4px;">${tag.offerType === 'daily' ? 'عرض فلاش يومي' : 'عرض خاص توفير'}</div>
+              </div>
+              <div style="text-align:right; border-bottom:1px solid #ccc; padding-bottom:6px;">
+                <div style="font-size:10px; color:#555; font-weight:bold;">${tag.category || ''}</div>
+                <div style="font-size:15px; font-weight:900; color:#000; line-height:1.2;">${tag.itemName || ''}</div>
+                <div style="font-size:10px; color:#666; font-family:monospace; margin-top:2px;">
+                  <span>الباركود: <strong>${tag.barcode || ''}</strong></span>
+                  ${tag.subCode ? ` | <span>ساب كود: <strong>${tag.subCode}</strong></span>` : ''}
+                  <span> | الموقع: ${tag.shelfLocation || 'ستاند العروض'}</span>
+                </div>
+              </div>
+              <div style="padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-size:10px; color:#666; font-weight:bold;">السعر السابق</div>
+                  <div style="font-size:13px; font-weight:bold; color:#888; text-decoration:line-through; font-family:monospace;">${tag.regularPrice} ج.م</div>
+                  <div style="font-size:11px; font-weight:900; color:#047857; background:#D1FAE5; padding:2px 6px; border-radius:4px; display:inline-block; margin-top:4px;">
+                    وفر ${savings} ج.م
+                  </div>
+                </div>
+                <div style="text-align:left;">
+                  <div style="font-size:10px; font-weight:bold; color:#FF6600;">سعر العرض للقطعة</div>
+                  <div style="font-size:32px; font-weight:900; font-family:monospace; color:#FF6600; line-height:1;">${tag.promoPrice}</div>
+                  <div style="font-size:10px; font-weight:bold; color:#000;">جنيه مصري</div>
+                </div>
+              </div>
+              <div style="border-top:1px solid #eee; padding-top:4px; font-size:10px; color:#666; display:flex; justify-content:space-between;">
+                <span>العرض ساري حتى: <strong style="color:#000;">${tag.expiryDate || '---'}</strong></span>
+                <span>أو حتى نفاد الكمية</span>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+
+          fragment.appendChild(grid);
+          container.appendChild(fragment);
+
+          this.showToast(`تم تجهيز ورقة الطباعة المجمعة (${activeTags.length} يافطة) عبر DocumentFragment!`, 'success');
+          setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+              if (container && container.parentNode) {
+                container.replaceChildren();
+              }
+            }, 1200);
+          }, 150);
         },
 
         exportPromoTagsExcel() {
